@@ -1,0 +1,103 @@
+elow is a two‑part deliverable:
+
+Code‑base audit & gap analysis – what you already have, what is missing, and what is strongly recommended before you can ship to Google Play and the Apple App Store.
+
+Hyper‑granular deployment plan – a day‑by‑day (for the first week) and stage‑by‑stage roadmap that takes you from code‑freeze to production release, with all compliance, asset‑creation, QA, and store‑operations tasks sequenced.
+
+1. Code‑base audit & gap analysis
+Area	Current state (from the uploaded zip)	Requirements for Google Play & iOS	What’s missing / recommended to add
+Project type / framework	React 19 + Vite PWA. No native container, no android/ or ios/ directories, no Capacitor/Cordova config.	Each store needs a signed native binary: an .aab (Android App Bundle) targeting API 34+
+developer.android.com
+ and an .ipa built with Xcode 15+, SDK 17.	Add a wrapper. The shortest path is Capacitor 6: npx @capacitor/cli init, then add android & add ios.
+Manifest & permissions	Web public/manifest.json plus metadata.json requesting camera.	Native equivalents: AndroidManifest.xml must declare android.permission.CAMERA; iOS needs NSCameraUsageDescription in Info.plist with a human‑readable reason (App Store Guideline 5.1.1)
+developer.apple.com
+apple.com
+.	Generate/merge platform manifests during Capacitor init, then add store‑compliant privacy strings.
+Icons & splash screens	72–512 px PNGs for PWA.	Android: 48‑512 dp foreground, 108‑dp monochrome, adaptive icon XML. iOS: at least 13 sizes (20 pt up to 1024 pt) in an XCAsset catalog.	Produce full asset sets (Figma/plugin export) & update android/app/src/main/res and Assets.xcassets.
+Privacy policy	None in repo.	Both stores require an external URL. Apple additionally shows “App Privacy” nutrition‑labels; Google Play’s Health Apps declaration must be completed because the app processes dietary & health‑related data
+support.google.com
+support.google.com
+.	Draft a GDPR/CCPA‑compliant policy: describe camera use, Gemini API calls, data retention, analytics. Host it (e.g., GitHub Pages or wizard‑press.com) and link in Play Console & App Store Connect.
+Medical / wellness disclaimers	None.	Guideline 5.2.4 (Apple) and Google Health‑Content policy require a disclaimer that the app provides informational, not medical, advice, and recommend consulting a healthcare professional.	Add in‑app modal + store description language.
+Tracking & analytics	No libraries observed (good).	If you later add Firebase/GA, iOS ATT dialog & Google Play Data‑safety form become mandatory.	Decide early; adding later triggers a new review cycle.
+API keys & secrets	GEMINI_API_KEY stored in .env.local.	Keys must not be in the compiled bundle.	Use Capacitor’s Build Variables or CI secrets injection. Validate via a post‑build diff.
+Offline capability / graceful degradation	Service‑worker present (public/sw.js) but no offline caching rules.	Not a hard requirement, but both stores reject apps that “crash or become blank when offline.”	Implement basic Cache‑First for static assets or show a “No network” screen.
+Automated testing	None.	Not mandatory, but Google pre‑launch report & Apple’s automated screens will flag obvious crashes.	Add Cypress/E2E smoke tests + Detox for native shells.
+CI / CD	No pipeline config.	Strongly recommended to produce reproducible signed builds.	GitHub Actions or GitLab CI with matrix: web, android, ios.
+App‑store listing assets	None.	4–8 screenshots per platform, feature graphic (Play), 6.9 × 5.4 in privacy screenshot (iOS).	Capture after QA pass on real devices (not simulators).
+Legal & compliance docs	No EULA, no Terms.	Apple asks for End‑User License Agreement and contact info (Guideline 1.1).	Add Markdown docs + link inside Settings/About.
+
+2. Hyper‑granular deployment plan
+Week 0 – preparation (parallel tracks)
+Track	Tasks
+Code	• Branch release/v1.0.0 → code‑freeze.
+• Run npx @capacitor/cli init DietWise com.wizardtech.dietwise.
+• npm run build → npx cap copy.
+• Add Capacitor Camera plugin (npm i @capacitor/camera); patch platform code to request permission on demand.
+• Implement offline fallback + medical disclaimer modal.
+• Add privacyPolicyUrl constant pointing to hosted page.
+Design	• Export icon sets & splash screens.
+• Produce 6 phone + 3 tablet screenshots per platform.
+• Compose Play‑feature graphic (1024×500).
+Compliance	• Draft Privacy Policy & Terms (hosted).
+• Fill Google Play “Health Apps Declaration” & “Data safety” forms.
+• Fill App Store “Data Types” questionnaire.
+CI	• Set up GitHub Actions:
+– job android‑build: ./gradlew bundleRelease, sign with Play keystore (secret).
+– job ios‑build: xcodebuild -workspace ios/App.xcworkspace -scheme App -archive, export signed .ipa using App Store Connect API key (secret).
+
+Day‑by‑day roll‑out (Week 1)
+Day	Android	iOS
+Mon	• Internal testing track: upload v1.0.0‑RC1.aab to Google Play Console.
+• Run Pre‑launch report; fix UX issues flagged.	• Archive build for TestFlight (RC1).
+• Invite internal testers (≤25) for 24 h smoke test.
+Tue	• Address crash logs from pre‑launch; rebuild RC2.
+• Move to Closed testing (QA team, 100 users).	• Gather TestFlight feedback; iterate on critical bugs.
+• Upload build RC2 to TestFlight (expedited review usually ~15 min).
+Wed	• Prepare production store listing (long & short description, feature graphic, screenshots, privacy policy link).
+• Submit Data safety form.	• Configure App Store Connect page: keywords, subtitle, ages 4+, primary category “Health & Fitness”.
+• Upload App Privacy “nutrition labels”.
+Thu	Release‑candidate sign‑off meeting. Tag v1.0.0. Generate final signed bundle & IPA in CI.	Same meeting.
+Fri (GO/NO‑GO)	• Rollout 20 % in Production track with staged rollout (automatic). Monitor vitals (ANRs, crash rate < 1 %).	• Submit for App Review (expect 24‑48 h). Provide detailed reviewer notes: camera use, no health advice, Gemini API. Attach demo video if features hidden behind login.
+Sat–Sun	• Monitor Play Console vitals, Firebase Crashlytics (if added). Increase rollout to 100 % Monday if KPIs green.	• Apple review—respond to reviewer metadata questions within 24 h. On approval, “Manual release” toggle stays off until Monday A.M.
+
+Post‑launch (Week 2+)
+Hot‑patch window: keep branch release/1.0‑patch open for emergency fixes; follow fast‑track review on both stores.
+
+Analytics & A/B: integrate Firebase + Privacy Manifest / ATT prompt in 1.1.0.
+
+User‑feedback cadence: weekly Play‑Store & App‑Store review scrape → Jira tickets → triage.
+
+Deliverables checklist (build‑time artifacts)
+google‑services.json / GoogleService‑Info.plist (only if Firebase added).
+
+keystore.jks (Android) — back‑up outside VCS.
+
+App Signing Certificate (iOS): Distribution certificate (.p12) + Apple Distribution profile (XC12).
+
+Play‑Listing‑assets/, App‑Store‑assets/ directories in repo for reproducibility.
+
+CI/README.md explaining how to trigger release via GitHub tags.
+
+Key policy references
+Apple App Store Review Guidelines 2025 – camera permission & health‑information rules
+developer.apple.com
+developer.apple.com
+
+Google Play — Health Apps & Privacy requirements (2024‑25) 
+support.google.com
+support.google.com
+
+Target API 34 deadline (Aug 2024) for new Play submissions 
+developer.android.com
+
+Next actions for you
+Decide on Capacitor vs. full React Native rewrite. Capacitor is 2‑day work; React Native brings deeper native feel but 2‑3 weeks.
+
+Confirm hosting location for Privacy Policy (wizard‑press.com suffices).
+
+Create Apple Developer & Google Play developer accounts if not already done (24–48 h approval).
+
+Schedule the GO/NO‑GO readiness review 48 h before the intended launch date.
+
+With the above gaps closed and the deployment plan executed, DietWise will meet all current 2025 store requirements and should pass review on the first attempt.
