@@ -1,0 +1,127 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security checks weekly
+    - cron: '0 2 * * 1'
+
+jobs:
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run npm audit
+      run: npm audit --audit-level=moderate
+      
+    - name: Check for security vulnerabilities
+      run: |
+        if npm audit --audit-level=high --json | jq '.vulnerabilities | length' | grep -q '^0$'; then
+          echo "No high-severity vulnerabilities found"
+        else
+          echo "High-severity vulnerabilities detected!"
+          npm audit --audit-level=high
+          exit 1
+        fi
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run secret detection
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Check for hardcoded secrets
+      run: |
+        # Check for potential API keys in source code
+        if grep -r "GEMINI_API_KEY.*=" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" src/ || true; then
+          echo "Warning: Found potential hardcoded API keys in source code"
+        fi
+        
+        # Check for other common secret patterns
+        if grep -r "password.*=" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" src/ || true; then
+          echo "Warning: Found potential hardcoded passwords"
+        fi
+        
+    - name: Validate environment variable usage
+      run: |
+        # Ensure GEMINI_API_KEY is properly accessed via process.env
+        if ! grep -r "process\.env\.GEMINI_API_KEY" --include="*.ts" --include="*.tsx" .; then
+          echo "Warning: GEMINI_API_KEY not found in environment variables"
+        fi
+
+  bundle-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for analysis
+      run: npm run build
+      env:
+        GEMINI_API_KEY: dummy_key_for_build
+        
+    - name: Analyze bundle size
+      run: |
+        echo "Bundle analysis:"
+        find dist -name "*.js" -exec ls -lh {} \; | sort -k5 -h
+        
+        # Check for large files that might indicate bundling issues
+        find dist -name "*.js" -size +1M -exec echo "Large bundle detected: {}" \;
+        
+    - name: Check for exposed secrets in build
+      run: |
+        # Check if any secrets accidentally made it into the build
+        if grep -r "GEMINI_API_KEY" dist/ | grep -v "dummy_key_for_build"; then
+          echo "ERROR: API key found in build artifacts!"
+          exit 1
+        fi
