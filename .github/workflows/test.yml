@@ -1,0 +1,309 @@
+name: Comprehensive Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run nightly tests
+    - cron: '0 2 * * *'
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run unit tests with coverage
+      run: npm run test:coverage
+      
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage/lcov.info
+        flags: unittests
+        
+    - name: Check coverage thresholds
+      run: |
+        npm run test:coverage -- --reporter=json-summary
+        node -e "
+        const coverage = require('./coverage/coverage-summary.json');
+        const total = coverage.total;
+        const thresholds = { lines: 80, functions: 80, branches: 70, statements: 80 };
+        let failed = false;
+        
+        Object.entries(thresholds).forEach(([key, threshold]) => {
+          const pct = total[key].pct;
+          if (pct < threshold) {
+            console.error(\`❌ \${key} coverage \${pct}% is below threshold \${threshold}%\`);
+            failed = true;
+          } else {
+            console.log(\`✅ \${key} coverage \${pct}% meets threshold \${threshold}%\`);
+          }
+        });
+        
+        if (failed) process.exit(1);
+        "
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps ${{ matrix.browser }}
+      
+    - name: Run E2E tests - ${{ matrix.browser }}
+      run: npm run test:e2e -- --project=${{ matrix.browser }}
+      
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-results-${{ matrix.browser }}
+        path: |
+          test-results/
+          playwright-report/
+        retention-days: 30
+
+  mobile-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build app
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps chromium
+      
+    - name: Run mobile viewport tests
+      run: npm run test:e2e -- --project="Mobile Chrome" --project="Mobile Safari"
+      
+    - name: Test PWA installation
+      run: npm run test:e2e -- --project="chromium-pwa"
+      
+    - name: Test camera permissions
+      run: npm run test:e2e -- --project="chromium-camera"
+
+  accessibility-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -D @axe-core/playwright
+        
+    - name: Install Playwright
+      run: npx playwright install --with-deps chromium
+      
+    - name: Run accessibility tests
+      run: npm run test:a11y
+      
+    - name: Upload accessibility reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: accessibility-results
+        path: test-results/
+        retention-days: 30
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build production bundle
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
+    - name: Analyze bundle size
+      run: |
+        echo "### Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| File | Size | Gzipped |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|------|---------|" >> $GITHUB_STEP_SUMMARY
+        find dist -name "*.js" -o -name "*.css" | while read file; do
+          size=$(stat -c%s "$file" | numfmt --to=iec)
+          gzipped=$(gzip -c "$file" | wc -c | numfmt --to=iec)
+          echo "| $(basename $file) | $size | $gzipped |" >> $GITHUB_STEP_SUMMARY
+        done
+        
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v11
+      with:
+        urls: |
+          http://localhost:5173
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+        
+    - name: Check performance budget
+      run: |
+        # Add performance budget checks here
+        MAX_JS_SIZE=500000  # 500KB
+        js_size=$(find dist -name "*.js" -exec stat -c%s {} \; | awk '{sum+=$1} END {print sum}')
+        if [ $js_size -gt $MAX_JS_SIZE ]; then
+          echo "❌ JS bundle size ($js_size) exceeds budget ($MAX_JS_SIZE)"
+          exit 1
+        fi
+
+  visual-regression:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright
+      run: npx playwright install --with-deps chromium
+      
+    - name: Run visual regression tests
+      run: npm run test:visual
+      
+    - name: Upload visual diff artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: visual-regression-diffs
+        path: test-results/
+        retention-days: 30
+
+  android-device-tests:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '[device-test]')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build web assets
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
+    - name: Copy to Android
+      run: npx cap copy android
+      
+    - name: Setup Android emulator
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 33
+        target: google_apis
+        arch: x86_64
+        profile: Pixel_5
+        avd-name: test
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          # Build and install APK
+          cd android && ./gradlew assembleDebug
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          
+          # Run UI tests with Appium or Espresso
+          # ./gradlew connectedAndroidTest
+
+  test-summary:
+    needs: [unit-tests, e2e-tests, mobile-tests, accessibility-tests, performance-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Create test summary
+      run: |
+        echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "### Test Suite Status" >> $GITHUB_STEP_SUMMARY
+        echo "| Suite | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Mobile Tests | ${{ needs.mobile-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Accessibility | ${{ needs.accessibility-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Performance | ${{ needs.performance-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
