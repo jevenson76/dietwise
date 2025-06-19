@@ -19,9 +19,9 @@
       "@components/*": ["components/*"],
       "@hooks/*": ["hooks/*"],
       "@constants": ["constants.ts"],
-      "@appTypes/*": ["types.ts"]
+      "@appTypes": ["types.ts"]
     },
-    "types": ["react/next", "react-dom/next"] 
+    "types": ["node"] 
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "public"]
