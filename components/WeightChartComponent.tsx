@@ -1,0 +1,313 @@
+
+import React, { useEffect, useRef } from 'react';
+import { Chart, ChartConfiguration, ChartTypeRegistry } from 'chart.js';
+import { UserProfile, WeightEntry, AppTheme } from '../types';
+import { LBS_PER_WEEK_TARGET_CHANGE } from '../constants';
+import { format, addWeeks, differenceInWeeks, addDays, differenceInCalendarDays } from 'date-fns';
+import parseISO from 'date-fns/parseISO';
+import startOfDay from 'date-fns/startOfDay';
+
+
+interface WeightChartComponentProps {
+  userProfile: UserProfile | null;
+  actualWeightLog: WeightEntry[];
+  currentTheme: AppTheme;
+}
+
+const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile, actualWeightLog, currentTheme }) => {
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstanceRef = useRef<Chart | null>(null);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
+    }
+
+    const ctx = chartRef.current.getContext('2d');
+    if (!ctx) return;
+
+    const isDark = currentTheme === 'dark';
+    const textColor = isDark ? 'rgb(203, 213, 225)' : 'rgb(71, 85, 105)'; 
+    const gridColor = isDark ? 'rgba(71, 85, 105, 0.5)' : 'rgba(203, 213, 225, 0.5)';
+    const titleColor = isDark ? 'rgb(241, 245, 249)' : 'rgb(51, 65, 85)';
+    const legendColor = titleColor;
+
+    if (!userProfile || userProfile.targetWeight === null) {
+        ctx.clearRect(0, 0, chartRef.current.width, chartRef.current.height);
+        ctx.font = "16px Inter, sans-serif"; 
+        ctx.fillStyle = textColor; 
+        ctx.textAlign = "center";
+        ctx.fillText("Set a target weight in Profile to see your progress chart.", chartRef.current.width / 2, chartRef.current.height / 2);
+        return;
+    }
+    
+    const sortedActualWeights = [...actualWeightLog].sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+
+    const actualWeightData = sortedActualWeights.map(entry => ({
+      x: startOfDay(parseISO(entry.date)).getTime(),
+      y: entry.weight,
+    }));
+
+    let expectedWeightData: { x: number; y: number }[] = [];
+    const targetWeight = userProfile.targetWeight;
+    let projectionStartDateObj: Date;
+    let projectionStartWeight: number | null = userProfile.startWeight;
+
+    if (!projectionStartWeight && sortedActualWeights.length > 0) {
+        projectionStartWeight = sortedActualWeights[0].weight;
+    } else if (!projectionStartWeight && userProfile.weight) {
+        projectionStartWeight = userProfile.weight;
+    }
+    
+    if (sortedActualWeights.length > 0) {
+        projectionStartDateObj = startOfDay(parseISO(sortedActualWeights[0].date));
+    } else if (userProfile.profileCreationDate) {
+        projectionStartDateObj = startOfDay(parseISO(userProfile.profileCreationDate));
+    } else {
+        projectionStartDateObj = startOfDay(new Date());
+    }
+
+
+    if (targetWeight !== null && projectionStartWeight !== null) {
+      let ratePerWeek: number;
+      let weeksToTargetCalc: number;
+
+      if (userProfile.targetDate) {
+        const targetDateObj = startOfDay(parseISO(userProfile.targetDate));
+        const daysToTarget = differenceInCalendarDays(targetDateObj, projectionStartDateObj);
+        
+        if (daysToTarget > 0) {
+          weeksToTargetCalc = daysToTarget / 7;
+          ratePerWeek = (targetWeight - projectionStartWeight) / weeksToTargetCalc;
+        } else { 
+          weeksToTargetCalc = Math.abs(targetWeight - projectionStartWeight) / LBS_PER_WEEK_TARGET_CHANGE;
+          ratePerWeek = projectionStartWeight > targetWeight ? -LBS_PER_WEEK_TARGET_CHANGE : LBS_PER_WEEK_TARGET_CHANGE;
+          if (projectionStartWeight === targetWeight) ratePerWeek = 0;
+        }
+      } else {
+        weeksToTargetCalc = Math.abs(targetWeight - projectionStartWeight) / LBS_PER_WEEK_TARGET_CHANGE;
+        ratePerWeek = projectionStartWeight > targetWeight ? -LBS_PER_WEEK_TARGET_CHANGE : LBS_PER_WEEK_TARGET_CHANGE;
+        if (projectionStartWeight === targetWeight) ratePerWeek = 0;
+      }
+
+      if (Math.abs(ratePerWeek) === Infinity || isNaN(ratePerWeek)) { 
+          ratePerWeek = 0; 
+      }
+
+      const maxProjectionWeeks = userProfile.targetDate ? Math.max(weeksToTargetCalc + 1, 4) : Math.max(weeksToTargetCalc + 4, 8);
+
+      for (let i = 0; i <= Math.ceil(maxProjectionWeeks); i++) {
+        const currentDate = addWeeks(projectionStartDateObj, i);
+        let currentExpectedWeight = projectionStartWeight + (i * ratePerWeek);
+
+        if (ratePerWeek > 0 && currentExpectedWeight > targetWeight) currentExpectedWeight = targetWeight;
+        if (ratePerWeek < 0 && currentExpectedWeight < targetWeight) currentExpectedWeight = targetWeight;
+        
+        expectedWeightData.push({ x: currentDate.getTime(), y: parseFloat(currentExpectedWeight.toFixed(1)) });
+        
+        if (userProfile.targetDate && currentExpectedWeight === targetWeight && i >= weeksToTargetCalc && weeksToTargetCalc > 0) break;
+        if (i > weeksToTargetCalc + 12 && !userProfile.targetDate) break; 
+      }
+      
+      if (userProfile.targetDate && expectedWeightData.length > 0) {
+          const targetDateTime = startOfDay(parseISO(userProfile.targetDate)).getTime();
+          const lastExpectedPoint = expectedWeightData[expectedWeightData.length-1];
+          if (lastExpectedPoint.x < targetDateTime) {
+            expectedWeightData.push({x: targetDateTime, y: targetWeight});
+          } else { 
+             expectedWeightData = expectedWeightData.filter(p => p.x <= targetDateTime);
+             if (expectedWeightData.length === 0 || expectedWeightData[expectedWeightData.length-1].x < targetDateTime) {
+                 expectedWeightData.push({x: targetDateTime, y: targetWeight});
+             }
+          }
+           expectedWeightData = expectedWeightData.sort((a,b) => a.x - b.x); 
+      } else if (expectedWeightData.length === 0 && projectionStartWeight !== null && targetWeight !== null) {
+          expectedWeightData.push({ x: projectionStartDateObj.getTime(), y: projectionStartWeight });
+          if (projectionStartWeight !== targetWeight) {
+              const endDate = userProfile.targetDate ? startOfDay(parseISO(userProfile.targetDate)) : addWeeks(projectionStartDateObj, Math.ceil(weeksToTargetCalc) || 1);
+              expectedWeightData.push({ x: endDate.getTime(), y: targetWeight });
+          }
+      }
+    }
+    
+    const allDates = [
+        ...actualWeightData.map(d => d.x), 
+        ...expectedWeightData.map(d => d.x)
+    ];
+
+    if (allDates.length === 0) { 
+        const todayTime = startOfDay(new Date()).getTime();
+        allDates.push(todayTime);
+        allDates.push(addWeeks(new Date(todayTime), 4).getTime()); 
+        if (targetWeight !== null) {
+           if (projectionStartWeight !== null) expectedWeightData.push({x: todayTime, y: projectionStartWeight});
+           expectedWeightData.push({x: addWeeks(new Date(todayTime), 4).getTime(), y: targetWeight}); 
+        }
+    }
+
+
+    const minDate = allDates.length > 0 ? Math.min(...allDates) : startOfDay(new Date()).getTime();
+    const maxDateActual = actualWeightData.length > 0 ? Math.max(...actualWeightData.map(d => d.x)) : minDate;
+    const maxDateExpected = expectedWeightData.length > 0 ? Math.max(...expectedWeightData.map(d => d.x)) : minDate;
+    let maxDate = Math.max(minDate, maxDateActual, maxDateExpected, addWeeks(startOfDay(new Date()), 1).getTime()); 
+
+
+    if (differenceInWeeks(new Date(maxDate), new Date(minDate)) < 4) { 
+        maxDate = addWeeks(new Date(minDate), 4).getTime();
+    }
+
+
+    const config: ChartConfiguration<keyof ChartTypeRegistry, {x: number, y:number}[], unknown> = {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: 'Actual Weight',
+            data: actualWeightData,
+            borderColor: isDark ? 'rgb(20, 184, 166)' : 'rgb(13, 148, 136)', 
+            backgroundColor: isDark ? 'rgba(20, 184, 166, 0.2)' :'rgba(13, 148, 136, 0.1)',
+            tension: 0.2,
+            fill: false,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointBackgroundColor: isDark ? 'rgb(20, 184, 166)' : 'rgb(13, 148, 136)',
+          },
+          {
+            label: 'Projected Path',
+            data: expectedWeightData,
+            borderColor: isDark ? 'rgb(251, 146, 60)' : 'rgb(249, 115, 22)', 
+            borderDash: [6, 3],
+            tension: 0.2,
+            fill: false,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: isDark ? 'rgb(251, 146, 60)' : 'rgb(249, 115, 22)',
+          },
+          { 
+            label: 'Target Weight',
+            data: (targetWeight !== null && allDates.length > 0) ? [
+                    { x: minDate, y: targetWeight },
+                    { x: maxDate, y: targetWeight }
+                ] : [],
+            borderColor: isDark ? 'rgb(96, 165, 250)' : 'rgb(59, 130, 246)', 
+            borderDash: [10,5],
+            borderWidth: 2.5,
+            pointRadius: 0,
+            fill: false,
+          }
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: 'day',
+              tooltipFormat: 'MMM d, yyyy',
+              displayFormats: {
+                day: 'MMM d' 
+              }
+            },
+            title: {
+              display: true,
+              text: 'Date',
+              font: { size: 14, family: 'Inter, sans-serif' },
+              color: titleColor
+            },
+            min: minDate,
+            max: maxDate,
+            grid: {
+              color: gridColor 
+            },
+            ticks: { 
+                color: textColor,
+                maxTicksLimit: 7, // Limit number of ticks for better spacing
+                padding: 10,       // Add padding to labels
+                autoSkip: true,
+            } 
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Weight (lbs)',
+              font: { size: 14, family: 'Inter, sans-serif' },
+              color: titleColor
+            },
+            beginAtZero: false,
+            grid: {
+              color: gridColor
+            },
+            ticks: { color: textColor }
+          },
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+                font: { family: 'Inter, sans-serif' },
+                color: legendColor,
+                usePointStyle: true,
+                boxWidth: 8,
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.85)', 
+            titleFont: { size: 14, family: 'Inter, sans-serif', weight: 'bold' },
+            bodyFont: { family: 'Inter, sans-serif' },
+            titleColor: isDark ? '#f1f5f9' : '#ffffff', 
+            bodyColor: isDark ? '#e2e8f0' : '#f1f5f9', 
+            padding: 10,
+            cornerRadius: 6,
+            callbacks: {
+              title: function(tooltipItems) {
+                if (tooltipItems.length > 0) {
+                  const date = new Date(tooltipItems[0].parsed.x);
+                  return format(date, 'EEEE, MMM d, yyyy');
+                }
+                return '';
+              },
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += context.parsed.y.toFixed(1) + ' lbs';
+                }
+                return label;
+              }
+            }
+          },
+        },
+      },
+    };
+
+    chartInstanceRef.current = new Chart(ctx, config);
+
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+        chartInstanceRef.current = null;
+      }
+    };
+  }, [userProfile, actualWeightLog, currentTheme]);
+
+  return (
+    <div className="bg-bg-card p-4 sm:p-6 rounded-xl shadow-xl min-h-[350px] sm:min-h-[450px]">
+      <h3 className="text-xl font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+        <i className="fas fa-chart-line mr-2.5 text-teal-600 dark:text-teal-400"></i>Weight Progress
+      </h3>
+      <div className="relative h-[280px] sm:h-[380px]"> 
+        <canvas ref={chartRef} aria-label="Weight progress chart" role="img"></canvas>
+      </div>
+    </div>
+  );
+};
+
+export default WeightChartComponent;

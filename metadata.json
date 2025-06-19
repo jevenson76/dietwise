@@ -1,0 +1,8 @@
+{
+  "name": "DietWise - Your Personal Dieting Companion",
+  "description": "A web application to help you track your diet, calculate BMI/BMR, set weight goals, get food recommendations, and scan UPC codes for nutritional information using Gemini API.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "prompt": ""
+}
