@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DietWise</string>
+    <string name="title_activity_main">DietWise</string>
+    <string name="package_name">com.wizardtech.dietwise</string>
+    <string name="custom_url_scheme">com.wizardtech.dietwise</string>
+</resources>
