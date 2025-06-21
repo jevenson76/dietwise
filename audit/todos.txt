@@ -1,0 +1,65 @@
+checklist.md:4:## TODOs / FIXMEs
+checklist.md:6:- **checklist.md**: Line 4: `## TODOs / FIXMEs`
+checklist.md:8:- **backend/src/routes/health.routes.ts**: Line 26: `  // TODO`
+checklist.md:9:- **backend/src/routes/health.routes.ts**: Line 51: `  // TODO`
+checklist.md:10:- **backend/src/routes/health.routes.ts**: Line 81: `  // TODO`
+checklist.md:11:- **backend/src/routes/health.routes.ts**: Line 106: `  // TODO`
+checklist.md:12:- **backend/src/routes/health.routes.ts**: Line 125: `  // TODO`
+checklist.md:13:- **backend/src/routes/health.routes.ts**: Line 150: `  // TODO`
+checklist.md:14:- **android/gradlew.bat**: Line 19: `@if "%DEBUG%"=="" @echo off`
+checklist.md:15:- **backend/src/routes/user.routes.ts**: Line 24: `  // TODO`
+checklist.md:16:- **backend/src/routes/user.routes.ts**: Line 56: `  // TODO`
+checklist.md:17:- **backend/src/routes/user.routes.ts**: Line 75: `  // TODO`
+checklist.md:18:- **backend/src/routes/user.routes.ts**: Line 94: `  // TODO`
+checklist.md:19:- **TESTING_GUIDE.md**: Line 134: `PWDEBUG=1 npm run test`
+checklist.md:20:- **ios/App/App.xcodeproj/project.pbxproj**: Line 269: `				DEBUG_INFORMATION_FORMAT = dwarf;`
+checklist.md:21:- **ios/App/App.xcodeproj/project.pbxproj**: Line 277: `					"DEBUG=1",`
+checklist.md:22:- **ios/App/App.xcodeproj/project.pbxproj**: Line 287: `				MTL_ENABLE_DEBUG_INFO = YES;`
+checklist.md:23:- **ios/App/App.xcodeproj/project.pbxproj**: Line 290: `				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;`
+checklist.md:24:- **ios/App/App.xcodeproj/project.pbxproj**: Line 326: `				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";`
+checklist.md:25:- **ios/App/App.xcodeproj/project.pbxproj**: Line 338: `				MTL_ENABLE_DEBUG_INFO = NO;`
+checklist.md:26:- **ios/App/App.xcodeproj/project.pbxproj**: Line 356: `				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";`
+checklist.md:27:- **ios/App/App.xcodeproj/project.pbxproj**: Line 359: `				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;`
+backend/package-lock.json:2162:      "integrity": "sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==",
+android/gradlew.bat:19:@if "%DEBUG%"=="" @echo off
+backend/src/routes/health.routes.ts:26:  // TODO: Implement
+backend/src/routes/health.routes.ts:51:  // TODO: Implement
+backend/src/routes/health.routes.ts:81:  // TODO: Implement
+backend/src/routes/health.routes.ts:106:  // TODO: Implement
+backend/src/routes/health.routes.ts:125:  // TODO: Implement
+backend/src/routes/health.routes.ts:150:  // TODO: Implement
+backend/src/routes/user.routes.ts:24:  // TODO: Implement
+backend/src/routes/user.routes.ts:56:  // TODO: Implement
+backend/src/routes/user.routes.ts:75:  // TODO: Implement
+backend/src/routes/user.routes.ts:94:  // TODO: Implement
+TESTING_GUIDE.md:134:PWDEBUG=1 npm run test:e2e
+audit/checklist.md:4:## TODOs / FIXMEs
+audit/checklist.md:6:- **checklist.md**: Line 4: `## TODOs / FIXMEs`
+audit/checklist.md:8:- **backend/src/routes/health.routes.ts**: Line 26: `  // TODO`
+audit/checklist.md:9:- **backend/src/routes/health.routes.ts**: Line 51: `  // TODO`
+audit/checklist.md:10:- **backend/src/routes/health.routes.ts**: Line 81: `  // TODO`
+audit/checklist.md:11:- **backend/src/routes/health.routes.ts**: Line 106: `  // TODO`
+audit/checklist.md:12:- **backend/src/routes/health.routes.ts**: Line 125: `  // TODO`
+audit/checklist.md:13:- **backend/src/routes/health.routes.ts**: Line 150: `  // TODO`
+audit/checklist.md:14:- **android/gradlew.bat**: Line 19: `@if "%DEBUG%"=="" @echo off`
+audit/checklist.md:15:- **backend/src/routes/user.routes.ts**: Line 24: `  // TODO`
+audit/checklist.md:16:- **backend/src/routes/user.routes.ts**: Line 56: `  // TODO`
+audit/checklist.md:17:- **backend/src/routes/user.routes.ts**: Line 75: `  // TODO`
+audit/checklist.md:18:- **backend/src/routes/user.routes.ts**: Line 94: `  // TODO`
+audit/checklist.md:19:- **TESTING_GUIDE.md**: Line 134: `PWDEBUG=1 npm run test`
+audit/checklist.md:20:- **ios/App/App.xcodeproj/project.pbxproj**: Line 269: `				DEBUG_INFORMATION_FORMAT = dwarf;`
+audit/checklist.md:21:- **ios/App/App.xcodeproj/project.pbxproj**: Line 277: `					"DEBUG=1",`
+audit/checklist.md:22:- **ios/App/App.xcodeproj/project.pbxproj**: Line 287: `				MTL_ENABLE_DEBUG_INFO = YES;`
+audit/checklist.md:23:- **ios/App/App.xcodeproj/project.pbxproj**: Line 290: `				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;`
+audit/checklist.md:24:- **ios/App/App.xcodeproj/project.pbxproj**: Line 326: `				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";`
+audit/checklist.md:25:- **ios/App/App.xcodeproj/project.pbxproj**: Line 338: `				MTL_ENABLE_DEBUG_INFO = NO;`
+audit/checklist.md:26:- **ios/App/App.xcodeproj/project.pbxproj**: Line 356: `				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";`
+audit/checklist.md:27:- **ios/App/App.xcodeproj/project.pbxproj**: Line 359: `				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;`
+ios/App/App.xcodeproj/project.pbxproj:269:				DEBUG_INFORMATION_FORMAT = dwarf;
+ios/App/App.xcodeproj/project.pbxproj:277:					"DEBUG=1",
+ios/App/App.xcodeproj/project.pbxproj:287:				MTL_ENABLE_DEBUG_INFO = YES;
+ios/App/App.xcodeproj/project.pbxproj:290:				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+ios/App/App.xcodeproj/project.pbxproj:326:				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+ios/App/App.xcodeproj/project.pbxproj:338:				MTL_ENABLE_DEBUG_INFO = NO;
+ios/App/App.xcodeproj/project.pbxproj:356:				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
+ios/App/App.xcodeproj/project.pbxproj:359:				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;

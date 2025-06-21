@@ -13,12 +13,23 @@ interface UPCScannerComponentProps {
   onFoodScanned: (foodItem: FoodItem, source: 'scan' | 'manual') => void;
   apiKeyMissing: boolean; 
   isOpen: boolean; 
-  onClose: () => void; 
+  onClose: () => void;
+  canScanBarcode: { allowed: boolean; remaining: number };
+  onBarcodeScan: () => void;
+  onUpgradeClick: () => void;
 }
 
 const VIDEO_ELEMENT_ID_PREFIX = "barcode-video-instance-"; // For multiple instances
 
-const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({ onFoodScanned, apiKeyMissing, isOpen, onClose }) => {
+const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({ 
+  onFoodScanned, 
+  apiKeyMissing, 
+  isOpen, 
+  onClose,
+  canScanBarcode,
+  onBarcodeScan,
+  onUpgradeClick
+}) => {
   const [videoElementId] = useState(() => `${VIDEO_ELEMENT_ID_PREFIX}${Math.random().toString(36).substring(7)}`);
   
   const [scannedUpc, setScannedUpc] = useState<string | null>(null);
@@ -30,6 +41,15 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({ onFoodScanned
 
 
   const handleScanSuccess = useCallback((text: string) => {
+    // Check if user can scan
+    if (!canScanBarcode.allowed) {
+      setScannerError('scan_limit_reached');
+      return;
+    }
+    
+    // Increment the scan count
+    onBarcodeScan();
+    
     trackEvent('upc_scan_success', { upc: text, context: 'global_scanner' });
     setScannedUpc(text);
     setIsLoadingApi(true);
@@ -178,7 +198,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({ onFoodScanned
             )}
           </div>
           
-          { currentError && 
+          { currentError && currentError !== 'scan_limit_reached' &&
             <Alert 
               type="error" 
               message={currentError} 
@@ -186,6 +206,32 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({ onFoodScanned
               className="w-full max-w-md"
             />
           }
+          
+          {scannerError === 'scan_limit_reached' && (
+            <div className="w-full max-w-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+              <div className="flex items-start">
+                <i className="fas fa-lock text-yellow-600 dark:text-yellow-400 mr-3 mt-1"></i>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Daily Scan Limit Reached</h4>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                    You've used all {canScanBarcode.remaining === 0 ? 'your' : canScanBarcode.remaining} free barcode scans for today.
+                  </p>
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                    Upgrade to Premium for unlimited barcode scanning!
+                  </p>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onUpgradeClick();
+                    }}
+                    className="mt-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:shadow-md transition-all text-sm"
+                  >
+                    <i className="fas fa-crown mr-2"></i>Upgrade to Premium
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
            {!isScanning && !isLoadingApi && !scannedUpc && currentError && !apiKeyMissing && ( 
             <button 
               onClick={() => { 

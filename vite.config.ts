@@ -17,7 +17,17 @@ export default defineConfig(({ mode }) => {
           '@components': path.resolve(__dirname, 'components'),
           '@hooks': path.resolve(__dirname, 'hooks'),
           '@constants': path.resolve(__dirname, 'constants.ts'),
-          '@appTypes': path.resolve(__dirname, 'types.ts')
+          '@appTypes': path.resolve(__dirname, 'types.ts'),
+          '@utils': path.resolve(__dirname, 'src/utils')
+        }
+      },
+      server: {
+        proxy: {
+          '/api': {
+            target: 'http://localhost:3001',
+            changeOrigin: true,
+            secure: false
+          }
         }
       }
     };

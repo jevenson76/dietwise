@@ -16,6 +16,8 @@ interface FoodLogProps {
   onSyncOfflineItems: () => void;
   onOpenUPCScanner: () => void; // Prop to open App-level UPC scanner modal
   apiKeyMissing: boolean; // Prop to disable UPC scan button
+  canScanBarcode?: { allowed: boolean; remaining: number };
+  isPremiumUser?: boolean;
 }
 
 const FoodLog: React.FC<FoodLogProps> = ({ 
@@ -29,7 +31,9 @@ const FoodLog: React.FC<FoodLogProps> = ({
   isOnline,
   onSyncOfflineItems,
   onOpenUPCScanner, // Use this prop
-  apiKeyMissing
+  apiKeyMissing,
+  canScanBarcode,
+  isPremiumUser
 }) => {
   const [isManualAddModalOpen, setIsManualAddModalOpen] = useState(false);
   const [manualFoodName, setManualFoodName] = useState('');
@@ -128,10 +132,16 @@ const FoodLog: React.FC<FoodLogProps> = ({
           </button>
           <button
             onClick={onOpenUPCScanner}
-            disabled={apiKeyMissing}
-            className={`${actionButtonClass} from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 focus:ring-teal-500`}
+            disabled={apiKeyMissing || (canScanBarcode && !canScanBarcode.allowed)}
+            className={`${actionButtonClass} from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 focus:ring-teal-500 relative`}
           >
-            <i className="fas fa-barcode mr-1.5"></i> Scan UPC
+            <i className="fas fa-barcode mr-1.5"></i> 
+            Scan UPC
+            {canScanBarcode && !isPremiumUser && (
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+                {canScanBarcode.remaining}
+              </span>
+            )}
           </button>
           <button 
               onClick={() => setIsManualAddModalOpen(true)}

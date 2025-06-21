@@ -9,6 +9,10 @@ interface MealIdeaSuggestionProps {
   isProfileComplete: boolean;
   userName: string | null;
   apiKeyMissing: boolean; // New prop
+  canGetMealSuggestion?: { allowed: boolean; remaining: number };
+  onMealSuggestion?: () => void;
+  onUpgradeClick?: () => void;
+  isPremiumUser?: boolean;
 }
 
 interface CachedMealIdeas {
@@ -19,7 +23,16 @@ interface CachedMealIdeas {
 
 const CACHE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
-const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({ calorieTarget, isProfileComplete, userName, apiKeyMissing }) => {
+const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({ 
+  calorieTarget, 
+  isProfileComplete, 
+  userName, 
+  apiKeyMissing,
+  canGetMealSuggestion,
+  onMealSuggestion,
+  onUpgradeClick,
+  isPremiumUser
+}) => {
   const [ideas, setIdeas] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +41,13 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({ calorieTarget, 
   const cachedIdeasRef = useRef<CachedMealIdeas | null>(null);
 
   const fetchIdeas = useCallback(async () => {
+    // Check premium limits
+    if (canGetMealSuggestion && !canGetMealSuggestion.allowed) {
+      setError('meal_limit_reached');
+      trackEvent('meal_ideas_fetch_failed_limit_reached');
+      return;
+    }
+    
     if (apiKeyMissing) {
       setError(API_KEY_ERROR_MESSAGE);
       trackEvent('meal_ideas_fetch_failed_api_key_missing');
@@ -55,6 +75,12 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({ calorieTarget, 
     
     try {
       const result = await getMealIdeas(calorieTarget, preferences);
+      
+      // Increment usage counter after successful API call
+      if (onMealSuggestion && !result.error) {
+        onMealSuggestion();
+      }
+      
       if (result.error) {
         setError(result.error);
         setIdeas(null);
@@ -75,7 +101,7 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({ calorieTarget, 
     } finally {
       setIsLoading(false);
     }
-  }, [calorieTarget, preferences, apiKeyMissing]);
+  }, [calorieTarget, preferences, apiKeyMissing, canGetMealSuggestion, onMealSuggestion]);
 
   const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
   const greeting = userName ? `Looking for inspiration, ${userName}?` : "Need some meal ideas?";
@@ -124,13 +150,46 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({ calorieTarget, 
       </div>
       <button
         onClick={fetchIdeas}
-        disabled={isLoading || !calorieTarget || apiKeyMissing}
+        disabled={isLoading || !calorieTarget || apiKeyMissing || (canGetMealSuggestion && !canGetMealSuggestion.allowed)}
         className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
         aria-busy={isLoading}
       >
-        {isLoading ? <LoadingSpinner size="sm" color="text-white" label="Generating ideas"/> : <><i className="fas fa-wand-magic-sparkles fa-fw mr-2"></i>Suggest Meal Ideas</>}
+        {isLoading ? <LoadingSpinner size="sm" color="text-white" label="Generating ideas"/> : (
+          <>
+            <i className="fas fa-wand-magic-sparkles fa-fw mr-2"></i>
+            Suggest Meal Ideas
+            {canGetMealSuggestion && !isPremiumUser && (
+              <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
+                {canGetMealSuggestion.remaining} left
+              </span>
+            )}
+          </>
+        )}
       </button>
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} className="mt-4" />}
+      {error && error !== 'meal_limit_reached' && <Alert type="error" message={error} onClose={() => setError(null)} className="mt-4" />}
+      
+      {error === 'meal_limit_reached' && (
+        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+          <div className="flex items-start">
+            <i className="fas fa-lock text-yellow-600 dark:text-yellow-400 mr-3 mt-1"></i>
+            <div className="flex-1">
+              <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Daily Limit Reached</h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                You've used all {canGetMealSuggestion?.remaining === 0 ? 'your' : canGetMealSuggestion?.remaining} free meal suggestions for today.
+              </p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                Upgrade to Premium for unlimited AI-powered meal suggestions!
+              </p>
+              <button
+                onClick={onUpgradeClick}
+                className="mt-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-2 px-4 rounded-lg shadow hover:shadow-md transition-all text-sm"
+              >
+                <i className="fas fa-crown mr-2"></i>Upgrade to Premium
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {ideas && !isLoading && (
         <div className="mt-6 pt-4 border-t border-border-default">
           <h3 className="text-lg font-semibold text-text-default">Suggestions for ~{calorieTarget} kcal:</h3>

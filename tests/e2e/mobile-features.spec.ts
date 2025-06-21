@@ -1,7 +1,9 @@
 import { test, expect, devices } from '@playwright/test';
 
+// Configure mobile device at the top level
+test.use({ ...devices['Pixel 5'] });
+
 test.describe('Mobile-specific features', () => {
-  test.use({ ...devices['Pixel 5'] });
 
   test('camera barcode scanning on mobile', async ({ page, context }) => {
     // Grant camera permissions

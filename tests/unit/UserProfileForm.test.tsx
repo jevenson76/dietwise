@@ -16,14 +16,14 @@ describe('UserProfileForm', () => {
     diet_plan: 'balanced',
   };
 
-  const mockOnUpdate = vi.fn();
+  const mockOnProfileChange = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('renders all form fields correctly', () => {
-    render(<UserProfileForm profile={mockProfile} onUpdate={mockOnUpdate} />);
+    render(<UserProfileForm profile={mockProfile} onProfileChange={mockOnProfileChange} />);
     
     expect(screen.getByLabelText(/age/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/sex/i)).toBeInTheDocument();
@@ -33,7 +33,7 @@ describe('UserProfileForm', () => {
   });
 
   it('displays initial values correctly', () => {
-    render(<UserProfileForm profile={mockProfile} onUpdate={mockOnUpdate} />);
+    render(<UserProfileForm profile={mockProfile} onProfileChange={mockOnProfileChange} />);
     
     expect(screen.getByDisplayValue('30')).toBeInTheDocument();
     expect(screen.getByDisplayValue('175')).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('UserProfileForm', () => {
 
   it('validates age input', async () => {
     const user = userEvent.setup();
-    render(<UserProfileForm profile={mockProfile} onUpdate={mockOnUpdate} />);
+    render(<UserProfileForm profile={mockProfile} onProfileChange={mockOnProfileChange} />);
     
     const ageInput = screen.getByLabelText(/age/i);
     
@@ -61,7 +61,7 @@ describe('UserProfileForm', () => {
 
   it('calls onUpdate with correct data on form submission', async () => {
     const user = userEvent.setup();
-    render(<UserProfileForm profile={mockProfile} onUpdate={mockOnUpdate} />);
+    render(<UserProfileForm profile={mockProfile} onProfileChange={mockOnProfileChange} />);
     
     // Update weight
     const weightInput = screen.getByLabelText(/current weight/i);
@@ -73,7 +73,7 @@ describe('UserProfileForm', () => {
     await user.click(submitButton);
     
     await waitFor(() => {
-      expect(mockOnUpdate).toHaveBeenCalledWith(
+      expect(mockOnProfileChange).toHaveBeenCalledWith(
         expect.objectContaining({
           ...mockProfile,
           weight: 75,
@@ -84,7 +84,7 @@ describe('UserProfileForm', () => {
 
   it('handles metric/imperial unit conversion', async () => {
     const user = userEvent.setup();
-    render(<UserProfileForm profile={mockProfile} onUpdate={mockOnUpdate} />);
+    render(<UserProfileForm profile={mockProfile} onProfileChange={mockOnProfileChange} />);
     
     // Switch to imperial
     const unitToggle = screen.getByRole('button', { name: /switch to imperial/i });
@@ -99,9 +99,9 @@ describe('UserProfileForm', () => {
     const user = userEvent.setup();
     
     // Mock slow update
-    mockOnUpdate.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
+    mockOnProfileChange.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
     
-    render(<UserProfileForm profile={mockProfile} onUpdate={mockOnUpdate} />);
+    render(<UserProfileForm profile={mockProfile} onProfileChange={mockOnProfileChange} />);
     
     const submitButton = screen.getByRole('button', { name: /save profile/i });
     await user.click(submitButton);

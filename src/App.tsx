@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { UserProfile, CalculatedMetrics, FoodItem, WeightEntry, ReminderSettings, Sex, SevenDayPlanResponse, SharePayload, AppTheme, MyFoodItem, MyMeal, MealReminder, StreakData, Milestone, MilestoneType } from '@appTypes'; 
 import { defaultUserProfile, DEFAULT_REMINDER_SETTINGS, DEFAULT_STREAK_DATA, WEIGHT_MILESTONE_INCREMENT, STREAK_MILESTONES_DAYS, TOTAL_LOGGED_MEALS_MILESTONES } from '@constants';
-import { calculateAllMetrics } from '@services/calculationService';
+import { calculateAllMetrics, calculateDefaultMacroTargets } from '@services/calculationService';
 import { trackEvent } from '@services/analyticsService'; 
 import { API_KEY_ERROR_MESSAGE } from '@services/geminiService'; // Import the error message
 import UserProfileForm from '@components/UserProfileForm';
@@ -17,11 +17,19 @@ import MealPlannerComponent from '@components/MealPlannerComponent';
 import { ProgressTabComponent } from '@components/ProgressTabComponent';
 import UserStatusDashboard from '@components/UserStatusDashboard';
 import MyLibraryComponent from '@components/MyLibraryComponent'; 
-import ReviewPromptModal from '@components/ReviewPromptModal'; 
-import { ReviewManagementSystem, ReviewPromptMetrics } from './src/aso/reviewManagement'; 
+import ReviewPromptModal from '@components/ReviewPromptModal';
+import { ReviewManagementSystem, ReviewPromptMetrics } from './aso/reviewManagement'; 
 import { differenceInCalendarDays, format, addDays, isPast, isToday, differenceInMinutes } from 'date-fns';
 import parseISO from 'date-fns/parseISO';
 import startOfDay from 'date-fns/startOfDay';
+import { usePremiumLimits } from '@hooks/usePremiumLimits';
+import { PREMIUM_FEATURES, PREMIUM_MESSAGES } from './constants/premiumFeatures';
+import StripeCheckout from '@components/StripeCheckout';
+import AdvancedAnalytics from '@components/AdvancedAnalytics';
+import PDFExportButton from '@components/PDFExportButton';
+import CustomMacroTargets from '@components/CustomMacroTargets';
+import UpgradePrompt from '@components/UpgradePrompt';
+import { filterByHistoricalLimit, getHistoricalLimitMessage } from '@utils/dataLimits';
 
 
 import Chart from 'chart.js/auto';
@@ -37,6 +45,7 @@ enum Tab {
   Meals = 'Meal Ideas',
   Planner = '7-Day Plan',
   Progress = 'Progress',
+  Analytics = 'Analytics', // Premium feature
   Profile = 'Profile', // Renamed from Settings
 }
 
@@ -156,12 +165,35 @@ const App: React.FC = () => {
     return localStorage.getItem('hasShownSetupCompleteMessage') === 'true';
   });
 
-  const [isPremiumUser] = useState<boolean>(false); 
+  const [isPremiumUser, setIsPremiumUser] = useState<boolean>(() => {
+    // Check subscription status from localStorage (would be from API in production)
+    try {
+      const subscription = localStorage.getItem('subscription_dietwise_user');
+      if (subscription) {
+        const sub = JSON.parse(subscription);
+        return sub.isActive && new Date(sub.currentPeriodEnd) > new Date();
+      }
+    } catch (e) {
+      console.warn('Failed to check subscription status:', e);
+    }
+    return false;
+  }); 
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
   const [isReviewPromptModalOpen, setIsReviewPromptModalOpen] = useState<boolean>(false);
   const [isLogFromMyMealModalOpen, setIsLogFromMyMealModalOpen] = useState<boolean>(false);
   const [isUPCScannerModalOpen, setIsUPCScannerModalOpen] = useState<boolean>(false); // For FoodLog's scanner
 
+  // Premium limits hook
+  const premiumLimits = usePremiumLimits(isPremiumUser);
+
+  // Apply historical data limits for free users
+  const filteredFoodLog = useMemo(() => {
+    return filterByHistoricalLimit(foodLog, isPremiumUser);
+  }, [foodLog, isPremiumUser]);
+
+  const filteredWeightLog = useMemo(() => {
+    return filterByHistoricalLimit(actualWeightLog, isPremiumUser);
+  }, [actualWeightLog, isPremiumUser]);
 
   const reviewManagerRef = useRef(new ReviewManagementSystem());
 
@@ -362,6 +394,14 @@ const App: React.FC = () => {
   const handleTargetDateChange = useCallback((targetDate: string | null) => {
     setUserProfile(prev => ({...prev, targetDate}));
     trackEvent('target_date_updated', { targetDate });
+  }, []);
+
+  const handleUpdateMacroTargets = useCallback((macroTargets: { protein: number; carbs: number; fat: number; fiber: number }) => {
+    setUserProfile(prev => ({
+      ...prev,
+      customMacroTargets: macroTargets
+    }));
+    trackEvent('custom_macro_targets_updated', macroTargets);
   }, []);
 
 
@@ -778,6 +818,16 @@ const App: React.FC = () => {
             />
             <CalculationsDisplay metrics={calculatedMetrics} isProfileComplete={isProfileCompleteForFunctionality} showBmiCategoryMessage={false} />
             
+            <div className="mt-6">
+              <CustomMacroTargets
+                currentTargets={userProfile.customMacroTargets || calculateDefaultMacroTargets(calculatedMetrics.targetCalories)}
+                onUpdateTargets={handleUpdateMacroTargets}
+                isPremiumUser={isPremiumUser}
+                onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                targetCalories={calculatedMetrics.targetCalories}
+              />
+            </div>
+            
             <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
                 <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
                     <i className="fas fa-palette mr-2.5 text-purple-500 dark:text-purple-400"></i>Appearance
@@ -855,19 +905,40 @@ const App: React.FC = () => {
                 <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
                     <i className="fas fa-file-export mr-2.5 text-green-500 dark:text-green-400"></i>Export Data
                 </h3>
+                {!isPremiumUser && (
+                  <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      <i className="fas fa-info-circle mr-2"></i>
+                      Free users can only export data from the last 30 days. Upgrade to access your complete history.
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-3">
                     <button 
-                        onClick={() => exportDataToCsv(foodLog.map(item => ({...item, timestamp: new Date(item.timestamp).toLocaleString()})), 'dietwise_food_log.csv')}
+                        onClick={() => exportDataToCsv(filteredFoodLog.map(item => ({...item, timestamp: new Date(item.timestamp).toLocaleString()})), 'dietwise_food_log.csv')}
                         className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
                     >
                         Export Food Log (CSV)
                     </button>
                     <button 
-                        onClick={() => exportDataToCsv(actualWeightLog, 'dietwise_weight_history.csv')}
+                        onClick={() => exportDataToCsv(filteredWeightLog, 'dietwise_weight_history.csv')}
                         className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
                     >
                         Export Weight History (CSV)
                     </button>
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <PDFExportButton
+                            foodLog={filteredFoodLog}
+                            userProfile={userProfile}
+                            weightLog={filteredWeightLog}
+                            isPremiumUser={isPremiumUser}
+                            onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                            premiumLimits={{
+                                canExportData: premiumLimits.limits.canExportData,
+                                onExport: premiumLimits.increment.exports
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
             <AdPlaceholder sizeLabel="Profile Tab Ad (e.g., 300x100)" className="mt-6" />
@@ -877,7 +948,7 @@ const App: React.FC = () => {
         return (
           <>
             <FoodLog 
-                loggedItems={foodLog.filter(item => differenceInCalendarDays(new Date(), new Date(item.timestamp)) === 0)}
+                loggedItems={filteredFoodLog.filter(item => differenceInCalendarDays(new Date(), new Date(item.timestamp)) === 0)}
                 offlineQueue={offlineFoodQueue}
                 onAddFood={(item, source) => handleAddFood(item, source)} 
                 onRemoveFood={handleRemoveFood} 
@@ -888,6 +959,8 @@ const App: React.FC = () => {
                 onSyncOfflineItems={syncOfflineFoodLog}
                 onOpenUPCScanner={() => setIsUPCScannerModalOpen(true)}
                 apiKeyMissing={apiKeyStatus === 'missing'}
+                canScanBarcode={premiumLimits.limits.canScanBarcode()}
+                isPremiumUser={isPremiumUser}
             />
             <AdPlaceholder />
           </>
@@ -895,6 +968,17 @@ const App: React.FC = () => {
       case Tab.FoodLibrary:
         return (
           <>
+            {!isPremiumUser && (myFoods.length + myMeals.length) >= 15 && (
+              <div className="mb-4">
+                <UpgradePrompt
+                  feature="Expand Your Food Library"
+                  message="Remove limits and save unlimited custom foods and meals. Never lose your favorite recipes!"
+                  icon="fas fa-book"
+                  variant="banner"
+                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                />
+              </div>
+            )}
             <MyLibraryComponent
               myFoods={myFoods}
               myMeals={myMeals}
@@ -918,6 +1002,10 @@ const App: React.FC = () => {
               isProfileComplete={isProfileCompleteForFunctionality}
               userName={userProfile.name}
               apiKeyMissing={apiKeyStatus === 'missing'}
+              canGetMealSuggestion={premiumLimits.limits.canGetMealSuggestion()}
+              onMealSuggestion={premiumLimits.increment.mealSuggestions}
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+              isPremiumUser={isPremiumUser}
             />
             <AdPlaceholder sizeLabel="Medium Rectangle Ad (e.g., 300x250)" />
           </>
@@ -960,15 +1048,41 @@ const App: React.FC = () => {
                   }}
                />;
       case Tab.Progress:
-        return <ProgressTabComponent
-                  userProfile={userProfile}
-                  actualWeightLog={actualWeightLog}
-                  onAddWeightEntry={handleAddWeightEntry}
-                  reminderSettings={reminderSettings}
-                  onUpdateReminderSettings={handleUpdateReminderSettings}
-                  isProfileComplete={isProfileCompleteForFunctionality}
-                  currentTheme={currentTheme}
-               />;
+        return (
+          <>
+            {!isPremiumUser && actualWeightLog.length >= 5 && (
+              <div className="mb-4">
+                <UpgradePrompt
+                  feature="Track Your Full Journey"
+                  message="Get advanced progress analytics, unlimited historical data, and detailed insights to reach your goals faster."
+                  icon="fas fa-trophy"
+                  variant="banner"
+                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                />
+              </div>
+            )}
+            <ProgressTabComponent
+              userProfile={userProfile}
+              actualWeightLog={filteredWeightLog}
+              onAddWeightEntry={handleAddWeightEntry}
+              reminderSettings={reminderSettings}
+              onUpdateReminderSettings={handleUpdateReminderSettings}
+              isProfileComplete={isProfileCompleteForFunctionality}
+              currentTheme={currentTheme}
+            />
+          </>
+        );
+      case Tab.Analytics:
+        return (
+          <>
+            <AdvancedAnalytics
+              foodLog={filteredFoodLog}
+              isPremiumUser={isPremiumUser}
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            />
+            {isPremiumUser && <AdPlaceholder sizeLabel="Analytics Ad (e.g., 300x100)" className="mt-6"/>}
+          </>
+        );
       default:
         return null;
     }
@@ -982,15 +1096,16 @@ const App: React.FC = () => {
       case Tab.Meals: return "fas fa-lightbulb";
       case Tab.Planner: return "fas fa-calendar-alt";
       case Tab.Progress: return "fas fa-chart-line";
+      case Tab.Analytics: return "fas fa-chart-pie";
       default: return "";
     }
   };
 
   const handleTabChange = (tab: Tab) => {
     trackEvent('tab_navigation', { tab_name: tab });
-    if (tab === Tab.Planner && !isPremiumUser) {
+    if ((tab === Tab.Planner || tab === Tab.Analytics) && !isPremiumUser) {
       setIsUpgradeModalOpen(true);
-      trackEvent('upgrade_modal_opened_from_tab_click', { tab_name: Tab.Planner });
+      trackEvent('upgrade_modal_opened_from_tab_click', { tab_name: tab });
     } else {
       setActiveTab(tab);
     }
@@ -1041,13 +1156,25 @@ const App: React.FC = () => {
             >
               <i className={`${getTabIcon(tab)} fa-fw mr-1.5 sm:mr-2 text-base ${activeTab === tab ? 'text-teal-500 dark:text-teal-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-teal-500 dark:group-hover:text-teal-400'}`}></i>
               {tab}
-              {tab === Tab.Planner && !isPremiumUser && <i className="fas fa-star text-yellow-400 text-sm ml-1.5 -mr-0.5 transform group-hover:scale-110 transition-transform duration-150" title="Premium Feature"></i>}
+              {(tab === Tab.Planner || tab === Tab.Analytics) && !isPremiumUser && <i className="fas fa-star text-yellow-400 text-sm ml-1.5 -mr-0.5 transform group-hover:scale-110 transition-transform duration-150" title="Premium Feature"></i>}
             </button>
           ))}
         </div>
       </nav>
 
       <main className="container mx-auto max-w-5xl p-4 md:p-6 flex-grow w-full">
+        {/* Strategic upgrade prompt - show after user has logged 10+ items and is not premium */}
+        {!isPremiumUser && foodLog.length >= 10 && activeTab === Tab.Log && (
+          <div className="mb-4">
+            <UpgradePrompt
+              feature="You're doing great!"
+              message="Unlock unlimited barcode scans, advanced analytics, and more premium features to supercharge your diet tracking."
+              icon="fas fa-chart-line"
+              variant="banner"
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            />
+          </div>
+        )}
         {globalSuccessMessage && (
           <Alert 
             type="success" 
@@ -1099,6 +1226,12 @@ const App: React.FC = () => {
           apiKeyMissing={apiKeyStatus === 'missing'}
           isOpen={isUPCScannerModalOpen}
           onClose={() => setIsUPCScannerModalOpen(false)}
+          canScanBarcode={premiumLimits.limits.canScanBarcode()}
+          onBarcodeScan={premiumLimits.increment.barcodeScans}
+          onUpgradeClick={() => {
+            setIsUPCScannerModalOpen(false);
+            setIsUpgradeModalOpen(true);
+          }}
         />
       )}
 
@@ -1152,67 +1285,17 @@ const App: React.FC = () => {
           setIsUpgradeModalOpen(false);
           trackEvent('upgrade_modal_closed');
         }} 
-        title="Upgrade to DietWise Premium"
+        title=""
         size="md"
       >
-        <div className="text-center">
-          <i className="fas fa-crown text-5xl text-yellow-500 dark:text-yellow-400 mb-6 animate-pulse"></i>
-          <h3 className="text-2xl font-semibold text-text-default mb-4">Unlock Your Full Potential!</h3>
-          <p className="text-text-alt mb-6 px-2">
-            Supercharge your health journey with DietWise Premium. Get exclusive access to:
-          </p>
-          <ul className="text-left space-y-3 mb-8 px-4 sm:px-8 text-text-default">
-            <li className="flex items-start">
-              <i className="fas fa-check-circle text-green-500 dark:text-green-400 mr-3 mt-1 text-lg"></i>
-              <div>
-                <strong className="block">Personalized 7-Day Meal Plans:</strong>
-                AI-crafted weekly schedules tailored to your goals.
-              </div>
-            </li>
-            <li className="flex items-start">
-              <i className="fas fa-check-circle text-green-500 dark:text-green-400 mr-3 mt-1 text-lg"></i>
-              <div>
-                <strong className="block">Detailed Shopping Lists:</strong>
-                Automatically generated lists to make grocery shopping a breeze.
-              </div>
-            </li>
-            <li className="flex items-start">
-              <i className="fas fa-check-circle text-green-500 dark:text-green-400 mr-3 mt-1 text-lg"></i>
-              <div>
-                <strong className="block">Advanced AI Insights:</strong>
-                Deeper understanding of your nutritional habits and trends.
-                </div>
-            </li>
-            <li className="flex items-start">
-              <i className="fas fa-check-circle text-green-500 dark:text-green-400 mr-3 mt-1 text-lg"></i>
-              <div>
-                <strong className="block">Ad-Free Experience:</strong>
-                Focus on your goals without interruptions.
-              </div>
-            </li>
-          </ul>
-          <div className="space-y-3 sm:space-y-0 sm:flex sm:space-x-4 justify-center">
-             <button
-              onClick={() => {
-                setIsUpgradeModalOpen(false); 
-                trackEvent('upgrade_modal_action_taken', { action: 'upgrade_now_clicked_coming_soon' });
-                alert("Upgrade feature coming soon! Thank you for your interest.");
-              }}
-              className="w-full sm:w-auto bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all text-lg"
-            >
-              <i className="fas fa-rocket mr-2"></i>Upgrade Now
-            </button>
-            <button
-              onClick={() => {
-                setIsUpgradeModalOpen(false);
-                trackEvent('upgrade_modal_action_taken', { action: 'maybe_later_clicked' });
-              }}
-              className="w-full sm:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
-            >
-              Maybe Later
-            </button>
-          </div>
-        </div>
+        <StripeCheckout
+          onClose={() => {
+            setIsUpgradeModalOpen(false);
+            trackEvent('stripe_checkout_closed');
+          }}
+          customerEmail={userProfile.email}
+          selectedPlan="yearly"
+        />
       </Modal>
 
       <footer className="bg-slate-800 dark:bg-slate-900 text-slate-300 dark:text-slate-400 text-center p-8 mt-16 border-t border-slate-700 dark:border-slate-600">

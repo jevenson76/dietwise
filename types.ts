@@ -27,6 +27,12 @@ export interface UserProfile {
   targetDate: string | null; // ISO string, e.g., "2024-12-31"
   profileCreationDate?: string; // ISO string, when profile was first non-default
   startWeight?: number | null; // Initial weight when target was first set or profile created
+  customMacroTargets?: {
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+  };
 }
 
 export interface CalculatedMetrics {

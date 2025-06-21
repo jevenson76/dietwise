@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserProfile } from '../types';
 import { format } from 'date-fns';
 import parseISO from 'date-fns/parseISO';
+import { validateUserProfile } from '../utils/validation';
 
 interface WeightGoalSetterProps {
   profile: UserProfile;
@@ -10,6 +11,7 @@ interface WeightGoalSetterProps {
 }
 
 const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWeightChange, onTargetDateChange }) => {
+  const [error, setError] = useState<string>('');
   const currentWeightLbs = profile.weight; 
   const minTargetWeight = 50; 
   const maxTargetWeight = 500;
@@ -24,6 +26,11 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    
+    // Validate
+    const validationError = validateUserProfile('targetWeight', value);
+    setError(validationError?.message || '');
+    
     if (value === '') {
       onTargetWeightChange(null);
     } else {
@@ -77,13 +84,19 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
             id="targetWeightInput"
             value={profile.targetWeight === null ? '' : profile.targetWeight}
             onChange={handleInputChange}
-            className={`${inputClass} mt-4`}
+            className={`${inputClass} mt-4 ${error ? 'border-red-500' : ''}`}
             placeholder={`Enter target weight (${minTargetWeight}-${maxTargetWeight} lbs)`}
             disabled={!profile.weight}
             min={minTargetWeight}
             max={maxTargetWeight}
             aria-label="Target weight input"
           />
+          {error && (
+            <p className="mt-1 text-sm text-red-500" role="alert">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {error}
+            </p>
+          )}
         </div>
         
         <div>

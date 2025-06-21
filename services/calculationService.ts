@@ -72,6 +72,32 @@ export const calculateTargetCalories = (
 };
 
 
+export const calculateDefaultMacroTargets = (targetCalories: number | null) => {
+  if (!targetCalories || targetCalories <= 0) {
+    return {
+      protein: 50,
+      carbs: 130,
+      fat: 35,
+      fiber: 25
+    };
+  }
+
+  // Default macro split: 30% protein, 40% carbs, 30% fat
+  const proteinCalories = targetCalories * 0.30;
+  const carbsCalories = targetCalories * 0.40;
+  const fatCalories = targetCalories * 0.30;
+
+  // Convert calories to grams (protein: 4 cal/g, carbs: 4 cal/g, fat: 9 cal/g)
+  const protein = Math.round(proteinCalories / 4);
+  const carbs = Math.round(carbsCalories / 4);
+  const fat = Math.round(fatCalories / 9);
+  
+  // Fiber recommendation: 14g per 1000 calories
+  const fiber = Math.round((targetCalories / 1000) * 14);
+
+  return { protein, carbs, fat, fiber };
+};
+
 export const calculateAllMetrics = (profile: UserProfile): CalculatedMetrics => {
   const bmi = calculateBMI(profile.height, profile.weight);
   const bmr = calculateBMR(profile.age, profile.sex, profile.height, profile.weight);

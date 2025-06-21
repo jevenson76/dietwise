@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserProfile, Sex, ActivityLevel } from '../types';
+import { validateUserProfile, ValidationError } from '../utils/validation';
 
 interface UserProfileFormProps {
   profile: UserProfile;
@@ -7,6 +8,8 @@ interface UserProfileFormProps {
 }
 
 const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileChange }) => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name: rawName, value } = e.target;
     const name = rawName as keyof UserProfile | 'height_ft' | 'height_in';
@@ -50,6 +53,20 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
       newProfileDataUpdate.startWeight = parseFloat(value);
     }
     
+    // Validate the field
+    const validationError = validateUserProfile(name, value);
+    
+    // Update errors state
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (validationError) {
+        newErrors[validationError.field] = validationError.message;
+      } else {
+        delete newErrors[name];
+      }
+      return newErrors;
+    });
+    
     onProfileChange({
       ...profile,
       ...newProfileDataUpdate,
@@ -75,10 +92,16 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
             id="name"
             value={profile.name || ''}
             onChange={handleChange}
-            className={inputClass}
+            className={`${inputClass} ${errors.name ? 'border-red-500' : ''}`}
             placeholder="e.g., Alex Doe"
             maxLength={100}
           />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-500" role="alert">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.name}
+            </p>
+          )}
         </div>
 
         <div>
@@ -89,10 +112,16 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
             id="email"
             value={profile.email || ''}
             onChange={handleChange}
-            className={inputClass}
+            className={`${inputClass} ${errors.email ? 'border-red-500' : ''}`}
             placeholder="e.g., alex.doe@example.com"
             maxLength={100}
           />
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500" role="alert">
+              <i className="fas fa-exclamation-circle mr-1"></i>
+              {errors.email}
+            </p>
+          )}
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Used for future updates or account recovery. We respect your privacy.</p>
         </div>
 
@@ -106,11 +135,17 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
               id="age"
               value={profile.age || ''}
               onChange={handleChange}
-              className={inputClass}
+              className={`${inputClass} ${errors.age ? 'border-red-500' : ''}`}
               placeholder="e.g., 30"
               min="1"
               max="120"
             />
+            {errors.age && (
+              <p className="mt-1 text-sm text-red-500" role="alert">
+                <i className="fas fa-exclamation-circle mr-1"></i>
+                {errors.age}
+              </p>
+            )}
           </div>
           <div>
             <span className="block text-sm font-medium text-text-alt mb-1">Sex</span>
@@ -157,11 +192,17 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
                         id="height_ft"
                         value={profile.height?.ft ?? ''}
                         onChange={handleChange}
-                        className={inputClass}
+                        className={`${inputClass} ${errors.height_ft ? 'border-red-500' : ''}`}
                         placeholder="e.g., 5"
                         min="1"
                         max="8"
                     />
+                    {errors.height_ft && (
+                      <p className="mt-1 text-sm text-red-500" role="alert">
+                        <i className="fas fa-exclamation-circle mr-1"></i>
+                        {errors.height_ft}
+                      </p>
+                    )}
                 </div>
                 <div>
                     <label htmlFor="height_in" className="block text-xs font-medium text-text-alt">Inches</label>
@@ -171,12 +212,18 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
                         id="height_in"
                         value={profile.height?.in ?? ''}
                         onChange={handleChange}
-                        className={inputClass}
+                        className={`${inputClass} ${errors.height_in ? 'border-red-500' : ''}`}
                         placeholder="e.g., 8"
                         min="0"
                         max="11"
                         step="0.1"
                     />
+                    {errors.height_in && (
+                      <p className="mt-1 text-sm text-red-500" role="alert">
+                        <i className="fas fa-exclamation-circle mr-1"></i>
+                        {errors.height_in}
+                      </p>
+                    )}
                 </div>
             </div>
           </div>
@@ -189,12 +236,18 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
               id="weight"
               value={profile.weight || ''}
               onChange={handleChange}
-              className={inputClass}
+              className={`${inputClass} ${errors.weight ? 'border-red-500' : ''}`}
               placeholder="e.g., 150"
               min="10"
               max="1000"
               step="0.1"
             />
+            {errors.weight && (
+              <p className="mt-1 text-sm text-red-500" role="alert">
+                <i className="fas fa-exclamation-circle mr-1"></i>
+                {errors.weight}
+              </p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label htmlFor="activityLevel" className="block text-sm font-medium text-text-alt">Activity Level</label>
