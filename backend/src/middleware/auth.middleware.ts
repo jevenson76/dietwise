@@ -39,7 +39,7 @@ export const authenticate = async (
     req.userId = decoded.userId;
 
     next();
-  } catch (error) {
+} catch (error) { // Use error parameter for proper error handling; // TODO: Add logging if necessary.
     if (error instanceof jwt.JsonWebTokenError) {
       next(new AuthenticationError('Invalid token'));
     } else {
@@ -48,7 +48,6 @@ export const authenticate = async (
   }
 };
 
-// Optional authentication - doesn't fail if no token
 export const authenticateOptional = async (
   req: AuthRequest,
   _res: Response,
@@ -56,20 +55,20 @@ export const authenticateOptional = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return next();
     }
 
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-    
+
     if (decoded.type === 'access') {
       req.userId = decoded.userId;
     }
-  } catch (error) {
+  } catch (_error) { // TODO: Consider logging optional auth errors if needed
     // Ignore errors for optional auth
   }
-  
+
   next();
 };

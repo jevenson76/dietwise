@@ -8,6 +8,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
+  // _next parameter is required for Express error handling middleware; currently unused.
   // Log error
   logger.error({
     error: err.message,

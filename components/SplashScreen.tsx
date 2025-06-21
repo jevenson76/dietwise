@@ -1,14 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-// Mock Capacitor for web environments
-const mockCapacitor = {
-  isNativePlatform: () => false
-};
-
-const mockSplashScreen = {
-  hide: () => Promise.resolve()
-};
-
 interface SplashScreenProps {
   onComplete: () => void;
   duration?: number;
