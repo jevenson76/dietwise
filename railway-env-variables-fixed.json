@@ -1,0 +1,21 @@
+{
+  "NODE_ENV": "production",
+  "PORT": "3001",
+  "DATABASE_URL": "postgresql://postgres:0zmEpl3v%23Jux%26vpz8JzcUmnuMBwwPAbFzuO%24HF%23F@db.ozuuombybpfluztjvzdc.supabase.co:5432/postgres",
+  "JWT_SECRET": "P55K13v6rklXhVN6FtlI66WoA4e46Apu4cH5jiXru3DC53b6PJuQ1b/GI0u/EE/gyoDVdgKwd4LtOoZ/gc52yg==",
+  "JWT_EXPIRES_IN": "7d",
+  "STRIPE_SECRET_KEY": "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",
+  "STRIPE_WEBHOOK_SECRET": "whsec_pWkZRaxQZ79sh3V0lgeWmeKC3e8GqirJ",
+  "STRIPE_PRICE_ID_MONTHLY": "price_1Rbs8KFmhcNUMRQy7LPWM3n5",
+  "STRIPE_PRICE_ID_YEARLY": "price_1RbsAVFmhcNUMRQyI3IpNq17",
+  "STRIPE_TRIAL_DAYS": "7",
+  "SUPABASE_URL": "https://ozuuombybpfluztjvzdc.supabase.co",
+  "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96dXVvbWJ5YnBmbHV6dGp2emRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAzNTQxNzIsImV4cCI6MjA2NTkzMDE3Mn0.nItFFmyF4PbgKQ_K8Gi-nztQPrU14iVxsne9B9xnqKM",
+  "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96dXVvbWJ5YnBmbHV6dGp2emRjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDM1NDE3MiwiZXhwIjoyMDY1OTMwMTcyfQ.YNM0BoGFkAZqrvBIs4pfNrd_kCX1-2tMrbuLdecZRd0",
+  "GEMINI_API_KEY": "AIzaSyALbHuWeJ3tS87ygqhQ5jbZ_RFGMDW288o",
+  "FRONTEND_URL": "https://euphonious-moonbeam-b33115.netlify.app",
+  "CORS_ORIGIN": "https://euphonious-moonbeam-b33115.netlify.app",
+  "RATE_LIMIT_WINDOW_MS": "60000",
+  "RATE_LIMIT_MAX_REQUESTS": "100",
+  "LOG_LEVEL": "warn"
+}

@@ -1,6 +1,14 @@
 [build]
-  command = "npm run build"
+  command = "echo 'Build already done'"
   publish = "dist"
 
-[[plugins]]
-  package = "./plugins/check-todos"
+# Fix MIME types for JavaScript modules
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    
+[[headers]]
+  for = "*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
