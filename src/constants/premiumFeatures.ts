@@ -1,11 +1,11 @@
 // Premium Feature Configuration
 export const PREMIUM_FEATURES = {
   // Pricing
-  MONTHLY_PRICE: 9.99,
-  YEARLY_PRICE: 79.00,
-  MONTHLY_PRICE_DISPLAY: '$9.99',
-  YEARLY_PRICE_DISPLAY: '$79',
-  YEARLY_SAVINGS_PERCENT: 34, // Save 34% with yearly
+  MONTHLY_PRICE: 4.99,
+  YEARLY_PRICE: 39.99,
+  MONTHLY_PRICE_DISPLAY: '$4.99',
+  YEARLY_PRICE_DISPLAY: '$39.99',
+  YEARLY_SAVINGS_PERCENT: 33, // Save 33% with yearly
   TRIAL_DAYS: 7,
   LAUNCH_DISCOUNT_PERCENT: 50, // 50% off first month
 
