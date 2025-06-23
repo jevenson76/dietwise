@@ -57,14 +57,30 @@
    railway up
    ```
 
-### Option 2: Render
+### Option 2: Render (Free Tier Available)
 
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Set build command: `npm install && npm run build`
-4. Set start command: `npm start`
-5. Add all environment variables
-6. Deploy
+1. **Create a Render Account** at https://render.com
+2. **Connect your GitHub repository**
+3. **Create a new Web Service:**
+   - Name: `dietwise-backend`
+   - Root Directory: `backend`
+   - Build Command: `npm install && npm run build`
+   - Start Command: `npm start`
+   - Instance Type: Free
+4. **Add environment variables:**
+   - `NODE_ENV`: `production`
+   - `PORT`: `10000`
+   - `DATABASE_URL`: Your Supabase connection string
+   - `JWT_SECRET`: Generate secure random string
+   - `STRIPE_SECRET_KEY`: From Stripe dashboard
+   - `STRIPE_WEBHOOK_SECRET`: Will set after webhook config
+   - `SUPABASE_URL`: From Supabase settings
+   - `SUPABASE_ANON_KEY`: From Supabase settings
+   - `SUPABASE_SERVICE_ROLE_KEY`: From Supabase settings
+   - `GEMINI_API_KEY`: From Google AI Studio
+   - `FRONTEND_URL`: Your Netlify URL
+5. **Deploy** - Click "Create Web Service"
+6. **Note your URL**: `https://dietwise-backend.onrender.com`
 
 ### Option 3: Docker
 

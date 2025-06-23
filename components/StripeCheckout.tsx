@@ -126,7 +126,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
           </div>
           {activePlan === 'yearly' && (
             <p className="text-sm text-green-600 dark:text-green-400 font-medium mt-1">
-              {yearlyPlan.savings} • Only $6.58/month
+              {yearlyPlan.savings} • Only $3.33/month
             </p>
           )}
         </div>

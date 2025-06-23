@@ -19,19 +19,19 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: 'monthly',
     name: 'Monthly Plan',
-    price: 9.99,
-    priceDisplay: '$9.99',
+    price: 4.99,
+    priceDisplay: '$4.99',
     interval: 'month',
     stripePriceId: STRIPE_PRICES.monthly,
   },
   {
     id: 'yearly',
     name: 'Yearly Plan',
-    price: 79.00,
-    priceDisplay: '$79',
+    price: 39.99,
+    priceDisplay: '$39.99',
     interval: 'year',
     stripePriceId: STRIPE_PRICES.yearly,
-    savings: 'Save 34%',
+    savings: 'Save 33%',
   },
 ];
 

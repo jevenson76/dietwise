@@ -1,5 +1,29 @@
 import React, { useEffect, useState } from 'react';
 
+// Motivational messages pool
+const MOTIVATIONAL_MESSAGES = [
+  "Every healthy choice is a step towards a better you",
+  "Your journey to wellness starts with a single bite",
+  "Small changes today, big results tomorrow",
+  "Fuel your body, feed your potential",
+  "Progress, not perfection",
+  "You are what you eat, so eat amazing",
+  "Today's healthy choices are tomorrow's strength",
+  "Nourish your body, nurture your soul",
+  "Every meal is a chance to love yourself",
+  "Your health is an investment, not an expense",
+  "Be stronger than your excuses",
+  "Good nutrition is self-respect",
+  "Healthy eating is a form of self-care",
+  "Your body deserves the best fuel",
+  "Make food your medicine",
+  "Wellness is a journey, not a destination",
+  "Choose foods that love you back",
+  "A healthy outside starts from the inside",
+  "You're one meal away from a good mood",
+  "Eat well, live well, be well"
+];
+
 interface SplashScreenProps {
   onComplete: () => void;
   duration?: number;
@@ -7,11 +31,15 @@ interface SplashScreenProps {
 
 const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({ 
   onComplete, 
-  duration = 3000 
+  duration = 5000 // Increased from 3000ms to 5000ms
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [logoScale, setLogoScale] = useState(0.5);
   const [opacity, setOpacity] = useState(0);
+  const [messageOpacity, setMessageOpacity] = useState(0);
+  const [motivationalMessage] = useState(() => 
+    MOTIVATIONAL_MESSAGES[Math.floor(Math.random() * MOTIVATIONAL_MESSAGES.length)]
+  );
 
   useEffect(() => {
     // Animation sequence starts immediately for web
@@ -23,11 +51,18 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
       setLogoScale(1);
     }, 100);
 
+    // Show motivational message after logo animation
     const timer2 = setTimeout(() => {
+      setMessageOpacity(1);
+    }, 800);
+
+    // Start fade out
+    const timer3 = setTimeout(() => {
       setOpacity(0);
     }, duration - 500);
 
-    const timer3 = setTimeout(() => {
+    // Complete and hide
+    const timer4 = setTimeout(() => {
       setIsVisible(false);
       onComplete();
     }, duration);
@@ -36,6 +71,7 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      clearTimeout(timer4);
     };
   }, [onComplete, duration]);
 
@@ -106,12 +142,25 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
         </h1>
 
         {/* Tagline */}
-        <p className="text-xl md:text-2xl text-white/90 font-light tracking-wide">
+        <p className="text-xl md:text-2xl text-white/90 font-light tracking-wide mb-8">
           Your Personal Health Companion
         </p>
 
+        {/* Motivational Message */}
+        <div 
+          className="max-w-md mx-auto px-6"
+          style={{
+            opacity: messageOpacity,
+            transition: 'opacity 0.8s ease-in-out',
+          }}
+        >
+          <p className="text-lg md:text-xl text-white/95 font-medium italic">
+            "{motivationalMessage}"
+          </p>
+        </div>
+
         {/* Loading Animation */}
-        <div className="mt-12 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <div className="flex space-x-2">
             <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
             <div className="w-3 h-3 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
