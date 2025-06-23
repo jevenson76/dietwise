@@ -31,3 +31,38 @@ android/local.properties
 ios/App/build/
 ios/App/Pods/
 ios/App/App.xcworkspace/xcuserdata/
+
+# Android Release Signing
+*.keystore
+*.jks
+/android/keystore.properties
+/android/app/keystore/
+
+# Environment Variables and Secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Test files with credentials
+backend/test-*.js
+backend/test-credentials/
+
+# Backup files
+*.backup
+*.bak
+*~
+.*.swp
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+# Stripe
+stripe.env
+
+# Service account keys
+*-service-account.json
+serviceAccountKey.json

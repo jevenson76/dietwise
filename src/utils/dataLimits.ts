@@ -12,7 +12,7 @@ export const filterByHistoricalLimit = <T extends { timestamp: number } | { date
   }
 
   const limitDate = subDays(new Date(), HISTORICAL_DATA_LIMIT_DAYS);
-  
+
   return data.filter(item => {
     const itemDate = 'timestamp' in item 
       ? new Date(item.timestamp) 
@@ -27,9 +27,9 @@ export const getHistoricalLimitMessage = () => {
 
 export const isDataOutsideLimit = (dateStr: string | number, isPremiumUser: boolean): boolean => {
   if (isPremiumUser) return false;
-  
+
   const date = typeof dateStr === 'number' ? new Date(dateStr) : new Date(dateStr);
   const limitDate = subDays(new Date(), HISTORICAL_DATA_LIMIT_DAYS);
-  
+
   return !isAfter(date, limitDate);
 };

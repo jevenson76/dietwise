@@ -77,7 +77,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
 
     try {
       await authApi.register(formData);
-      
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -217,7 +217,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
                 {errors.password}
               </p>
             )}
-            
+
             {formData.password && (
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-1">

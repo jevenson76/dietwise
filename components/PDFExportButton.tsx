@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { exportFoodLogToPDF } from '@services/pdfExportService';
+import { exportFoodLogToPDF } from '../src/services/pdfExportService';
 import { FoodItem, UserProfile, WeightEntry } from '@appTypes';
 import { subDays, startOfDay, endOfDay } from 'date-fns';
 import { trackEvent } from '@services/analyticsService';
@@ -51,7 +51,7 @@ const PDFExportButton: React.FC<PDFExportButtonProps> = ({
     try {
       let dateRange;
       const today = endOfDay(new Date());
-      
+
       switch (exportOptions.dateRange) {
         case '7days':
           dateRange = {
@@ -78,7 +78,7 @@ const PDFExportButton: React.FC<PDFExportButtonProps> = ({
 
       const filename = `dietwise-report-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(filename);
-      
+
       premiumLimits.onExport();
       trackEvent('pdf_export_completed', { filename, ...exportOptions });
       setShowOptions(false);
@@ -118,7 +118,7 @@ const PDFExportButton: React.FC<PDFExportButtonProps> = ({
         <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
           <div className="p-4">
             <h3 className="text-lg font-semibold text-text-default mb-4">PDF Export Options</h3>
-            
+
             {/* Date Range */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-text-alt mb-2">Date Range</label>

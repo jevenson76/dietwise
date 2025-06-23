@@ -37,7 +37,7 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preferences, setPreferences] = useState('');
-  
+
   const cachedIdeasRef = useRef<CachedMealIdeas | null>(null);
 
   const fetchIdeas = useCallback(async () => {
@@ -47,7 +47,7 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
       trackEvent('meal_ideas_fetch_failed_limit_reached');
       return;
     }
-    
+
     if (apiKeyMissing) {
       setError(API_KEY_ERROR_MESSAGE);
       trackEvent('meal_ideas_fetch_failed_api_key_missing');
@@ -72,15 +72,15 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
       trackEvent('meal_ideas_fetch_cache_hit', { calorieTarget, preferences });
       return;
     }
-    
+
     try {
       const result = await getMealIdeas(calorieTarget, preferences);
-      
+
       // Increment usage counter after successful API call
       if (onMealSuggestion && !result.error) {
         onMealSuggestion();
       }
-      
+
       if (result.error) {
         setError(result.error);
         setIdeas(null);
@@ -128,7 +128,7 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
         <i className="fas fa-lightbulb mr-2.5 text-yellow-500 dark:text-yellow-400"></i>AI Meal Ideas
       </h2>
       <p className="text-sm text-text-alt mb-6">{greeting} Let's find some tasty options for your ~{calorieTarget} kcal target!</p>
-      
+
       {apiKeyMissing && (
         <Alert type="warning" message={<><strong>Meal Ideas Disabled:</strong><br/>{API_KEY_ERROR_MESSAGE}</>} className="mb-4" />
       )}
@@ -167,7 +167,7 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
         )}
       </button>
       {error && error !== 'meal_limit_reached' && <Alert type="error" message={error} onClose={() => setError(null)} className="mt-4" />}
-      
+
       {error === 'meal_limit_reached' && (
         <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
           <div className="flex items-start">

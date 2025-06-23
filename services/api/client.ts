@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { log } from '../../src/services/loggingService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
@@ -14,21 +15,34 @@ class ApiClient {
       },
     });
 
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token and start time
     this.client.interceptors.request.use(
       async (config) => {
         const token = this.getAccessToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        // Add request start time for duration calculation
+        (config as any)._requestStartTime = Date.now();
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor to handle token refresh
+    // Response interceptor to handle token refresh and logging
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        // Log successful API calls
+        const duration = Date.now() - (response.config as any)._requestStartTime;
+        log.apiCall(
+          response.config.method?.toUpperCase() || 'UNKNOWN',
+          response.config.url || 'unknown-url',
+          response.status,
+          duration,
+          'api-client'
+        );
+        return response;
+      },
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
@@ -40,11 +54,22 @@ class ApiClient {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return this.client(originalRequest);
           } catch (refreshError) {
+            log.error('Token refresh failed', 'api-client', { error: refreshError });
             this.logout();
             window.location.href = '/login';
             return Promise.reject(refreshError);
           }
         }
+
+        // Log failed API calls
+        const duration = Date.now() - (originalRequest._requestStartTime || Date.now());
+        log.apiCall(
+          originalRequest.method?.toUpperCase() || 'UNKNOWN',
+          originalRequest.url || 'unknown-url',
+          error.response?.status || 0,
+          duration,
+          'api-client'
+        );
 
         return Promise.reject(error);
       }
@@ -70,7 +95,7 @@ class ApiClient {
     }
 
     this.refreshPromise = this.performTokenRefresh();
-    
+
     try {
       const token = await this.refreshPromise;
       this.refreshPromise = null;
@@ -93,7 +118,7 @@ class ApiClient {
 
     const { accessToken } = response.data.data;
     localStorage.setItem('accessToken', accessToken);
-    
+
     return accessToken;
   }
 

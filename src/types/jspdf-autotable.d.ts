@@ -1,6 +1,6 @@
 declare module 'jspdf-autotable' {
   import { jsPDF } from 'jspdf';
-  
+
   export interface UserOptions {
     head?: any[][];
     body?: any[][];

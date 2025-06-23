@@ -5,8 +5,8 @@ import WeightLogFormComponent from '@components/WeightLogFormComponent';
 import Alert from '@components/common/Alert';
 import { trackEvent } from '@services/analyticsService'; // Import analytics
 import { differenceInDays, format } from 'date-fns';
-import parseISO from 'date-fns/parseISO';
-import startOfDay from 'date-fns/startOfDay';
+import { parseISO } from 'date-fns/parseISO';
+import { startOfDay } from 'date-fns/startOfDay';
 
 interface ProgressTabComponentProps {
   userProfile: UserProfile;
@@ -41,7 +41,7 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
     let lastReminderDismissDate: Date | null = null;
     if (reminderSettings.lastWeighInReminderDismissedDate) {
         try { lastReminderDismissDate = startOfDay(parseISO(reminderSettings.lastWeighInReminderDismissedDate)); }
-        catch (e) { console.warn("Invalid lastReminderDismissedDate", e); }
+        catch (e) {  }
     }
 
     if (lastReminderDismissDate && format(lastReminderDismissDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
@@ -50,7 +50,7 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
         let lastWeighInDate: Date | null = null;
         if (actualWeightLog.length > 0) {
             try { lastWeighInDate = startOfDay(parseISO(actualWeightLog[actualWeightLog.length - 1].date)); }
-            catch (e) { console.warn("Invalid date in weight log", e); }
+            catch (e) {  }
         }
 
         const shouldShowReminder = lastWeighInDate 
@@ -59,7 +59,7 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
               (userProfile.targetWeight && (userProfile.weight || userProfile.profileCreationDate)) &&
               (differenceInDays(today, userProfile.profileCreationDate ? parseISO(userProfile.profileCreationDate) : new Date(0)) >=1 || userProfile.weight)
             );
-        
+
         if (shouldShowReminder && !showWeighInReminder) {
             trackEvent('weigh_in_reminder_shown', { frequencyDays: reminderSettings.weighInFrequencyDays, lastWeighIn: lastWeighInDate?.toISOString() });
         }
@@ -72,7 +72,7 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
       const firstLog = userProfile.startWeight || actualWeightLog[0].weight;
       const latestLog = actualWeightLog[actualWeightLog.length - 1].weight;
       const target = userProfile.targetWeight;
-      
+
       if ((target < firstLog && latestLog < firstLog) || (target > firstLog && latestLog > firstLog)) { 
         if (Math.abs(latestLog - target) < Math.abs(firstLog - target)) { 
             if (Math.abs(latestLog - target) <= 5) { 
@@ -95,7 +95,6 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
     }
 
   }, [actualWeightLog, userProfile, reminderSettings.weighInFrequencyDays, reminderSettings.lastWeighInReminderDismissedDate, showWeighInReminder]);
-
 
   const handleDismissReminder = () => {
     trackEvent('weigh_in_reminder_dismissed');
@@ -120,7 +119,7 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
         </div>
     );
   }
-  
+
   if (userProfile.targetWeight === null) {
      return (
         <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
@@ -136,7 +135,6 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
         </div>
     );
   }
-
 
   return (
     <div className="space-y-6 sm:space-y-8">

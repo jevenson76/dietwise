@@ -6,7 +6,7 @@ const CheckoutSuccess: React.FC = () => {
     // Get URL parameters to determine which plan was purchased
     const urlParams = new URLSearchParams(window.location.search);
     const sessionId = urlParams.get('session_id');
-    
+
     if (sessionId) {
       // In a real app, you'd verify the session with your backend
       // For demo purposes, we'll activate the subscription locally

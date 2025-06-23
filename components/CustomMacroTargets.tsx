@@ -42,7 +42,7 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
       const carbsCals = tempTargets.carbs * 4;
       const fatCals = tempTargets.fat * 9;
       const totalCals = proteinCals + carbsCals + fatCals;
-      
+
       if (totalCals > 0) {
         setMacroPercentages({
           protein: Math.round((proteinCals / totalCals) * 100),
@@ -59,13 +59,13 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
     // Ensure percentages add up to 100
     const newPercentages = { ...macroPercentages, [macro]: value };
     const total = newPercentages.protein + newPercentages.carbs + newPercentages.fat;
-    
+
     if (total > 100) {
       // Adjust other macros proportionally
       const excess = total - 100;
       const otherMacros = Object.keys(newPercentages).filter(m => m !== macro) as ('protein' | 'carbs' | 'fat')[];
       const adjustment = excess / otherMacros.length;
-      
+
       otherMacros.forEach(m => {
         newPercentages[m] = Math.max(0, newPercentages[m] - adjustment);
       });
@@ -173,7 +173,7 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
           {targetCalories && (
             <div className="space-y-4">
               <h4 className="font-semibold text-text-default">Adjust by Percentage</h4>
-              
+
               <div className="space-y-3">
                 <div>
                   <label className="flex justify-between text-sm text-text-alt mb-1">
@@ -230,7 +230,7 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
           {/* Direct gram input */}
           <div className="space-y-4">
             <h4 className="font-semibold text-text-default">Or Set Exact Amounts</h4>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-text-alt mb-1">
@@ -321,21 +321,21 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
             </div>
             <div className="text-sm text-red-700 dark:text-red-300">Protein</div>
           </div>
-          
+
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {currentTargets.carbs}g
             </div>
             <div className="text-sm text-blue-700 dark:text-blue-300">Carbs</div>
           </div>
-          
+
           <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
               {currentTargets.fat}g
             </div>
             <div className="text-sm text-yellow-700 dark:text-yellow-300">Fat</div>
           </div>
-          
+
           <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {currentTargets.fiber}g

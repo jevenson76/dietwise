@@ -124,7 +124,6 @@ interface CostOptimizationSuggestion {
     estimated_savings: number;
 }
 
-
 // Performance Monitoring System
 export class PerformanceMonitor {
   private readonly SLA_TARGETS = {
@@ -166,17 +165,16 @@ export class PerformanceMonitor {
       // Add more cost optimization logic here
       return suggestions;
   }
-  
+
   async configureAutoScaling(policies: any): Promise<void> {
-      console.log("Configuring auto-scaling policies:", policies);
+
       // Placeholder for actual cloud provider API calls
   }
-
 
   async monitorPerformance(): Promise<PerformanceReport> {
     const metrics = await this.collectMetrics();
     const alerts = this.checkSLAViolations(metrics);
-    
+
     return {
       timestamp: new Date(),
       metrics,
@@ -188,7 +186,7 @@ export class PerformanceMonitor {
 
   private async getScalingRecommendations(metrics: any): Promise<ScalingRecommendation[]> {
     const recommendations: ScalingRecommendation[] = [];
-    
+
     // CPU utilization scaling
     if (metrics.cpu_utilization > 80) {
       recommendations.push({
@@ -199,7 +197,7 @@ export class PerformanceMonitor {
         estimated_cost: 400,
       });
     }
-    
+
     // Database performance scaling
     if (metrics.db_connections > 0.8 * metrics.max_db_connections) {
       recommendations.push({
@@ -210,7 +208,7 @@ export class PerformanceMonitor {
         estimated_cost: 1000,
       });
     }
-    
+
     // Cache hit rate optimization
     if (metrics.cache_hit_rate < 0.85) {
       recommendations.push({
@@ -221,7 +219,7 @@ export class PerformanceMonitor {
         estimated_cost: 200,
       });
     }
-    
+
     return recommendations;
   }
 
@@ -250,7 +248,7 @@ export class PerformanceMonitor {
         cooldown_period: 600,
       },
     };
-    
+
     await this.configureAutoScaling(autoScalingPolicies);
   }
 }

@@ -21,7 +21,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       try {
         await navigator.share(shareData);
         trackEvent('share_successful_native', { title: shareData.title });
-        console.log('Content shared successfully');
+
       } catch (error) {
         trackEvent('share_failed_native', { error: (error as Error).message });
         console.error('Error sharing content:', error);
@@ -38,8 +38,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
         alert('Sharing not available, content copied to clipboard!');
         trackEvent('share_fallback_clipboard_copied');
       } catch (err) {
-        console.warn('Could not copy to clipboard, logging to console.', err);
-        console.log("Share this: ", fullTextToCopy);
+
         alert("Sharing not available. Content logged to console. You can copy it from there.");
         trackEvent('share_fallback_console_log');
       }

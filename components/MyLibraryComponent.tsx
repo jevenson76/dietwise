@@ -9,7 +9,6 @@ import { getFoodInfoFromUPC, API_KEY_ERROR_MESSAGE } from '@services/geminiServi
 import { trackEvent } from '@services/analyticsService';
 import type { GroundingChunk } from '@google/genai';
 
-
 const MYFOOD_SCANNER_VIDEO_ID = "myfood-barcode-video";
 
 interface MyLibraryComponentProps {
@@ -54,7 +53,6 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
   const [isMyFoodScannerLoadingApi, setIsMyFoodScannerLoadingApi] = useState(false);
   const [myFoodScannedUpc, setMyFoodScannedUpc] = useState<string | null>(null);
   const [myFoodScanGroundingSources, setMyFoodScanGroundingSources] = useState<GroundingSource[]>([]);
-
 
   const handleMyFoodScanSuccess = useCallback((text: string) => {
     trackEvent('myfood_upc_scan_success', { upc: text });
@@ -101,7 +99,7 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
     setIsMyFoodScannerLoadingApi(false);
     stopMyFoodScan(); 
   }, []);
-  
+
   const { 
     startScan: startMyFoodScan, 
     stopScan: stopMyFoodScan, 
@@ -148,7 +146,6 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
     setIsMyFoodScannerModalOpen(false);
     setIsFoodModalOpen(true); 
   };
-
 
   const inputClass = "mt-1 block w-full px-3 py-2 border border-border-default rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
   const buttonClass = "bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors disabled:opacity-50";
@@ -210,7 +207,7 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
     setIsMealModalOpen(false);
     setCurrentMeal({ ingredients: [] });
   };
-  
+
   const handleMealIngredientChange = (index: number, field: keyof MyMeal['ingredients'][0], value: string) => {
     const updatedIngredients = [...(currentMeal.ingredients || [])];
     if (field === 'servings') {
@@ -234,7 +231,6 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
       ingredients: (prev.ingredients || []).filter((_, i) => i !== index)
     }));
   };
-
 
   return (
     <div className="space-y-8">
@@ -381,7 +377,6 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
             </button>
         </div>
       </Modal>
-
 
       {/* Add/Edit Meal Modal */}
       <Modal isOpen={isMealModalOpen} onClose={() => { setIsMealModalOpen(false); setEditingMeal(null); setCurrentMeal({ ingredients: [] }); setModalError(null); }} title={editingMeal ? "Edit Meal" : "Create New Meal"} size="lg">

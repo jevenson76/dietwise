@@ -52,7 +52,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 
     try {
       await authApi.login(formData);
-      
+
       if (onSuccess) {
         onSuccess();
       } else {

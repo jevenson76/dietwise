@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { UserProfile, CalculatedMetrics, FoodItem, WeightEntry, ReminderSettings, Sex, SevenDayPlanResponse, SharePayload, AppTheme, MyFoodItem, MyMeal, MealReminder, StreakData, Milestone, MilestoneType } from '@appTypes'; 
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import { UserProfile, CalculatedMetrics, FoodItem, WeightEntry, ReminderSettings, SharePayload, AppTheme, MyFoodItem, MyMeal, MealReminder, StreakData, Milestone, MilestoneType } from '@appTypes'; 
 import { defaultUserProfile, DEFAULT_REMINDER_SETTINGS, DEFAULT_STREAK_DATA, WEIGHT_MILESTONE_INCREMENT, STREAK_MILESTONES_DAYS, TOTAL_LOGGED_MEALS_MILESTONES } from '@constants';
 import { calculateAllMetrics, calculateDefaultMacroTargets } from '@services/calculationService';
 import { trackEvent } from '@services/analyticsService'; 
-import { API_KEY_ERROR_MESSAGE } from '@services/geminiService'; // Import the error message
+// Removed unused import: API_KEY_ERROR_MESSAGE from '@services/geminiService'
 import UserProfileForm from '@components/UserProfileForm';
 import CalculationsDisplay from '@components/CalculationsDisplay';
 import WeightGoalSetter from '@components/WeightGoalSetter';
@@ -13,24 +13,30 @@ import UPCScannerComponent from '@components/UPCScannerComponent';
 import FoodLog from '@components/FoodLog';
 import Alert from '@components/common/Alert';
 import Modal from '@components/common/Modal';
-import MealPlannerComponent from '@components/MealPlannerComponent';
-import { ProgressTabComponent } from '@components/ProgressTabComponent';
-import UserStatusDashboard from '@components/UserStatusDashboard';
-import MyLibraryComponent from '@components/MyLibraryComponent'; 
-import ReviewPromptModal from '@components/ReviewPromptModal';
+// Lazy load heavy components
+const MealPlannerComponent = lazy(() => import('@components/MealPlannerComponent'));
+const ProgressTabComponent = lazy(() => import('@components/ProgressTabComponent').then(module => ({ default: module.ProgressTabComponent })));
+const UserStatusDashboard = lazy(() => import('@components/UserStatusDashboard'));
+const MyLibraryComponent = lazy(() => import('@components/MyLibraryComponent'));
+const ReviewPromptModal = lazy(() => import('@components/ReviewPromptModal'));
 import { ReviewManagementSystem, ReviewPromptMetrics } from './aso/reviewManagement'; 
 import { differenceInCalendarDays, format, addDays, isPast, isToday, differenceInMinutes } from 'date-fns';
-import parseISO from 'date-fns/parseISO';
-import startOfDay from 'date-fns/startOfDay';
+import { parseISO } from 'date-fns/parseISO';
+import { startOfDay } from 'date-fns/startOfDay';
 import { usePremiumLimits } from '@hooks/usePremiumLimits';
+import { usePremiumStatus } from '@hooks/usePremiumStatus';
+import { useAuth } from '@hooks/useAuth';
 import { PREMIUM_FEATURES, PREMIUM_MESSAGES } from './constants/premiumFeatures';
-import StripeCheckout from '@components/StripeCheckout';
-import AdvancedAnalytics from '@components/AdvancedAnalytics';
+// More lazy loaded components
+const StripeCheckout = lazy(() => import('@components/StripeCheckout'));
+const AdvancedAnalytics = lazy(() => import('@components/AdvancedAnalytics'));
 import PDFExportButton from '@components/PDFExportButton';
 import CustomMacroTargets from '@components/CustomMacroTargets';
 import UpgradePrompt from '@components/UpgradePrompt';
+import AuthModal from '@components/auth/AuthModal';
 import { filterByHistoricalLimit, getHistoricalLimitMessage } from '@utils/dataLimits';
-
+import DietWiseSplashScreen from '@components/SplashScreen';
+import { useSplashScreen } from '@hooks/useSplashScreen';
 
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
@@ -38,6 +44,14 @@ import 'chartjs-adapter-date-fns';
 Chart.defaults.locale = 'en-US';
 
 const generateUUID = () => crypto.randomUUID();
+
+// Simple loading component for Suspense fallbacks
+const LoadingSpinner: React.FC<{ message?: string }> = ({ message = "Loading..." }) => (
+  <div className="flex flex-col items-center justify-center py-8 px-4">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mb-3"></div>
+    <p className="text-text-alt text-sm">{message}</p>
+  </div>
+);
 
 enum Tab {
   Log = 'Log Food', 
@@ -71,10 +85,10 @@ const App: React.FC = () => {
                  return { ...defaultUserProfile, ...parsed };
             }
         }
-    } catch (e) { console.warn("Failed to parse userProfile from localStorage", e); }
+    } catch (e) {  }
     return defaultUserProfile;
   });
-  
+
   const [calculatedMetrics, setCalculatedMetrics] = useState<CalculatedMetrics>({
     bmi: null, bmr: null, tdee: null, targetCalories: null,
   });
@@ -87,7 +101,7 @@ const App: React.FC = () => {
         if (Array.isArray(parsedLog)) {
           return parsedLog;
         }
-      } catch (e) { console.warn("Failed to parse foodLog from localStorage", e); }
+      } catch (e) {  }
     }
     return [];
   });
@@ -112,7 +126,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-
   const [actualWeightLog, setActualWeightLog] = useState<WeightEntry[]>(() => {
     const savedLog = localStorage.getItem('actualWeightLog');
     if (savedLog) {
@@ -121,7 +134,7 @@ const App: React.FC = () => {
         if (Array.isArray(parsedLog)) {
           return parsedLog.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
         }
-      } catch (e) { console.warn("Failed to parse actualWeightLog from localStorage", e); }
+      } catch (e) {  }
     }
     return [];
   });
@@ -130,7 +143,7 @@ const App: React.FC = () => {
     const savedSettings = localStorage.getItem('reminderSettings');
     if (savedSettings) {
         try { return { ...DEFAULT_REMINDER_SETTINGS, ...JSON.parse(savedSettings) }; }
-        catch(e) { console.warn("Failed to parse reminderSettings", e); }
+        catch(e) {  }
     }
     return DEFAULT_REMINDER_SETTINGS;
   });
@@ -159,32 +172,39 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(isInitialSetup ? Tab.Profile : Tab.Log); // Default to Profile if initial setup
   const [apiKeyStatus, setApiKeyStatus] = useState<'checking' | 'ok' | 'missing'>('checking');
   const [isDashboardVisible, setIsDashboardVisible] = useState<boolean>(true);
+  
+  // Splash screen hook
+  const { showSplash, hideSplash } = useSplashScreen();
 
   const [globalSuccessMessage, setGlobalSuccessMessage] = useState<GlobalSuccessPayload | null>(null);
   const [hasShownSetupCompleteMessage, setHasShownSetupCompleteMessage] = useState<boolean>(() => {
     return localStorage.getItem('hasShownSetupCompleteMessage') === 'true';
   });
 
-  const [isPremiumUser, setIsPremiumUser] = useState<boolean>(() => {
-    // Check subscription status from localStorage (would be from API in production)
-    try {
-      const subscription = localStorage.getItem('subscription_dietwise_user');
-      if (subscription) {
-        const sub = JSON.parse(subscription);
-        return sub.isActive && new Date(sub.currentPeriodEnd) > new Date();
-      }
-    } catch (e) {
-      console.warn('Failed to check subscription status:', e);
-    }
-    return false;
-  }); 
+  // Use auth hook
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
+
+  // Use the premium status hook to check backend subscription
+  const { isPremium: isPremiumUser, isLoading: isPremiumLoading, checkPremiumStatus, openCustomerPortal } = usePremiumStatus();
+
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const [isReviewPromptModalOpen, setIsReviewPromptModalOpen] = useState<boolean>(false);
   const [isLogFromMyMealModalOpen, setIsLogFromMyMealModalOpen] = useState<boolean>(false);
   const [isUPCScannerModalOpen, setIsUPCScannerModalOpen] = useState<boolean>(false); // For FoodLog's scanner
 
   // Premium limits hook
   const premiumLimits = usePremiumLimits(isPremiumUser);
+
+  // Check if we need to refresh premium status after successful checkout
+  useEffect(() => {
+    const shouldRefresh = localStorage.getItem('refreshPremiumStatus');
+    if (shouldRefresh === 'true') {
+      localStorage.removeItem('refreshPremiumStatus');
+      checkPremiumStatus();
+    }
+  }, [checkPremiumStatus]);
 
   // Apply historical data limits for free users
   const filteredFoodLog = useMemo(() => {
@@ -235,7 +255,6 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem('streakData', JSON.stringify(streakData)); }, [streakData]);
   useEffect(() => { localStorage.setItem('milestones', JSON.stringify(milestones)); }, [milestones]);
 
-
   const displayGlobalSuccessMessage = useCallback((payload: GlobalSuccessPayload | string) => {
     if (typeof payload === 'string') {
       setGlobalSuccessMessage({ message: payload });
@@ -272,12 +291,22 @@ const App: React.FC = () => {
         return [...prev, newMilestone].sort((a,b) => parseISO(b.dateAchieved).getTime() - parseISO(a.dateAchieved).getTime());
     });
   }, [displayGlobalSuccessMessage]);
-  
+
+  // Memoize today's food log to avoid recalculating on every render
+  const todaysLog = useMemo(() => {
+    return filteredFoodLog.filter(item => differenceInCalendarDays(new Date(), new Date(item.timestamp)) === 0);
+  }, [filteredFoodLog]);
+
+  // Memoize today's unfiltered food log for streak calculations
+  const todaysUnfilteredLog = useMemo(() => {
+    const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+    return foodLog.filter(item => format(startOfDay(new Date(item.timestamp)), 'yyyy-MM-dd') === todayStr);
+  }, [foodLog]);
+
   useEffect(() => {
     const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
-    const todayLog = foodLog.filter(item => format(startOfDay(new Date(item.timestamp)), 'yyyy-MM-dd') === todayStr);
 
-    if (todayLog.length > 0 && streakData.lastFoodLogDate !== todayStr) {
+    if (todaysUnfilteredLog.length > 0 && streakData.lastFoodLogDate !== todayStr) {
       let newStreak = 1;
       if (streakData.lastFoodLogDate) {
         const lastLogDate = startOfDay(parseISO(streakData.lastFoodLogDate));
@@ -362,7 +391,6 @@ const App: React.FC = () => {
     }
   }, [isOnline, offlineFoodQueue.length, syncOfflineFoodLog]); 
 
-
   const handleProfileChange = useCallback((newProfileData: UserProfile) => { 
     setUserProfile(prev => {
         const updatedProfile = {...newProfileData}; 
@@ -403,7 +431,6 @@ const App: React.FC = () => {
     }));
     trackEvent('custom_macro_targets_updated', macroTargets);
   }, []);
-
 
   const handleRemoveFood = useCallback((foodId: string, isOfflineItem: boolean = false) => {
     if (isOfflineItem) {
@@ -466,7 +493,7 @@ const App: React.FC = () => {
           const lastAchievedMilestoneVal = milestones
             .filter(m => m.type === MilestoneType.WEIGHT_LOSS_X_LBS && typeof m.value === 'number')
             .reduce((max, m) => Math.max(max, m.value as number), 0);
-          
+
           const nextMilestone = Math.floor(weightLost / WEIGHT_MILESTONE_INCREMENT) * WEIGHT_MILESTONE_INCREMENT;
           if (nextMilestone > lastAchievedMilestoneVal && nextMilestone > 0) {
             addMilestone(MilestoneType.WEIGHT_LOSS_X_LBS, `Lost ${nextMilestone} lbs!`, nextMilestone);
@@ -475,10 +502,10 @@ const App: React.FC = () => {
       }
     }
   }, [displayGlobalSuccessMessage, userProfile.targetWeight, userProfile.startWeight, addMilestone, milestones]);
-  
+
   const showNotification = useCallback( (title: string, options: NotificationOptions) => {
     if (!('Notification' in window) || Notification.permission !== 'granted' || !('serviceWorker' in navigator) || !navigator.serviceWorker.ready) {
-        console.warn("Notifications not supported or permission not granted or SW not ready.");
+
         return;
     }
     navigator.serviceWorker.ready.then(registration => {
@@ -490,7 +517,7 @@ const App: React.FC = () => {
   const handleUpdateReminderSettings = useCallback((settingsUpdate: Partial<ReminderSettings>) => {
     setReminderSettings(prev => {
       const newSettings = { ...prev, ...settingsUpdate };
-  
+
       if (settingsUpdate.mealReminders) {
         const refinedMealReminders = { ...prev.mealReminders };
         for (const key of Object.keys(settingsUpdate.mealReminders) as Array<keyof ReminderSettings['mealReminders']>) {
@@ -504,9 +531,9 @@ const App: React.FC = () => {
         }
         newSettings.mealReminders = refinedMealReminders;
       }
-  
+
       trackEvent('reminder_settings_updated', settingsUpdate);
-  
+
       if (Notification.permission === 'granted') {
         Object.entries(newSettings.mealReminders).forEach(([mealTypeKey, reminder]: [string, MealReminder]) => {
           if (reminder.enabled) {
@@ -514,7 +541,7 @@ const App: React.FC = () => {
             const now = new Date();
             const reminderTimeToday = new Date(startOfDay(now));
             reminderTimeToday.setHours(hours, minutes, 0, 0);
-  
+
             if (isToday(reminderTimeToday) && differenceInMinutes(new Date(), reminderTimeToday) >= -15 && differenceInMinutes(new Date(), reminderTimeToday) <= 5) {
               showNotification(`Time for ${mealTypeKey}!`, {
                 body: `It's ${reminder.time}, time for your ${mealTypeKey}.`,
@@ -530,16 +557,15 @@ const App: React.FC = () => {
     });
   }, [showNotification, format, startOfDay, isToday, differenceInMinutes ]);
 
-
   const scheduleMealReminders = useCallback(() => {
     const now = new Date();
     Object.entries(reminderSettings.mealReminders).forEach(([mealType, reminder]: [string, MealReminder]) => {
       if (reminder.enabled) {
         const [hours, minutes] = reminder.time.split(':').map(Number);
-        
+
         const reminderTimeToday = new Date(startOfDay(now)); 
         reminderTimeToday.setHours(hours, minutes, 0, 0); 
-        
+
         if (isToday(reminderTimeToday) && 
             differenceInMinutes(now, reminderTimeToday) >= -15 && 
             differenceInMinutes(now, reminderTimeToday) <= 5      
@@ -556,13 +582,12 @@ const App: React.FC = () => {
     });
   }, [reminderSettings.mealReminders, showNotification, format, startOfDay, isToday, differenceInMinutes]);
 
-
   const scheduleWeighInReminder = useCallback(() => {
     const today = startOfDay(new Date());
     let lastReminderDismissDate: Date | null = null;
     if (reminderSettings.lastWeighInReminderDismissedDate) {
         try { lastReminderDismissDate = startOfDay(parseISO(reminderSettings.lastWeighInReminderDismissedDate)); }
-        catch (e) { console.warn("Invalid lastReminderDismissedDate", e); }
+        catch (e) {  }
     }
 
     if (lastReminderDismissDate && format(lastReminderDismissDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
@@ -572,7 +597,7 @@ const App: React.FC = () => {
     let lastWeighInDate: Date | null = null;
     if (actualWeightLog.length > 0) {
         try { lastWeighInDate = startOfDay(parseISO(actualWeightLog[actualWeightLog.length - 1].date)); }
-        catch (e) { console.warn("Invalid date in weight log", e); }
+        catch (e) {  }
     }
 
     const shouldNotify = (lastWeighInDate 
@@ -652,7 +677,6 @@ const App: React.FC = () => {
     }
   };
 
-
   const isProfileCompleteForFunctionality = useMemo(() => { 
     return userProfile.age !== null &&
            userProfile.sex !== null &&
@@ -675,7 +699,6 @@ const App: React.FC = () => {
       trackEvent('initial_setup_complete_message_shown', { userName: userProfile.name });
     }
   }, [isProfileCompleteForFunctionality, hasShownSetupCompleteMessage, activeTab, userProfile.name, displayGlobalSuccessMessage]);
-  
 
   useEffect(() => {
     if (isInitialSetup || isReviewPromptModalOpen || reminderSettings.hasGivenFeedback) return;
@@ -696,14 +719,12 @@ const App: React.FC = () => {
       });
   }, [milestones, isInitialSetup, isReviewPromptModalOpen, reminderSettings.lastReviewPromptDate, reminderSettings.hasGivenFeedback, userProfile.email, handleUpdateReminderSettings]);
 
-
   useEffect(() => {
     if (Notification.permission === 'granted') {
       scheduleMealReminders(); 
       scheduleWeighInReminder(); 
     }
   }, [reminderSettings.mealReminders, scheduleMealReminders, scheduleWeighInReminder, actualWeightLog]); 
-
 
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
@@ -734,7 +755,6 @@ const App: React.FC = () => {
         displayGlobalSuccessMessage({message: "Notification permission was previously denied. Please enable it in browser settings."});
     }
   };
-
 
   const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Planner, Tab.Progress, Tab.Profile];
 
@@ -817,7 +837,7 @@ const App: React.FC = () => {
               onTargetDateChange={handleTargetDateChange}
             />
             <CalculationsDisplay metrics={calculatedMetrics} isProfileComplete={isProfileCompleteForFunctionality} showBmiCategoryMessage={false} />
-            
+
             <div className="mt-6">
               <CustomMacroTargets
                 currentTargets={userProfile.customMacroTargets || calculateDefaultMacroTargets(calculatedMetrics.targetCalories)}
@@ -827,7 +847,55 @@ const App: React.FC = () => {
                 targetCalories={calculatedMetrics.targetCalories}
               />
             </div>
-            
+
+            {/* Premium Subscription Section */}
+            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+                <i className="fas fa-crown mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Premium Subscription
+              </h3>
+              {isPremiumLoading ? (
+                <div className="text-center py-4">
+                  <i className="fas fa-spinner fa-spin text-2xl text-text-alt"></i>
+                </div>
+              ) : isPremiumUser ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-lg">
+                    <div>
+                      <p className="text-text-default font-semibold">Premium Active</p>
+                      <p className="text-sm text-text-alt">Enjoy unlimited access to all features</p>
+                    </div>
+                    <i className="fas fa-check-circle text-2xl text-green-500"></i>
+                  </div>
+                  <button
+                    onClick={openCustomerPortal}
+                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+                  >
+                    <i className="fas fa-cog mr-2"></i>
+                    Manage Subscription
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                    <p className="text-text-default font-semibold mb-2">Upgrade to Premium</p>
+                    <ul className="space-y-2 text-sm text-text-alt">
+                      <li><i className="fas fa-check text-teal-500 mr-2"></i>Unlimited barcode scans</li>
+                      <li><i className="fas fa-check text-teal-500 mr-2"></i>Advanced analytics</li>
+                      <li><i className="fas fa-check text-teal-500 mr-2"></i>7-day meal planning</li>
+                      <li><i className="fas fa-check text-teal-500 mr-2"></i>Export to PDF</li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
+                  >
+                    <i className="fas fa-rocket mr-2"></i>
+                    Start 7-Day Free Trial
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
                 <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
                     <i className="fas fa-palette mr-2.5 text-purple-500 dark:text-purple-400"></i>Appearance
@@ -941,6 +1009,95 @@ const App: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+                <i className="fas fa-shield-alt mr-2.5 text-blue-500 dark:text-blue-400"></i>Legal & Privacy
+              </h3>
+              <div className="space-y-3">
+                <a 
+                  href="/privacy-policy.html" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  <span className="text-text-default">Privacy Policy</span>
+                  <i className="fas fa-external-link-alt text-text-alt text-sm"></i>
+                </a>
+                <a 
+                  href="/terms-of-service.html" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  <span className="text-text-default">Terms of Service</span>
+                  <i className="fas fa-external-link-alt text-text-alt text-sm"></i>
+                </a>
+                <div className="pt-3 mt-3 border-t border-border-default">
+                  <p className="text-sm text-text-alt">
+                    <i className="fas fa-info-circle mr-2"></i>
+                    By using DietWise, you agree to our Terms of Service and Privacy Policy.
+                  </p>
+                  <p className="text-xs text-text-alt mt-2">
+                    Version 1.0.0 · © 2025 Wizard Tech LLC
+                  </p>
+                </div>
+              </div>
+
+              {/* Account Section */}
+              <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+                <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+                  <i className="fas fa-user mr-2.5 text-indigo-500 dark:text-indigo-400"></i>Account
+                </h3>
+                {isAuthenticated && user ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <p className="text-sm text-text-alt">Signed in as</p>
+                      <p className="text-text-default font-semibold">{user.email}</p>
+                      {user.name && <p className="text-text-alt">{user.name}</p>}
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm('Are you sure you want to sign out?')) {
+                          logout();
+                        }
+                      }}
+                      className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+                    >
+                      <i className="fas fa-sign-out-alt mr-2"></i>
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-text-alt">Sign in to sync your data across devices and access premium features.</p>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => {
+                          setAuthModalMode('login');
+                          setIsAuthModalOpen(true);
+                        }}
+                        className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
+                      >
+                        <i className="fas fa-sign-in-alt mr-2"></i>
+                        Sign In
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAuthModalMode('signup');
+                          setIsAuthModalOpen(true);
+                        }}
+                        className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-2.5 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+                      >
+                        <i className="fas fa-user-plus mr-2"></i>
+                        Create Account
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <AdPlaceholder sizeLabel="Profile Tab Ad (e.g., 300x100)" className="mt-6" />
           </>
         );
@@ -948,7 +1105,7 @@ const App: React.FC = () => {
         return (
           <>
             <FoodLog 
-                loggedItems={filteredFoodLog.filter(item => differenceInCalendarDays(new Date(), new Date(item.timestamp)) === 0)}
+                loggedItems={todaysLog}
                 offlineQueue={offlineFoodQueue}
                 onAddFood={(item, source) => handleAddFood(item, source)} 
                 onRemoveFood={handleRemoveFood} 
@@ -979,18 +1136,20 @@ const App: React.FC = () => {
                 />
               </div>
             )}
-            <MyLibraryComponent
-              myFoods={myFoods}
-              myMeals={myMeals}
-              onAddFood={handleAddMyFood}
-              onUpdateFood={handleUpdateMyFood}
-              onDeleteFood={handleDeleteMyFood}
-              onAddMeal={handleAddMyMeal}
-              onUpdateMeal={handleUpdateMyMeal}
-              onDeleteMeal={handleDeleteMyMeal}
-              onLogMeal={(mealId: string) => handleLogMyMeal(mealId)}
-              apiKeyMissing={apiKeyStatus === 'missing'}
-            />
+            <Suspense fallback={<LoadingSpinner message="Loading Food Library..." />}>
+              <MyLibraryComponent
+                myFoods={myFoods}
+                myMeals={myMeals}
+                onAddFood={handleAddMyFood}
+                onUpdateFood={handleUpdateMyFood}
+                onDeleteFood={handleDeleteMyFood}
+                onAddMeal={handleAddMyMeal}
+                onUpdateMeal={handleUpdateMyMeal}
+                onDeleteMeal={handleDeleteMyMeal}
+                onLogMeal={(mealId: string) => handleLogMyMeal(mealId)}
+                apiKeyMissing={apiKeyStatus === 'missing'}
+              />
+            </Suspense>
             <AdPlaceholder sizeLabel="Food Library Ad (e.g., 300x100)" className="mt-6"/>
           </>
         );
@@ -1034,19 +1193,23 @@ const App: React.FC = () => {
             </div>
           );
         }
-        return <MealPlannerComponent 
-                  calorieTarget={calculatedMetrics.targetCalories} 
-                  isProfileComplete={isProfileCompleteForFunctionality} 
-                  apiKeyStatus={apiKeyStatus}
-                  apiKeyMissing={apiKeyStatus === 'missing'}
-                  onPlanGenerated={(planName) => {
-                    const shareText = `Just generated my 7-day meal plan "${planName || 'Awesome Plan'}" with DietWise! Ready for a healthy week. #DietWise #MealPlanning #HealthyLifestyle`;
-                    displayGlobalSuccessMessage({
-                      message: "7-Day Meal Plan generated successfully!",
-                      shareData: { title: "My DietWise Meal Plan!", text: shareText, url: window.location.href }
-                    });
-                  }}
-               />;
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading 7-Day Planner..." />}>
+            <MealPlannerComponent 
+              calorieTarget={calculatedMetrics.targetCalories} 
+              isProfileComplete={isProfileCompleteForFunctionality} 
+              apiKeyStatus={apiKeyStatus}
+              apiKeyMissing={apiKeyStatus === 'missing'}
+              onPlanGenerated={(planName) => {
+                const shareText = `Just generated my 7-day meal plan "${planName || 'Awesome Plan'}" with DietWise! Ready for a healthy week. #DietWise #MealPlanning #HealthyLifestyle`;
+                displayGlobalSuccessMessage({
+                  message: "7-Day Meal Plan generated successfully!",
+                  shareData: { title: "My DietWise Meal Plan!", text: shareText, url: window.location.href }
+                });
+              }}
+            />
+          </Suspense>
+        );
       case Tab.Progress:
         return (
           <>
@@ -1061,25 +1224,29 @@ const App: React.FC = () => {
                 />
               </div>
             )}
-            <ProgressTabComponent
-              userProfile={userProfile}
-              actualWeightLog={filteredWeightLog}
-              onAddWeightEntry={handleAddWeightEntry}
-              reminderSettings={reminderSettings}
-              onUpdateReminderSettings={handleUpdateReminderSettings}
-              isProfileComplete={isProfileCompleteForFunctionality}
-              currentTheme={currentTheme}
-            />
+            <Suspense fallback={<LoadingSpinner message="Loading Progress..." />}>
+              <ProgressTabComponent
+                userProfile={userProfile}
+                actualWeightLog={filteredWeightLog}
+                onAddWeightEntry={handleAddWeightEntry}
+                reminderSettings={reminderSettings}
+                onUpdateReminderSettings={handleUpdateReminderSettings}
+                isProfileComplete={isProfileCompleteForFunctionality}
+                currentTheme={currentTheme}
+              />
+            </Suspense>
           </>
         );
       case Tab.Analytics:
         return (
           <>
-            <AdvancedAnalytics
-              foodLog={filteredFoodLog}
-              isPremiumUser={isPremiumUser}
-              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-            />
+            <Suspense fallback={<LoadingSpinner message="Loading Analytics..." />}>
+              <AdvancedAnalytics
+                foodLog={filteredFoodLog}
+                isPremiumUser={isPremiumUser}
+                onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+              />
+            </Suspense>
             {isPremiumUser && <AdPlaceholder sizeLabel="Analytics Ad (e.g., 300x100)" className="mt-6"/>}
           </>
         );
@@ -1116,9 +1283,13 @@ const App: React.FC = () => {
     setIsDashboardVisible(newVisibility);
     trackEvent('dashboard_toggled', { visible: newVisibility });
   };
-  
+
   const showDashboardToggle = isProfileSufficientForDashboard && !isInitialSetup;
 
+  // Show splash screen if needed
+  if (showSplash) {
+    return <DietWiseSplashScreen onComplete={hideSplash} />;
+  }
 
   return (
     <div className={`min-h-screen bg-bg-default text-text-default flex flex-col theme-${currentTheme}`}>
@@ -1141,7 +1312,7 @@ const App: React.FC = () => {
           )}
         </div>
       </header>
-      
+
       <nav className="bg-bg-card shadow-md sticky top-[68px] sm:top-[76px] z-40 border-b border-border-default">
         <div className="container mx-auto max-w-7xl px-2 sm:px-4 flex justify-center sm:justify-start space-x-0.5 sm:space-x-1 overflow-x-auto custom-scrollbar">
           {tabOrder.map((tab) => (
@@ -1187,15 +1358,17 @@ const App: React.FC = () => {
         {apiKeyStatus === 'checking' && activeTab !== Tab.Profile && 
             <Alert type="info" message="Verifying AI integration status..." className="mb-4" />
         }
-        
+
         {showDashboardToggle && isDashboardVisible && (
-          <UserStatusDashboard 
-            userProfile={userProfile}
-            actualWeightLog={actualWeightLog}
-            reminderSettings={reminderSettings}
-            streakData={streakData}
-            onNavigateToMealIdeas={() => handleTabChange(Tab.Meals)}
-          />
+          <Suspense fallback={<LoadingSpinner message="Loading Dashboard..." />}>
+            <UserStatusDashboard 
+              userProfile={userProfile}
+              actualWeightLog={actualWeightLog}
+              reminderSettings={reminderSettings}
+              streakData={streakData}
+              onNavigateToMealIdeas={() => handleTabChange(Tab.Meals)}
+            />
+          </Suspense>
         )}
          {milestones.length > 0 && activeTab === Tab.Progress && (
             <div className="mt-8 bg-bg-card p-6 rounded-xl shadow-xl">
@@ -1235,7 +1408,6 @@ const App: React.FC = () => {
         />
       )}
 
-
       <Modal 
         isOpen={isLogFromMyMealModalOpen} 
         onClose={() => setIsLogFromMyMealModalOpen(false)} 
@@ -1264,20 +1436,22 @@ const App: React.FC = () => {
         )}
       </Modal>
 
-      <ReviewPromptModal
-        isOpen={isReviewPromptModalOpen}
-        onClose={() => setIsReviewPromptModalOpen(false)}
-        onSubmitFeedback={(rating, feedbackText) => {
-          trackEvent('internal_feedback_submitted', { rating, feedback_length: feedbackText?.length });
-          handleUpdateReminderSettings({ hasGivenFeedback: true }); 
-          if (rating >=4) {
-             displayGlobalSuccessMessage({message: "Thanks for your positive feedback! We appreciate it."});
-          } else {
-             displayGlobalSuccessMessage({message: "Thanks for your feedback! We'll use it to improve."});
-          }
-          setIsReviewPromptModalOpen(false);
-        }}
-      />
+      <Suspense fallback={<LoadingSpinner message="Loading Review Modal..." />}>
+        <ReviewPromptModal
+          isOpen={isReviewPromptModalOpen}
+          onClose={() => setIsReviewPromptModalOpen(false)}
+          onSubmitFeedback={(rating, feedbackText) => {
+            trackEvent('internal_feedback_submitted', { rating, feedback_length: feedbackText?.length });
+            handleUpdateReminderSettings({ hasGivenFeedback: true }); 
+            if (rating >=4) {
+               displayGlobalSuccessMessage({message: "Thanks for your positive feedback! We appreciate it."});
+            } else {
+               displayGlobalSuccessMessage({message: "Thanks for your feedback! We'll use it to improve."});
+            }
+            setIsReviewPromptModalOpen(false);
+          }}
+        />
+      </Suspense>
 
       <Modal 
         isOpen={isUpgradeModalOpen && !isPremiumUser} 
@@ -1288,15 +1462,27 @@ const App: React.FC = () => {
         title=""
         size="md"
       >
-        <StripeCheckout
-          onClose={() => {
-            setIsUpgradeModalOpen(false);
-            trackEvent('stripe_checkout_closed');
-          }}
-          customerEmail={userProfile.email}
-          selectedPlan="yearly"
-        />
+        <Suspense fallback={<LoadingSpinner message="Loading Checkout..." />}>
+          <StripeCheckout
+            onClose={() => {
+              setIsUpgradeModalOpen(false);
+              trackEvent('stripe_checkout_closed');
+            }}
+            customerEmail={user?.email || userProfile.email}
+            selectedPlan="yearly"
+          />
+        </Suspense>
       </Modal>
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          checkPremiumStatus(); // Refresh premium status after login
+          trackEvent('auth_success', { mode: authModalMode });
+        }}
+        initialMode={authModalMode}
+      />
 
       <footer className="bg-slate-800 dark:bg-slate-900 text-slate-300 dark:text-slate-400 text-center p-8 mt-16 border-t border-slate-700 dark:border-slate-600">
         <p className="text-sm">&copy; {new Date().getFullYear()} Wizard Tech, LLC.</p>

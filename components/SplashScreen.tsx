@@ -104,7 +104,7 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
         <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 tracking-wide">
           DietWise
         </h1>
-        
+
         {/* Tagline */}
         <p className="text-xl md:text-2xl text-white/90 font-light tracking-wide">
           Your Personal Health Companion

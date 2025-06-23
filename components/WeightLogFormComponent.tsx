@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WeightEntry } from '../types';
 import { format } from 'date-fns';
-import parseISO from 'date-fns/parseISO';
+import { parseISO } from 'date-fns/parseISO';
 
 interface WeightLogFormProps {
   onAddWeightEntry: (entry: WeightEntry) => void;
@@ -34,7 +34,6 @@ const WeightLogForm: React.FC<WeightLogFormProps> = ({ onAddWeightEntry, latestW
         return;
     }
 
-
     onAddWeightEntry({ date, weight: weightNum });
     setWeight(''); 
     // Optionally set date back to today if desired after submission
@@ -42,7 +41,6 @@ const WeightLogForm: React.FC<WeightLogFormProps> = ({ onAddWeightEntry, latestW
   };
 
   const inputClass = "block w-full px-3 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
-
 
   return (
     <div className="bg-bg-card p-6 rounded-xl shadow-xl">

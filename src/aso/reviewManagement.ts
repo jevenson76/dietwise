@@ -9,14 +9,14 @@ export interface ReviewPromptMetrics {
 
 export class ReviewManagementSystem {
   // REVIEW_REQUEST_TRIGGERS are conceptual, logic implemented in shouldRequestReview
-  
+
   async shouldRequestReview(
     userId: string, // For potential future use (e.g., fetching user-specific suppression flags)
     metrics: ReviewPromptMetrics,
     lastPromptDate: string | null,
     hasGivenFeedback: boolean
   ): Promise<boolean> {
-    
+
     if (hasGivenFeedback) {
       trackEvent('review_prompt_skipped_already_gave_feedback', { userId });
       return false; // User has already given feedback through the internal system
@@ -54,20 +54,20 @@ export class ReviewManagementSystem {
 
   // Placeholder methods from original file, adapted or kept for conceptual structure
   async submitReviewResponse(reviewId: string, response: string): Promise<void> {
-    console.log(`Submitting response for review ${reviewId}: ${response}`);
+
     trackEvent('review_response_submitted_placeholder', { reviewId });
   }
 
   async createInternalTicket(ticketData: any): Promise<void> {
-    console.log("Creating internal ticket:", ticketData);
+
     trackEvent('internal_feedback_ticket_created_placeholder', ticketData);
   }
 
   async sendPersonalFollowUp(email: string): Promise<void> {
-    console.log(`Sending personal follow-up to ${email}`);
+
     trackEvent('personal_follow_up_sent_placeholder', { email });
   }
-  
+
   extractIssues(content: string): string[] {
     if (content.toLowerCase().includes("bug") || content.toLowerCase().includes("crash")) {
         return ["Technical Issue Reported"];
@@ -77,7 +77,7 @@ export class ReviewManagementSystem {
     }
     return ["General Feedback"];
   }
-  
+
   categorizeReview(content: string): 'technical_issue' | 'feature_request' | 'general_negative' {
      if (content.toLowerCase().includes("bug") || content.toLowerCase().includes("crash") || content.toLowerCase().includes("error")) {
         return "technical_issue";
@@ -91,14 +91,14 @@ export class ReviewManagementSystem {
   async handleNegativeReview(reviewData: { reviewId: string, content: string, rating: number, userEmail?: string }): Promise<void> {
     const response = this.generateReviewResponse(reviewData);
     await this.submitReviewResponse(reviewData.reviewId, response);
-    
+
     await this.createInternalTicket({
       type: 'negative_review',
       review_content: reviewData.content,
       user_rating: reviewData.rating,
       suggested_improvements: this.extractIssues(reviewData.content),
     });
-    
+
     if (reviewData.userEmail) {
       await this.sendPersonalFollowUp(reviewData.userEmail);
     }
@@ -111,7 +111,7 @@ export class ReviewManagementSystem {
       feature_request: `Thanks for the suggestion! We're always looking to improve DietWise based on user feedback. This feature request has been added to our development roadmap. Follow us for updates!`,
       general_negative: `We appreciate your honest feedback and apologize that DietWise didn't meet your expectations. We'd love the opportunity to make this right - please reach out to our support team so we can help improve your experience.`,
     };
-    
+
     const category = this.categorizeReview(reviewData.content);
     return templates[category] || templates.general_negative;
   }

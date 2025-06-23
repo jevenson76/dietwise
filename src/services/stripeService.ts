@@ -40,14 +40,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
  */
 export async function redirectToCheckout(priceId: string, customerEmail?: string): Promise<void> {
   const stripe = await stripePromise;
-  
+
   if (!stripe) {
     throw new Error('Stripe failed to initialize');
   }
 
   // For a real implementation, you'd call your backend API here
   // For now, we'll use Stripe's client-only approach (less secure but works for testing)
-  
+
   const { error } = await stripe.redirectToCheckout({
     lineItems: [
       {
@@ -78,17 +78,21 @@ export async function openCustomerPortal(): Promise<void> {
 }
 
 /**
- * Mock function to check subscription status
- * In a real app, this would call your backend API
+ * Check subscription status via backend API
+ * @deprecated Use stripeApi.getSubscriptionStatus() instead for proper backend integration
  */
 export async function getSubscriptionStatus(userId: string): Promise<{
   isActive: boolean;
   plan?: 'monthly' | 'yearly';
   currentPeriodEnd?: Date;
 }> {
-  // Mock implementation - replace with real API call
-  const mockSubscription = localStorage.getItem(`subscription_${userId}`);
+  // DEPRECATED: This function uses localStorage fallback for backwards compatibility
+  // Production apps should use the API client in src/services/api/stripe.ts
+  console.warn('Using deprecated getSubscriptionStatus. Use stripeApi.getSubscriptionStatus() instead.');
   
+  // Fallback to localStorage for backwards compatibility during migration
+  const mockSubscription = localStorage.getItem(`subscription_${userId}`);
+
   if (mockSubscription) {
     try {
       return JSON.parse(mockSubscription);
@@ -96,7 +100,7 @@ export async function getSubscriptionStatus(userId: string): Promise<{
       return { isActive: false };
     }
   }
-  
+
   return { isActive: false };
 }
 
@@ -110,9 +114,9 @@ export function activateSubscription(userId: string, plan: 'monthly' | 'yearly')
     plan,
     currentPeriodEnd: new Date(Date.now() + (plan === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000),
   };
-  
+
   localStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
-  
+
   // Trigger a page reload to update the premium status
   window.location.reload();
 }

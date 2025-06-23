@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PREMIUM_FEATURES } from '../src/constants/premiumFeatures';
+import { stripeApi } from '../src/services/api/stripe';
 
 interface UsageData {
   dailyBarcodeScans: number;

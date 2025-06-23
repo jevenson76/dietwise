@@ -1,8 +1,11 @@
-// Simple test to check Supabase auth directly
+// Example test file - Copy to test-auth.js and add your credentials
+// DO NOT commit test-auth.js to the repository!
+
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://jabsotyzukoaqynmwscv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYnNvdHl6dWtvYXF5bm13c2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5ODYzOTYsImV4cCI6MjA2MzU2MjM5Nn0.FZcrFbQTxZ7zlEVa-0euQCvpaQb5bHdcu1hPERz4rIM';
+// Get these from your .env file or environment variables
+const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

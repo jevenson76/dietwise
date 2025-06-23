@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useRef } from 'react';
 import { getSevenDayDietPlan, API_KEY_ERROR_MESSAGE } from '@services/geminiService';
 import { trackEvent } from '@services/analyticsService'; 
@@ -131,7 +130,6 @@ const MealPlannerComponent: React.FC<MealPlannerComponentProps> = ({ calorieTarg
 
   const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
 
-
   if (!isProfileComplete || !calorieTarget) {
     return (
       <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
@@ -154,7 +152,7 @@ const MealPlannerComponent: React.FC<MealPlannerComponentProps> = ({ calorieTarg
         <i className="fas fa-calendar-alt mr-2.5 text-sky-500 dark:text-sky-400"></i>AI 7-Day Meal Plan & Shopping List
       </h2>
       <p className="text-sm text-text-alt mb-6">Enter any dietary preferences and let AI craft a plan for your ~{calorieTarget} kcal target!</p>
-      
+
       {apiKeyMissing && (
          <Alert type="warning" message={<><strong>7-Day Planner Disabled:</strong><br/>{API_KEY_ERROR_MESSAGE}</>} className="mb-4" />
       )}
@@ -183,7 +181,7 @@ const MealPlannerComponent: React.FC<MealPlannerComponentProps> = ({ calorieTarg
       >
         {isLoading ? <LoadingSpinner size="sm" color="text-white" label="Generating plan"/> : <><i className="fas fa-magic fa-fw mr-2"></i>Generate Plan & List</>}
       </button>
-      
+
       {apiKeyStatus === 'missing' && !apiKeyMissing && <Alert type="warning" message="Gemini API Key is missing or invalid. Plan generation is disabled." className="mt-4" />}
       {error && <Alert type="error" message={error} onClose={() => setError(null)} className="mt-4" />}
 

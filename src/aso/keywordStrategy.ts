@@ -110,13 +110,13 @@ interface KeywordRanking {
 export class ASOTracker {
   async getKeywordRanking(keyword: string): Promise<{position: number, volume: number, difficulty: number, trend: string}> {
     // Placeholder implementation
-    console.log(`Fetching ranking for ${keyword}`);
+
     return { position: Math.floor(Math.random() * 100) + 1, volume: Math.floor(Math.random() * 10000), difficulty: Math.random(), trend: "stable" };
   }
 
   async trackKeywordRankings(): Promise<KeywordRanking[]> {
     const rankings: KeywordRanking[] = [];
-    
+
     for (const keyword of ASO_KEYWORDS.primary) {
       const ranking = await this.getKeywordRanking(keyword);
       rankings.push({
@@ -127,20 +127,19 @@ export class ASOTracker {
         trend: ranking.trend,
       });
     }
-    
+
     return rankings;
   }
-  
+
   async updateAppStoreKeywords(keywords: string[]): Promise<void> {
     // Placeholder implementation
-    console.log("Updating app store keywords:", keywords);
-  }
 
+  }
 
   async optimizeSeasonalKeywords(): Promise<void> {
     const currentSeason = this.getCurrentSeason();
     const seasonalKeywords = ASO_KEYWORDS.seasonal.find(s => s.season === currentSeason);
-    
+
     if (seasonalKeywords) {
       await this.updateAppStoreKeywords(seasonalKeywords.keywords);
     }
@@ -149,7 +148,7 @@ export class ASOTracker {
   private getCurrentSeason(): string {
     const now = new Date();
     const month = now.getMonth() + 1;
-    
+
     if (month >= 12 || month <= 2) return 'New Year';
     if (month >= 3 && month <= 6) return 'Summer Prep';
     if (month >= 10) return 'Holidays';

@@ -87,7 +87,7 @@ interface ViralChallenge {
 export class ViralContentGenerator {
   async getUserData(userId: string): Promise<any> {
     // Placeholder: fetch actual user data
-    console.log(`Fetching data for user ${userId}`);
+
     return { 
         id: userId, 
         name: "User " + userId,
@@ -100,7 +100,7 @@ export class ViralContentGenerator {
 
   async renderVisualTemplate(template: any, user: any): Promise<any> {
       // Placeholder for visual rendering logic
-      console.log("Rendering visual template:", template, "for user:", user.id);
+
       return { url: `https://example.com/generated_visual_${template.type}.png` };
   }
 
@@ -122,7 +122,7 @@ export class ViralContentGenerator {
 
   private async generateVisualAssets(user: any, trigger: ViralTrigger): Promise<any> {
     // Placeholder implementation for generating visual assets
-    console.log(`Generating visual assets for user ${user.id} and trigger ${trigger.id}`);
+
     if (trigger.reward.type === 'social_post' && trigger.reward.value?.template) {
       return this.renderVisualTemplate({ type: trigger.reward.value.template }, user);
     }
@@ -132,9 +132,9 @@ export class ViralContentGenerator {
   async generateSharableContent(userId: string, triggerType: string): Promise<SharableContent> {
     const user = await this.getUserData(userId);
     const trigger = VIRAL_TRIGGERS.find(t => t.id === triggerType);
-    
+
     if (!trigger) throw new Error('Trigger not found');
-    
+
     return {
       content_type: trigger.reward.type,
       visual_assets: await this.generateVisualAssets(user, trigger),
@@ -170,7 +170,7 @@ export class ViralContentGenerator {
         `Did you know? @DietWise just shared a surprising fact about my eating habits! #SmartNutrition`,
       ]
     };
-    
+
     return variations[trigger.id] || [`Amazing progress with @DietWise! 🚀`];
   }
 
@@ -208,7 +208,7 @@ export class ViralContentGenerator {
         ],
       },
     };
-    
+
     const challenge = challenges[challengeType];
     if (!challenge) throw new Error(`Challenge type ${challengeType} not found.`);
     return challenge;

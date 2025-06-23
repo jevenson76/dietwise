@@ -132,17 +132,17 @@ export class RevenueOptimizationEngine {
   async getUserProfile(userId: string): Promise<any> { /* Placeholder */ return { id:userId, high_engagement: Math.random() > 0.5, student: Math.random() > 0.8 }; }
   async calculatePriceElasticity(userProfile: any): Promise<number> { /* Placeholder */ return -0.5 + Math.random() * (-1.5 - (-0.5)); } // Random between -0.5 and -1.5
   async getCompetitivePosition(): Promise<any> { /* Placeholder */ return { market_leader_price: 19.99, our_features_vs_competitors: 'superior' }; }
-  
+
   calculateDiscountEligibility(userProfile: any): boolean { /* Placeholder */ return userProfile.student || !userProfile.high_engagement; }
   async identifyUpsellOpportunities(userProfile: any): Promise<string[]> { /* Placeholder */ return userProfile.high_engagement ? ['Annual Plan', 'Family Pack'] : ['Extended Trial']; }
   calculateRetentionPricing(userProfile: any): number | null { /* Placeholder */ return userProfile.is_about_to_churn ? 9.99 : null; }
-  
+
   async getCohortData(): Promise<Array<any>> { /* Placeholder */ 
       return [{id: '2023-Q1', arpu: 12.50, monthly_churn_rate: 0.05, cac: 30}, {id: '2023-Q2', arpu: 13.00, monthly_churn_rate: 0.045, cac: 28}]; 
   }
   projectRevenue(cohort:any): Record<string, number> { /* Placeholder */ return { month1: cohort.arpu * 1000, month2: cohort.arpu * 1000 * (1-cohort.monthly_churn_rate) }; }
   async runScenarioAnalysis(): Promise<any> { /* Placeholder */ return { best_case_revenue: 1000000, worst_case_revenue: 300000 }; }
-  
+
   async getCurrentCashPosition(): Promise<number> { /* Placeholder */ return 500000; }
   async projectInflows(): Promise<any> { /* Placeholder */ return { total: 80000, monthly_average: 80000 }; }
   async projectOutflows(): Promise<any> { /* Placeholder */ return { total: 60000, monthly_average: 60000 }; }
@@ -151,12 +151,11 @@ export class RevenueOptimizationEngine {
       return net < 0 ? Math.abs(net) * 6 : "Profitable / Self-sustaining for next 6 months"; // 6 months runway target
   }
 
-
   async optimizePricing(userId: string): Promise<PersonalizedPricing> {
     const userProfile = await this.getUserProfile(userId);
     const priceElasticity = await this.calculatePriceElasticity(userProfile);
     // const competitivePosition = await this.getCompetitivePosition(); // Not used in current calculateOptimalPrice
-    
+
     return {
       recommended_price: this.calculateOptimalPrice(userProfile, priceElasticity),
       discount_eligibility: this.calculateDiscountEligibility(userProfile),
@@ -175,17 +174,17 @@ export class RevenueOptimizationEngine {
       student: 0.7,
       low_income_region: 0.8,
     };
-    
+
     let adjustment = 1.0;
-    
+
     Object.entries(adjustmentFactors).forEach(([factor, multiplier]) => {
       if (profile[factor]) { // Check if the factor (e.g., 'student') is true in the profile
         adjustment *= multiplier;
       }
     });
-    
+
     const elasticityAdjustment = 1 + (elasticity * 0.1); // Assuming elasticity is a negative value representing sensitivity
-    
+
     return parseFloat((basePrice * adjustment * elasticityAdjustment).toFixed(2));
   }
 
@@ -193,7 +192,7 @@ export class RevenueOptimizationEngine {
   async generateFinancialModel(): Promise<FinancialModel> {
     const cohorts = await this.getCohortData();
     const projections: Record<string, any> = {};
-    
+
     for (const cohort of cohorts) {
       projections[cohort.id] = {
         ltv: this.calculateLTV(cohort),
@@ -202,7 +201,7 @@ export class RevenueOptimizationEngine {
         revenue_projection: this.projectRevenue(cohort),
       };
     }
-    
+
     return {
       cohort_projections: projections,
       overall_metrics: this.calculateOverallMetrics(projections),
@@ -215,7 +214,7 @@ export class RevenueOptimizationEngine {
     const monthlyRevenue = cohort.arpu;
     const churnRate = cohort.monthly_churn_rate;
     const grossMargin = 0.85; // 85% gross margin
-    
+
     if (churnRate === 0) return Infinity; // Avoid division by zero if churn is zero
     return parseFloat(((monthlyRevenue * grossMargin) / churnRate).toFixed(2));
   }
@@ -241,14 +240,13 @@ export class RevenueOptimizationEngine {
       return recs;
   }
 
-
   // Cash Flow Management
   async manageCashFlow(): Promise<CashFlowReport> {
     const currentCash = await this.getCurrentCashPosition();
     const projectedInflows = await this.projectInflows();
     const projectedOutflows = await this.projectOutflows();
     const netCashFlow = projectedInflows.total - projectedOutflows.total;
-    
+
     return {
       current_position: currentCash,
       projected_inflows: projectedInflows,
@@ -279,7 +277,6 @@ export class UnitEconomicsDashboard {
     async getChannelPerformance(): Promise<any> { /* Placeholder */ return { 'organic': {cac:20, ltv:180}, 'paid_social': {cac:60, ltv:120} }; }
     async getPricingAnalysis(): Promise<any> { /* Placeholder */ return { 'standard_plan': {conversion:0.1, arpu:14.99}, 'annual_plan': {conversion:0.05, arpu:12.50*12} }; }
     async getForecasting(): Promise<any> { /* Placeholder */ return { next_12_months_revenue: 1200000 }; }
-
 
   async getDashboardData(): Promise<UnitEconomicsData> {
     return {

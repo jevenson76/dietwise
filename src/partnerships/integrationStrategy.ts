@@ -132,19 +132,19 @@ export class PartnershipManager {
         api_endpoints: ['/api/corporate/reporting']
       }
     };
-    
+
     return plans[partner.type] || { data_sync: [], features: [], api_endpoints: [] };
   }
-  
+
   async proposeBusinssTerms(partner: Partner): Promise<any> {
       // Placeholder
-      console.log(`Proposing business terms for ${partner.name}`);
+
       return { term_sheet_version: "1.0", exclusivity: "none", revenue_share_percentage: partner.type === 'grocery_service' ? 5 : 0 };
   }
 
   async assessTechnicalRequirements(partner: Partner): Promise<any> {
       // Placeholder
-      console.log(`Assessing technical requirements for ${partner.name}`);
+
       return { api_version_support: "v2", auth_method: "OAuth2.0", data_format: "JSON" };
   }
 
@@ -153,10 +153,9 @@ export class PartnershipManager {
       return `Phase 1 (Planning): 2 weeks, Phase 2 (Development): ${partner.integration_effort === 'high' ? 8 : partner.integration_effort === 'medium' ? 4 : 2} weeks, Phase 3 (Testing & Launch): 2 weeks`;
   }
 
-
   async initiatePartnership(partnerName: string): Promise<PartnershipPlan> {
     const partner = this.findPartner(partnerName);
-    
+
     return {
       partner,
       integration_plan: await this.createIntegrationPlan(partner),

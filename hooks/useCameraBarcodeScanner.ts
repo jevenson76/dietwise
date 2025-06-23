@@ -27,13 +27,12 @@ export const useCameraBarcodeScanner = ({ onScanSuccess, onScanError, videoEleme
     hints.set(DecodeHintType.TRY_HARDER, true);
 
     codeReaderRef.current = new BrowserMultiFormatReader(hints);
-    
+
     return () => {
       stopScan(); // Ensure cleanup on unmount
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoElementId]);
-
 
   const startScan = useCallback(async () => {
     if (!codeReaderRef.current) {

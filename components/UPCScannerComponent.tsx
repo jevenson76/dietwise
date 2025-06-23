@@ -31,7 +31,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
   onUpgradeClick
 }) => {
   const [videoElementId] = useState(() => `${VIDEO_ELEMENT_ID_PREFIX}${Math.random().toString(36).substring(7)}`);
-  
+
   const [scannedUpc, setScannedUpc] = useState<string | null>(null);
   const [foodInfo, setFoodInfo] = useState<ScannedFoodInfo | null>(null);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
@@ -39,17 +39,16 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
   const [scannerError, setScannerError] = useState<string | null>(null); 
   const [groundingSources, setGroundingSources] = useState<GroundingSource[]>([]);
 
-
   const handleScanSuccess = useCallback((text: string) => {
     // Check if user can scan
     if (!canScanBarcode.allowed) {
       setScannerError('scan_limit_reached');
       return;
     }
-    
+
     // Increment the scan count
     onBarcodeScan();
-    
+
     trackEvent('upc_scan_success', { upc: text, context: 'global_scanner' });
     setScannedUpc(text);
     setIsLoadingApi(true);
@@ -106,13 +105,12 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
     onScanError: handleScanErrorFromHook,
     videoElementId: videoElementId,
   });
-  
+
   useEffect(() => {
     if (scannerHookErrorInternal) {
       setScannerError(`Scanner Initialization Error: ${scannerHookErrorInternal}. Check camera permissions.`);
     }
   }, [scannerHookErrorInternal]);
-
 
   useEffect(() => {
     if (isOpen) {
@@ -123,13 +121,13 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
       setScannerError(null);
       setIsLoadingApi(false);
       setGroundingSources([]);
-      
+
       if (apiKeyMissing) {
         setScannerError(API_KEY_ERROR_MESSAGE + " Barcode scanning is disabled.");
         trackEvent('upc_scanner_disabled_apikey_missing');
         return;
       }
-      
+
       const timer = setTimeout(() => {
         const videoElement = document.getElementById(videoElementId) as HTMLVideoElement;
         if (videoRef.current && videoElement && videoElement.isConnected) { 
@@ -148,7 +146,6 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
       stopScan();
     }
   }, [isOpen, startScan, stopScan, videoElementId, videoRef, apiKeyMissing]);
-
 
   const handleCloseScanner = () => {
     trackEvent('upc_scanner_modal_closed_via_prop_handler');
@@ -175,7 +172,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
         trackEvent('upc_log_food_failed_missing_info', { foodInfo });
     }
   };
-  
+
   const currentError = apiError || scannerError;
 
   return (
@@ -197,7 +194,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
                 </div>
             )}
           </div>
-          
+
           { currentError && currentError !== 'scan_limit_reached' &&
             <Alert 
               type="error" 
@@ -206,7 +203,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
               className="w-full max-w-md"
             />
           }
-          
+
           {scannerError === 'scan_limit_reached' && (
             <div className="w-full max-w-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
               <div className="flex items-start">
@@ -243,7 +240,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
               <i className="fas fa-sync-alt mr-2"></i>Retry Camera
             </button>
           )}
-          
+
           {isLoadingApi && <div className="my-4 text-center w-full max-w-md"><LoadingSpinner color="text-teal-600 dark:text-teal-400" label={`Fetching info for UPC: ${scannedUpc}`}/> <p className="text-text-alt mt-2 text-sm">Fetching food info for UPC: {scannedUpc}...</p></div>}
 
           {foodInfo && !isLoadingApi && (
@@ -251,7 +248,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
               <h3 className="text-xl font-semibold text-teal-700 dark:text-teal-400">{foodInfo.name}</h3>
               {foodInfo.brand && <p className="text-sm text-text-alt">Brand: {foodInfo.brand}</p>}
               {foodInfo.servingSize && <p className="text-sm text-text-alt mb-2">Serving Size: {foodInfo.servingSize}</p>}
-              
+
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-sm border-t border-border-default pt-3">
                 {foodInfo.calories !== undefined && <p><strong className="text-text-default">Calories:</strong> <span className="text-orange-600 dark:text-orange-400 font-medium">{foodInfo.calories} kcal</span></p>}
                 {foodInfo.protein !== undefined && <p><strong className="text-text-default">Protein:</strong> <span className="text-text-alt">{foodInfo.protein} g</span></p>}

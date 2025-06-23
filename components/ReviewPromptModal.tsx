@@ -34,7 +34,7 @@ const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({ isOpen, onClose, 
         setStep('rating');
     }, 3000);
   };
-  
+
   const handleCloseAndReset = () => {
     onClose();
     // Reset state for next time

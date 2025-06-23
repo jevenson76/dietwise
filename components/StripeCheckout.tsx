@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { SUBSCRIPTION_PLANS, redirectToCheckout, activateSubscription } from '../src/services/stripeService';
+import { SUBSCRIPTION_PLANS } from '../src/services/stripeService';
+import { stripeApi } from '../src/services/api/stripe';
 import { trackEvent } from '@services/analyticsService';
 import LoadingSpinner from './common/LoadingSpinner';
 import Alert from './common/Alert';
@@ -22,7 +23,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const handleCheckout = async (planId: 'monthly' | 'yearly') => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const plan = SUBSCRIPTION_PLANS.find(p => p.id === planId);
       if (!plan) {
@@ -35,8 +36,20 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         customerEmail: customerEmail || 'anonymous'
       });
 
-      await redirectToCheckout(plan.stripePriceId, customerEmail);
-      
+      // Create checkout session via backend API
+      const { url } = await stripeApi.createCheckoutSession({
+        priceId: plan.stripePriceId,
+        successUrl: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: window.location.href,
+      });
+
+      // Redirect to Stripe Checkout
+      if (url) {
+        window.location.href = url;
+      } else {
+        throw new Error('Failed to create checkout session');
+      }
+
     } catch (err: any) {
       console.error('Checkout error:', err);
       setError(err.message || 'Failed to start checkout process');
@@ -181,7 +194,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
             </>
           )}
         </button>
-        
+
         <button
           onClick={onClose}
           disabled={isLoading}
@@ -189,19 +202,8 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
         >
           Maybe Later
         </button>
-        
-        {/* Demo button for testing subscription activation */}
-        <button
-          onClick={() => {
-            activateSubscription('dietwise_user', activePlan);
-            trackEvent('demo_subscription_activated', { plan: activePlan });
-            onClose();
-          }}
-          className="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 transition-all text-sm border border-purple-300"
-        >
-          <i className="fas fa-flask mr-2"></i>
-          Demo: Activate Premium (Testing Only)
-        </button>
+
+        {/* Demo button removed - now using real backend integration */}
       </div>
 
       {/* Security Badge */}

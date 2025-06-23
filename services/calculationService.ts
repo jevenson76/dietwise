@@ -55,7 +55,7 @@ export const calculateTargetCalories = (
 
   const currentWeightKg = currentWeightLbs * LB_TO_KG;
   const targetWeightKg = targetWeightLbs * LB_TO_KG;
-  
+
   const weightDifferenceKg = targetWeightKg - currentWeightKg;
   let calorieAdjustment = 0;
 
@@ -70,7 +70,6 @@ export const calculateTargetCalories = (
 
   return Math.round(tdee + calorieAdjustment);
 };
-
 
 export const calculateDefaultMacroTargets = (targetCalories: number | null) => {
   if (!targetCalories || targetCalories <= 0) {
@@ -91,7 +90,7 @@ export const calculateDefaultMacroTargets = (targetCalories: number | null) => {
   const protein = Math.round(proteinCalories / 4);
   const carbs = Math.round(carbsCalories / 4);
   const fat = Math.round(fatCalories / 9);
-  
+
   // Fiber recommendation: 14g per 1000 calories
   const fiber = Math.round((targetCalories / 1000) * 14);
 

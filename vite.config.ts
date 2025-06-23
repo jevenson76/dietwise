@@ -1,11 +1,32 @@
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
-      plugins: [react()],
+      plugins: [
+        react(),
+        visualizer({
+          filename: 'dist/stats.html',
+          open: false,
+          gzipSize: true
+        }),
+        // Only add Sentry plugin in production builds
+        ...(mode === 'production' && env.VITE_SENTRY_AUTH_TOKEN ? [
+          sentryVitePlugin({
+            org: env.VITE_SENTRY_ORG,
+            project: env.VITE_SENTRY_PROJECT,
+            authToken: env.VITE_SENTRY_AUTH_TOKEN,
+            silent: true,
+            sourceMaps: {
+              assets: ['./dist/**']
+            }
+          })
+        ] : [])
+      ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
@@ -29,6 +50,24 @@ export default defineConfig(({ mode }) => {
             secure: false
           }
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // Vendor chunks for large libraries
+              'react-vendor': ['react', 'react-dom'],
+              'chart-vendor': ['chart.js', 'chartjs-adapter-date-fns'],
+              'stripe-vendor': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
+              'date-vendor': ['date-fns'],
+              'pdf-vendor': ['jspdf', 'jspdf-autotable'],
+              'capacitor-vendor': ['@capacitor/core', '@capacitor/camera'],
+              'scanner-vendor': ['@zxing/library'],
+              'ai-vendor': ['@google/genai']
+            }
+          }
+        },
+        chunkSizeWarningLimit: 1000
       }
     };
 });

@@ -95,20 +95,19 @@ export class CorporateWellnessManager {
       if (companyData.employee_count > 1000) finalPrice *= 0.9; // Volume discount
       return { ...packageInfo.pricing, per_employee_monthly: finalPrice };
   }
-  
+
   createImplementationPlan(companyData: any): string {
       return `Phase 1 (Kick-off & Setup): 1 week. Phase 2 (Onboarding & Training): 2 weeks for ${companyData.employee_count} employees. Phase 3 (Launch & Monitoring): Ongoing.`;
   }
-  
+
   defineSuccessMetrics(companyData: any): string[] {
       return [`Achieve ${companyData.target_engagement_rate || 70}% employee engagement within 3 months.`, `Demonstrate a ${companyData.health_improvement_target || 5}% improvement in aggregate health scores.`];
   }
 
-
   async generateCorporateProposal(companyData: any): Promise<CorporateProposal> {
     const packageRecommendation = this.recommendPackage(companyData);
     const customPricing = await this.calculateCustomPricing(companyData, packageRecommendation);
-    
+
     return {
       company: companyData.name,
       recommended_package: packageRecommendation,
@@ -124,12 +123,12 @@ export class CorporateWellnessManager {
     // Use the custom price if available, otherwise the base package price
     const perEmployeeMonthly = companyData.customPricing?.per_employee_monthly || pkg.pricing.per_employee_monthly;
     const annualCost = perEmployeeMonthly * 12 * employeeCount + pkg.pricing.setup_fee;
-    
+
     // Industry average wellness ROI calculations
     const reducedHealthcareCosts = employeeCount * (companyData.avg_healthcare_cost_reduction_per_employee || 500); 
     const improvedProductivity = employeeCount * (companyData.avg_productivity_gain_per_employee || 1200); 
     const reducedAbsenteeism = employeeCount * (companyData.avg_absenteeism_reduction_value_per_employee || 800);
-    
+
     const totalBenefits = reducedHealthcareCosts + improvedProductivity + reducedAbsenteeism;
     const roi = annualCost > 0 ? ((totalBenefits - annualCost) / annualCost) * 100 : 0; // Avoid division by zero
     const payback_period_months = totalBenefits > 0 ? Math.ceil((annualCost / totalBenefits) * 12) : Infinity; // Avoid division by zero

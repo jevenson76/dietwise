@@ -1,6 +1,7 @@
 import { GoogleGenAI, GenerateContentResponse, GroundingChunk } from "@google/genai";
 import { GEMINI_MODEL_NAME } from '../constants';
 import { ScannedFoodInfo, SevenDayPlanResponse } from "../types";
+import { log } from '../src/services/loggingService';
 
 const API_KEY = process.env.API_KEY;
 export const API_KEY_ERROR_MESSAGE = "API Key not configured or invalid. AI-powered features are unavailable. Please ensure the API_KEY environment variable is set correctly by the application administrator.";
@@ -8,7 +9,7 @@ const MISSING_KEY_PLACEHOLDER_FOR_CONSTRUCTOR = "MISSING_API_KEY_RUNTIME_CONSTRU
 
 if (!API_KEY || API_KEY === "MISSING_API_KEY" || API_KEY.length < 10 || API_KEY === MISSING_KEY_PLACEHOLDER_FOR_CONSTRUCTOR) {
   const message = `CRITICAL DietWise SETUP ERROR: The Gemini API Key is not configured or is the placeholder value. AI features will not function. Please ensure the 'API_KEY' environment variable is correctly set in the deployment environment. Current key starts with: ${API_KEY ? API_KEY.substring(0,5) : 'undefined'}`;
-  console.error(message);
+  log.error(message, 'gemini-service', { apiKeyProvided: !!API_KEY, apiKeyLength: API_KEY?.length || 0 });
   // No throw here to allow app to load and show errors in UI
 }
 
@@ -20,18 +21,35 @@ const isApiKeyInvalid = () => !API_KEY || API_KEY === "MISSING_API_KEY" || API_K
 
 export const getMealIdeas = async (calorieTarget: number, preferences?: string): Promise<{ ideas: string | null; error?: string }> => {
   if (isApiKeyInvalid()) {
+    log.warn('API key invalid for meal ideas request', 'gemini-service', { calorieTarget, hasPreferences: !!preferences });
     return { ideas: null, error: API_KEY_ERROR_MESSAGE };
   }
+  
+  log.time('getMealIdeas', 'gemini-service');
+  log.info('Requesting meal ideas', 'gemini-service', { calorieTarget, hasPreferences: !!preferences });
+  
   try {
     const prompt = `Suggest 3-4 healthy meal ideas for a day, totaling around ${calorieTarget} calories. ${preferences ? `Consider these preferences: ${preferences}.` : ''} Provide a brief description for each meal (breakfast, lunch, dinner, snack). Format the response as a list.`;
-    
+
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: GEMINI_MODEL_NAME,
       contents: prompt,
     });
+    
+    log.timeEnd('getMealIdeas', 'gemini-service');
+    log.info('Meal ideas request successful', 'gemini-service', { 
+      responseLength: response.text?.length || 0,
+      calorieTarget 
+    });
+    
     return { ideas: response.text, error: undefined };
   } catch (error: any) {
-    console.error("Error fetching meal ideas from Gemini:", error);
+    log.timeEnd('getMealIdeas', 'gemini-service');
+    log.error('Error fetching meal ideas from Gemini', 'gemini-service', { 
+      error: error.message,
+      calorieTarget,
+      hasPreferences: !!preferences
+    });
     return { ideas: null, error: error.message || "Sorry, we couldn't fetch meal ideas at this time. Please try again later." };
   }
 };
@@ -76,25 +94,25 @@ If some nutritional values are missing, omit them from the JSON structure or set
 
     const jsonRegex = /{\s*[\s\S]*?\s*}/m; 
     const match = textResponse.match(jsonRegex);
-    
+
     if (match && match[0]) {
       try {
         let jsonStr = match[0];
         // Attempt to fix common JSON issues like trailing commas before closing braces/brackets
         jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1'); 
-        
+
         const parsedData = JSON.parse(jsonStr) as ScannedFoodInfo;
         // Check for at least a name and one nutritional value to consider it valid
         if (parsedData.name && (parsedData.calories !== undefined || parsedData.protein !== undefined || parsedData.carbs !== undefined || parsedData.fat !== undefined)) {
            return { foodInfo: parsedData, sources };
         }
       } catch (e) {
-        console.warn("Failed to parse JSON from UPC response, attempting to return raw text if relevant: ", e, textResponse);
+
         // Return a more generic "parsing issue" foodInfo object to indicate an attempt was made
         return { foodInfo: { name: "Product (parsing issue)", calories: undefined }, error: `Could not fully parse nutritional data. Details: ${textResponse.substring(0,150)}...`, sources };
       }
     }
-    
+
     // If no JSON match or parsed JSON is invalid
     return { foodInfo: { name: "Product (data extraction issue)", calories: undefined }, error: `Could not extract structured data. Details: ${textResponse.substring(0,150)}...`, sources };
 
@@ -171,18 +189,18 @@ Ensure the JSON is valid.
     if (match && match[2]) {
       jsonStr = match[2].trim();
     }
-    
+
     try {
       const parsedData = JSON.parse(jsonStr) as SevenDayPlanResponse;
       if (parsedData && parsedData.dailyPlans && parsedData.dailyPlans.length > 0 && parsedData.shoppingList) {
         return { planData: parsedData, sources };
       } else {
-        console.warn("Parsed JSON for meal plan is missing expected structure:", parsedData);
+
         return { planData: null, error: "Received plan data in an unexpected format. Please try again. Raw: " + response.text.substring(0,100), sources };
       }
     } catch (e: any) {
       console.error("Failed to parse JSON response for meal plan:", e);
-      console.log("Raw response text for meal plan:", response.text); // Log the problematic text
+       // Log the problematic text
       return { planData: null, error: `Failed to parse meal plan data. Please try again. Error: ${e.message}. Raw: ${response.text.substring(0,100)}...`, sources };
     }
 

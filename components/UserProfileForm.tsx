@@ -48,14 +48,14 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
         // where the LHS of the assignment was incorrectly inferred as 'never'.
         (newProfileDataUpdate as any)[name] = processedValue;
     }
-    
+
     if (name === 'weight' && value && !profile.startWeight && !profile.profileCreationDate) {
       newProfileDataUpdate.startWeight = parseFloat(value);
     }
-    
+
     // Validate the field
     const validationError = validateUserProfile(name, value);
-    
+
     // Update errors state
     setErrors(prev => {
       const newErrors = { ...prev };
@@ -66,7 +66,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
       }
       return newErrors;
     });
-    
+
     onProfileChange({
       ...profile,
       ...newProfileDataUpdate,
@@ -76,7 +76,6 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
   const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
   const selectClass = inputClass;
   const radioLabelBaseClass = "custom-radio-label block w-full text-center px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm cursor-pointer hover:border-teal-400";
-
 
   return (
     <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
@@ -124,7 +123,6 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
           )}
           <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Used for future updates or account recovery. We respect your privacy.</p>
         </div>
-
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
           <div>
@@ -180,7 +178,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
               </div>
             </div>
           </div>
-        
+
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-text-alt">Height</label>
             <div className="grid grid-cols-2 gap-x-4">

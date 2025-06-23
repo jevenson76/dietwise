@@ -4,9 +4,8 @@ import { Chart, ChartConfiguration, ChartTypeRegistry } from 'chart.js';
 import { UserProfile, WeightEntry, AppTheme } from '../types';
 import { LBS_PER_WEEK_TARGET_CHANGE } from '../constants';
 import { format, addWeeks, differenceInWeeks, addDays, differenceInCalendarDays } from 'date-fns';
-import parseISO from 'date-fns/parseISO';
-import startOfDay from 'date-fns/startOfDay';
-
+import { parseISO } from 'date-fns/parseISO';
+import { startOfDay } from 'date-fns/startOfDay';
 
 interface WeightChartComponentProps {
   userProfile: UserProfile | null;
@@ -42,7 +41,7 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
         ctx.fillText("Set a target weight in Profile to see your progress chart.", chartRef.current.width / 2, chartRef.current.height / 2);
         return;
     }
-    
+
     const sortedActualWeights = [...actualWeightLog].sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
 
     const actualWeightData = sortedActualWeights.map(entry => ({
@@ -60,7 +59,7 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
     } else if (!projectionStartWeight && userProfile.weight) {
         projectionStartWeight = userProfile.weight;
     }
-    
+
     if (sortedActualWeights.length > 0) {
         projectionStartDateObj = startOfDay(parseISO(sortedActualWeights[0].date));
     } else if (userProfile.profileCreationDate) {
@@ -69,7 +68,6 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
         projectionStartDateObj = startOfDay(new Date());
     }
 
-
     if (targetWeight !== null && projectionStartWeight !== null) {
       let ratePerWeek: number;
       let weeksToTargetCalc: number;
@@ -77,7 +75,7 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
       if (userProfile.targetDate) {
         const targetDateObj = startOfDay(parseISO(userProfile.targetDate));
         const daysToTarget = differenceInCalendarDays(targetDateObj, projectionStartDateObj);
-        
+
         if (daysToTarget > 0) {
           weeksToTargetCalc = daysToTarget / 7;
           ratePerWeek = (targetWeight - projectionStartWeight) / weeksToTargetCalc;
@@ -104,13 +102,13 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
 
         if (ratePerWeek > 0 && currentExpectedWeight > targetWeight) currentExpectedWeight = targetWeight;
         if (ratePerWeek < 0 && currentExpectedWeight < targetWeight) currentExpectedWeight = targetWeight;
-        
+
         expectedWeightData.push({ x: currentDate.getTime(), y: parseFloat(currentExpectedWeight.toFixed(1)) });
-        
+
         if (userProfile.targetDate && currentExpectedWeight === targetWeight && i >= weeksToTargetCalc && weeksToTargetCalc > 0) break;
         if (i > weeksToTargetCalc + 12 && !userProfile.targetDate) break; 
       }
-      
+
       if (userProfile.targetDate && expectedWeightData.length > 0) {
           const targetDateTime = startOfDay(parseISO(userProfile.targetDate)).getTime();
           const lastExpectedPoint = expectedWeightData[expectedWeightData.length-1];
@@ -131,33 +129,43 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
           }
       }
     }
-    
-    const allDates = [
-        ...actualWeightData.map(d => d.x), 
-        ...expectedWeightData.map(d => d.x)
-    ];
 
-    if (allDates.length === 0) { 
+    // Optimize: Calculate min/max dates in single iteration instead of multiple spread operations
+    let minDate = startOfDay(new Date()).getTime();
+    let maxDateActual = minDate;
+    let maxDateExpected = minDate;
+    let allDatesExist = false;
+
+    if (actualWeightData.length > 0) {
+      const actualDates = actualWeightData.map(d => d.x);
+      minDate = Math.min(minDate, ...actualDates);
+      maxDateActual = Math.max(...actualDates);
+      allDatesExist = true;
+    }
+
+    if (expectedWeightData.length > 0) {
+      const expectedDates = expectedWeightData.map(d => d.x);
+      minDate = allDatesExist ? Math.min(minDate, ...expectedDates) : Math.min(minDate, ...expectedDates);
+      maxDateExpected = Math.max(...expectedDates);
+      allDatesExist = true;
+    }
+
+    if (!allDatesExist) { 
         const todayTime = startOfDay(new Date()).getTime();
-        allDates.push(todayTime);
-        allDates.push(addWeeks(new Date(todayTime), 4).getTime()); 
+        minDate = todayTime;
+        maxDateActual = addWeeks(new Date(todayTime), 4).getTime();
+        maxDateExpected = maxDateActual;
         if (targetWeight !== null) {
            if (projectionStartWeight !== null) expectedWeightData.push({x: todayTime, y: projectionStartWeight});
            expectedWeightData.push({x: addWeeks(new Date(todayTime), 4).getTime(), y: targetWeight}); 
         }
     }
 
-
-    const minDate = allDates.length > 0 ? Math.min(...allDates) : startOfDay(new Date()).getTime();
-    const maxDateActual = actualWeightData.length > 0 ? Math.max(...actualWeightData.map(d => d.x)) : minDate;
-    const maxDateExpected = expectedWeightData.length > 0 ? Math.max(...expectedWeightData.map(d => d.x)) : minDate;
     let maxDate = Math.max(minDate, maxDateActual, maxDateExpected, addWeeks(startOfDay(new Date()), 1).getTime()); 
-
 
     if (differenceInWeeks(new Date(maxDate), new Date(minDate)) < 4) { 
         maxDate = addWeeks(new Date(minDate), 4).getTime();
     }
-
 
     const config: ChartConfiguration<keyof ChartTypeRegistry, {x: number, y:number}[], unknown> = {
       type: 'line',

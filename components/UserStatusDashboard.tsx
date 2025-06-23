@@ -2,8 +2,8 @@
 import React from 'react';
 import { UserProfile, WeightEntry, ReminderSettings, StreakData } from '../types';
 import { differenceInDays, addDays, format } from 'date-fns';
-import parseISO from 'date-fns/parseISO';
-import startOfDay from 'date-fns/startOfDay';
+import { parseISO } from 'date-fns/parseISO';
+import { startOfDay } from 'date-fns/startOfDay';
 
 interface UserStatusDashboardProps {
   userProfile: UserProfile;
@@ -29,7 +29,7 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
     : 0; 
 
   const targetWeight = typeof userProfile.targetWeight === 'number' ? userProfile.targetWeight : currentWeight; 
-  
+
   const startWeightNum = typeof userProfile.startWeight === 'number' 
     ? userProfile.startWeight 
     : (actualWeightLog.length > 0 ? actualWeightLog[0].weight : currentWeight);
@@ -38,7 +38,6 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
     ? actualWeightLog[0].date 
     : userProfile.profileCreationDate;
 
-
   const lbsToGo = targetWeight - currentWeight;
   const lbsChanged = currentWeight - startWeightNum;
 
@@ -46,7 +45,7 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
   if (startWeightNum && startWeightNum !== targetWeight) {
     const totalChangeNeeded = startWeightNum - targetWeight;
     const changeAchieved = startWeightNum - currentWeight;
-    
+
     if (totalChangeNeeded !== 0) { 
         if (startWeightNum < targetWeight) { 
             progressPercentage = Math.max(0, Math.min(100, ( (currentWeight - startWeightNum) / (targetWeight - startWeightNum) ) * 100));
@@ -60,7 +59,6 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
   } else if (currentWeight === targetWeight && startWeightNum === targetWeight) {
     progressPercentage = 100;
   }
-
 
   let nextWeighInStatus = "";
   const today = startOfDay(new Date());

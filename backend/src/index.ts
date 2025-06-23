@@ -10,6 +10,7 @@ import { testSupabaseConnection } from './config/supabase';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import healthRoutes from './routes/health.routes';
+import stripeRoutes from './routes/stripe.routes';
 import { setupSwagger } from './config/swagger';
 
 // Load environment variables
@@ -33,6 +34,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Stripe webhook needs raw body - must be before body parsing
+app.use('/api/v1/stripe/webhook', express.raw({ type: 'application/json' }));
+
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -47,6 +51,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/health', healthRoutes);
+app.use('/api/v1/stripe', stripeRoutes);
 
 // Swagger documentation
 setupSwagger(app);

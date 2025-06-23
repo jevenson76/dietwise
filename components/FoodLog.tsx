@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FoodItem, MyMeal } from '../types';
 import Modal from './common/Modal';
 import UPCScannerComponent from './UPCScannerComponent'; // Import for modal usage
@@ -43,7 +43,10 @@ const FoodLog: React.FC<FoodLogProps> = ({
   const [manualCarbs, setManualCarbs] = useState<number | ''>('');
   const [manualFat, setManualFat] = useState<number | ''>('');
 
-
+  // Memoize expensive calculations to avoid recalculating on every render
+  const reversedOfflineQueue = useMemo(() => [...offlineQueue].reverse(), [offlineQueue]);
+  const reversedLoggedItems = useMemo(() => [...loggedItems].reverse(), [loggedItems]);
+  
   const totalCaloriesToday = loggedItems.reduce((sum, item) => sum + item.calories, 0);
   const remainingCalories = targetCalories !== null ? targetCalories - totalCaloriesToday : null;
 
@@ -72,7 +75,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
       setIsManualAddModalOpen(false);
     }
   };
-  
+
   const getProgressGradient = () => {
     if (targetCalories === null || totalCaloriesToday === 0) return 'bg-slate-300 dark:bg-slate-600';
     const percentage = (totalCaloriesToday / targetCalories) * 100;
@@ -86,7 +89,6 @@ const FoodLog: React.FC<FoodLogProps> = ({
   const greeting = userName ? `What are you fueling yourself with today, ${userName}?` : "Log your meals for today.";
 
   const actionButtonClass = "bg-gradient-to-r text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
-
 
   const renderFoodListItem = (item: FoodItem, isOffline: boolean) => (
     <li 
@@ -207,8 +209,8 @@ const FoodLog: React.FC<FoodLogProps> = ({
         </div>
       ) : (
         <ul className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 -mr-2 custom-scrollbar">
-          {offlineQueue.slice().reverse().map((item) => renderFoodListItem(item, true))}
-          {loggedItems.slice().reverse().map((item) => renderFoodListItem(item, false))}
+          {reversedOfflineQueue.map((item) => renderFoodListItem(item, true))}
+          {reversedLoggedItems.map((item) => renderFoodListItem(item, false))}
         </ul>
       )}
        <Modal isOpen={isManualAddModalOpen} onClose={() => { resetManualForm(); setIsManualAddModalOpen(false); }} title="Add Food Manually">

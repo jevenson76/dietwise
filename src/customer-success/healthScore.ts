@@ -21,10 +21,9 @@ interface UserHealthScore {
 }
 
 // Dummy service placeholders - in a real app, these would be proper services or modules
-const emailService = { sendDripCampaign: async (userId: string, campaign: string) => console.log(`Email drip ${campaign} to ${userId}`) };
-const notificationService = { scheduleInAppNotification: async (userId: string, type: string) => console.log(`In-app notification ${type} to ${userId}`) };
-const pushService = { sendNotification: async (userId: string, type: string) => console.log(`Push notification ${type} to ${userId}`) };
-
+const emailService = { sendDripCampaign: async (userId: string, campaign: string) => {} };
+const notificationService = { scheduleInAppNotification: async (userId: string, type: string) => {} };
+const pushService = { sendNotification: async (userId: string, type: string) => {} };
 
 export class PredictiveHealthScoreEngine {
   async getUserData(userId: string): Promise<any> { /* Placeholder */ return { id: userId, name: `User ${userId}`, goalWeight: 150, currentWeight: 160, last_active: new Date() }; }
@@ -77,7 +76,7 @@ export class PredictiveHealthScoreEngine {
     const user = await this.getUserData(userId);
     const usage = await this.getUsageMetrics(userId);
     const feedback = await this.getFeedbackData(userId);
-    
+
     const componentScores = {
       engagement: this.calculateEngagementScore(usage),
       feature_adoption: this.calculateFeatureAdoptionScore(usage),
@@ -85,7 +84,7 @@ export class PredictiveHealthScoreEngine {
       support_satisfaction: this.calculateSupportScore(feedback),
       social_engagement: this.calculateSocialScore(usage),
     };
-    
+
     const overallScore = this.weightedAverage(componentScores, {
       engagement: 0.3,
       feature_adoption: 0.25,
@@ -93,7 +92,7 @@ export class PredictiveHealthScoreEngine {
       support_satisfaction: 0.1,
       social_engagement: 0.1,
     });
-    
+
     return {
       overall_score: parseFloat(overallScore.toFixed(1)),
       component_scores: componentScores,
@@ -105,7 +104,7 @@ export class PredictiveHealthScoreEngine {
 
   private async generateInterventions(scores: any, user: any): Promise<Intervention[]> {
     const interventions: Intervention[] = [];
-    
+
     if (scores.engagement < 50) {
       interventions.push({
         type: 'automated',
@@ -113,7 +112,7 @@ export class PredictiveHealthScoreEngine {
         timing: 'immediate',
         success_probability: 0.35,
       });
-      
+
       if (scores.engagement < 30) {
         interventions.push({
           type: 'personal',
@@ -123,7 +122,7 @@ export class PredictiveHealthScoreEngine {
         });
       }
     }
-    
+
     if (scores.feature_adoption < 40) {
       interventions.push({
         type: 'educational',
@@ -132,7 +131,7 @@ export class PredictiveHealthScoreEngine {
         success_probability: 0.45,
       });
     }
-    
+
     if (scores.goal_progress < 30 && user.goalWeight) { // Only if a goal is set
       interventions.push({
         type: 'personal',
@@ -147,7 +146,7 @@ export class PredictiveHealthScoreEngine {
         success_probability: 0.25,
       });
     }
-    
+
     return interventions;
   }
 
@@ -184,15 +183,15 @@ export class PredictiveHealthScoreEngine {
         await pushService.sendNotification(userId, 'daily_reminder');
       },
     };
-    
+
     const action = automatedActions[intervention.action];
     if (action) await action();
-    else console.warn(`Automated action ${intervention.action} not implemented.`);
+    // Note: Unrecognized automated intervention actions are silently ignored 
   }
-  private async schedulePersonalIntervention(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */ console.log(`Personal intervention: ${intervention.action} for ${userId} scheduled for ${intervention.timing}.`); }
-  private async sendEducationalContent(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */ console.log(`Educational content: ${intervention.action} for ${userId} to be sent on ${intervention.timing}.`); }
-  private async provideIncentive(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */ console.log(`Incentive: ${intervention.action} for ${userId} to be provided based on ${intervention.timing}.`); }
-  private async trackInterventionExecution(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */ console.log(`Intervention ${intervention.action} tracked for ${userId}.`); }
+  private async schedulePersonalIntervention(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */  }
+  private async sendEducationalContent(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */  }
+  private async provideIncentive(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */  }
+  private async trackInterventionExecution(userId: string, intervention: Intervention): Promise<void> { /* Placeholder */  }
 
 }
 
@@ -229,7 +228,6 @@ export class CustomerSuccessDashboard {
   async getSuccessStories(): Promise<any> { /* Placeholder */ return [{ userId: 'userX', story: 'Lost 20lbs!' }]; }
   async getTeamMetrics(): Promise<any> { /* Placeholder */ return { outreach_count: 50, resolution_time_avg: '2h' }; }
 
-
   async getDashboardData(): Promise<CustomerSuccessMetrics> {
     return {
       health_score_distribution: await this.getHealthScoreDistribution(),
@@ -243,10 +241,10 @@ export class CustomerSuccessDashboard {
   private async getAtRiskUsers(): Promise<AtRiskUser[]> {
     const users = await this.getAllUsers();
     const atRiskUsers: AtRiskUser[] = [];
-    
+
     for (const user of users) {
       const healthScore = await healthScoreEngine.calculateHealthScore(user.id); // Use the global/instantiated engine
-      
+
       if (healthScore.risk_level === 'high' || healthScore.risk_level === 'critical') {
         atRiskUsers.push({
           user_id: user.id,
@@ -260,7 +258,7 @@ export class CustomerSuccessDashboard {
         });
       }
     }
-    
+
     return atRiskUsers.sort((a, b) => b.churn_probability - a.churn_probability);
   }
 }

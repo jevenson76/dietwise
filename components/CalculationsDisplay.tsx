@@ -36,14 +36,13 @@ const CalculationsDisplay: React.FC<CalculationsDisplayProps> = ({ metrics, isPr
     if (bmi < 29.9) return "Overweight";
     return "Obese";
   };
-  
+
   const bmiCategory = getBMICategory(metrics.bmi);
   let bmiMessageColor = "text-text-default";
   let bmiBgColor = "bg-bg-alt"; 
   if (bmiCategory === "Normal weight") { bmiMessageColor = "text-green-700 dark:text-green-300"; bmiBgColor = "bg-green-50 dark:bg-green-900/30"; }
   else if (bmiCategory === "Underweight" || bmiCategory === "Overweight") { bmiMessageColor = "text-orange-700 dark:text-orange-300"; bmiBgColor = "bg-orange-50 dark:bg-orange-900/30"; }
   else if (bmiCategory === "Obese") { bmiMessageColor = "text-red-700 dark:text-red-300"; bmiBgColor = "bg-red-50 dark:bg-red-900/30"; }
-
 
   if (!isProfileComplete) {
     return (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
 import { format } from 'date-fns';
-import parseISO from 'date-fns/parseISO';
+import { parseISO } from 'date-fns/parseISO';
 import { validateUserProfile } from '../utils/validation';
 
 interface WeightGoalSetterProps {
@@ -26,11 +26,11 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    
+
     // Validate
     const validationError = validateUserProfile('targetWeight', value);
     setError(validationError?.message || '');
-    
+
     if (value === '') {
       onTargetWeightChange(null);
     } else {
@@ -40,7 +40,7 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
       }
     }
   };
-  
+
   const handleTargetDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onTargetDateChange(e.target.value ? e.target.value : null);
   };
@@ -98,7 +98,7 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
             </p>
           )}
         </div>
-        
+
         <div>
             <label htmlFor="targetDate" className="block text-sm font-medium text-text-alt">
                 Target Date (Optional)

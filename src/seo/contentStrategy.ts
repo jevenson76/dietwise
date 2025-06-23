@@ -97,7 +97,6 @@ interface ContentGaps {
     backlink_opportunities: string[];
 }
 
-
 // SEO Tool Development
 export class SEOToolBuilder {
   private bmiFormula(weight: number, height: number, age?:number, gender?: string): number { // height in meters, weight in kg
@@ -117,9 +116,9 @@ export class SEOToolBuilder {
     const totalCost = ingredients.reduce((sum, item) => sum + (item.cost * item.quantity), 0);
     return totalCost / portions;
   }
-  
+
   private async buildTool(config: any): Promise<CalculatorTool> {
-      console.log("Building tool with config:", config);
+
       // In a real scenario, this would involve generating UI components, backend logic, etc.
       return config as CalculatorTool; // Simplified
   }
@@ -145,7 +144,7 @@ export class SEOToolBuilder {
         lead_capture: 'savings_newsletter',
       },
     };
-    
+
     if (!tools[toolType]) throw new Error(`Tool type ${toolType} not found.`);
     return this.buildTool(tools[toolType]);
   }
@@ -181,24 +180,23 @@ export class CompetitiveContentAnalyzer {
 
   async scrapeCompetitorContent(competitor: string): Promise<any> {
       // Placeholder
-      console.log(`Scraping content from ${competitor}`);
+
       return { topics: [`${competitor}_topic1`, `${competitor}_topic2`], performance: {[`${competitor}_topic1`]: {traffic: 15000} }};
   }
-  
+
   getOurContentTopics(): string[] {
       // Placeholder
       return CONTENT_CLUSTERS.map(c => c.pillar_page.target_keyword).concat(
           CONTENT_CLUSTERS.flatMap(c => c.cluster_pages.map(p => p.keyword))
       );
   }
-  
+
   findKeywordGaps(competitorContent: any): string[] {
       // Placeholder logic
       const ourKeywords = this.getOurContentTopics();
       const theirKeywords = Object.keys(competitorContent.performance || {});
       return theirKeywords.filter(keyword => !ourKeywords.includes(keyword) && competitorContent.performance[keyword].traffic > 5000);
   }
-
 
   async analyzeCompetitorContent(): Promise<ContentGaps> {
     const competitors = ['myfitnesspal', 'loseit', 'noom', 'lifesum'];
@@ -208,7 +206,7 @@ export class CompetitiveContentAnalyzer {
       content_quality_score: {},
       backlink_opportunities: [],
     };
-    
+
     for (const competitor of competitors) {
       const content = await this.scrapeCompetitorContent(competitor);
       analysis.content_gaps.push(...this.findContentGaps(content));
@@ -216,14 +214,14 @@ export class CompetitiveContentAnalyzer {
       analysis.content_quality_score[competitor] = Math.random() * 100; // Placeholder score
       analysis.backlink_opportunities.push(`Check backlinks for ${competitor} content on specific topics.`); // Placeholder
     }
-    
+
     return analysis;
   }
 
   private findContentGaps(competitorContent: any): string[] {
     const ourTopics = this.getOurContentTopics();
     const theirTopics = competitorContent.topics || [];
-    
+
     return theirTopics.filter((topic: string) => 
       !ourTopics.includes(topic) && 
       competitorContent.performance && competitorContent.performance[topic] && competitorContent.performance[topic].traffic > 10000
