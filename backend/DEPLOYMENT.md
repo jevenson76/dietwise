@@ -32,29 +32,42 @@
 
 ## Production Deployment
 
-### Option 1: Railway (Recommended)
+### Option 1: Railway (Recommended - Best Free Tier)
 
-1. **Install Railway CLI:**
+1. **Create Railway Account** at https://railway.app
+
+2. **Deploy via GitHub (Easiest):**
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your `dietwise` repository
+   - Railway will auto-detect the `/backend` folder
+   - Click "Deploy Now"
+
+3. **Configure Environment Variables:**
+   In Railway dashboard, go to Variables tab and add:
+   ```
+   NODE_ENV=production
+   PORT=3001
+   DATABASE_URL=<your-supabase-connection-string>
+   JWT_SECRET=<generate-secure-random-string>
+   STRIPE_SECRET_KEY=<from-stripe-dashboard>
+   STRIPE_WEBHOOK_SECRET=<will-set-after-webhook-config>
+   SUPABASE_URL=<from-supabase-settings>
+   SUPABASE_ANON_KEY=<from-supabase-settings>
+   SUPABASE_SERVICE_ROLE_KEY=<from-supabase-settings>
+   GEMINI_API_KEY=<from-google-ai-studio>
+   FRONTEND_URL=<your-netlify-url>
+   ```
+
+4. **Get Your Backend URL:**
+   - Railway provides: `https://dietwise-backend.up.railway.app`
+   - Custom domains available on paid plans
+
+5. **Alternative: Deploy via CLI:**
    ```bash
    npm i -g @railway/cli
-   ```
-
-2. **Login and initialize:**
-   ```bash
    railway login
-   railway init
-   ```
-
-3. **Add environment variables:**
-   ```bash
-   railway variables set NODE_ENV=production
-   railway variables set SUPABASE_URL=your_url
-   # Add all other variables from .env.example
-   ```
-
-4. **Deploy:**
-   ```bash
-   railway up
+   railway link  # Select your project
+   railway up    # Deploy
    ```
 
 ### Option 2: Render (Free Tier Available)
