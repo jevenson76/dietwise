@@ -73,9 +73,14 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
     });
   };
 
-  const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
+  const inputClass = "mt-1 block w-full px-4 py-3 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
   const selectClass = inputClass;
-  const radioLabelBaseClass = "custom-radio-label block w-full text-center px-4 py-2.5 border border-slate-300 rounded-lg cursor-pointer hover:border-teal-400 transition-all";
+  const getRadioLabelClass = (isSelected: boolean) => 
+    `custom-radio-label block w-full text-center px-4 py-3 border rounded-lg cursor-pointer transition-all text-base font-medium ${
+      isSelected 
+        ? 'border-teal-500 bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300 shadow-md' 
+        : 'border-slate-300 hover:border-teal-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+    }`;
 
   return (
     <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
@@ -84,7 +89,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
       </h2>
       <div className="space-y-6">
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-text-alt">Name</label>
+          <label htmlFor="name" className="block text-base font-medium text-text-alt">Name</label>
           <input
             type="text"
             name="name"
@@ -104,7 +109,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-text-alt">Email (Optional)</label>
+          <label htmlFor="email" className="block text-base font-medium text-text-alt">Email (Optional)</label>
           <input
             type="email"
             name="email"
@@ -126,7 +131,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
           <div>
-            <label htmlFor="age" className="block text-sm font-medium text-text-alt">Age (years)</label>
+            <label htmlFor="age" className="block text-base font-medium text-text-alt">Age (years)</label>
             <input
               type="number"
               name="age"
@@ -146,7 +151,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
             )}
           </div>
           <div>
-            <span className="block text-sm font-medium text-text-alt mb-1">Sex</span>
+            <span className="block text-base font-medium text-text-alt mb-1">Sex</span>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <input 
@@ -158,7 +163,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
                   onChange={handleChange} 
                   className="sr-only custom-radio-input"
                 />
-                <label htmlFor="male" className={`${radioLabelBaseClass}`}>
+                <label htmlFor="male" className={getRadioLabelClass(profile.sex === Sex.MALE)}>
                   <i className="fas fa-mars mr-2"></i>Male
                 </label>
               </div>
@@ -172,7 +177,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
                   onChange={handleChange} 
                   className="sr-only custom-radio-input"
                 />
-                <label htmlFor="female" className={`${radioLabelBaseClass}`}>
+                <label htmlFor="female" className={getRadioLabelClass(profile.sex === Sex.FEMALE)}>
                   <i className="fas fa-venus mr-2"></i>Female
                 </label>
               </div>

@@ -918,13 +918,16 @@ const App: React.FC = () => {
     }
   };
 
+  // Helper function to get first name
+  const getFirstName = () => userProfile.name ? userProfile.name.split(' ')[0] : '';
+
   const renderTabContent = () => {
     // DEBUG: Log what tab is being rendered
-
+    const firstName = getFirstName();
     
     switch (activeTab) {
       case Tab.Profile:
-        const welcomeName = userProfile.name ? `, ${userProfile.name}` : '';
+        const welcomeName = firstName ? `, ${firstName}` : '';
 
         return (
           <>
@@ -1218,7 +1221,7 @@ const App: React.FC = () => {
                 onAddFood={(item, source) => handleAddFood(item, source)} 
                 onRemoveFood={handleRemoveFood} 
                 targetCalories={calculatedMetrics.targetCalories}
-                userName={userProfile.name}
+                userName={firstName || userProfile.name}
                 onOpenLogFromMyMeals={() => setIsLogFromMyMealModalOpen(true)}
                 isOnline={isOnline}
                 onSyncOfflineItems={syncOfflineFoodLog}
@@ -1256,7 +1259,7 @@ const App: React.FC = () => {
                 onDeleteMeal={handleDeleteMyMeal}
                 onLogMeal={(mealId: string) => handleLogMyMeal(mealId)}
                 apiKeyMissing={apiKeyStatus === 'missing'}
-                userName={userProfile.name}
+                userName={firstName || userProfile.name}
                 targetCalories={calculatedMetrics.targetCalories}
               />
             </Suspense>
