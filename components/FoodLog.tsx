@@ -163,6 +163,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
           <button 
               onClick={() => setIsManualAddModalOpen(true)}
               className={`${actionButtonClass} from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 focus:ring-sky-500`}
+              data-tooltip="add-food-button"
           >
               <i className="fas fa-plus fa-fw mr-1.5"></i> Add Manually
           </button>
@@ -171,7 +172,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
       <p className="text-sm text-text-alt mb-6">{greeting}</p>
 
       {targetCalories !== null && (
-        <div className="mb-6">
+        <div className="mb-6" data-tooltip="calorie-summary">
           <div className="flex justify-between text-sm font-medium text-text-alt mb-1.5">
             <span>{totalCaloriesToday.toLocaleString()} kcal consumed</span>
             <span className="font-semibold text-teal-700 dark:text-teal-400">Target: {targetCalories.toLocaleString()} kcal</span>

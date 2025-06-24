@@ -39,6 +39,8 @@ import { filterByHistoricalLimit, getHistoricalLimitMessage } from '../utils/dat
 import SettingsTab from '@components/SettingsTab';
 import DietWiseSplashScreen from '@components/SplashScreen';
 import OnboardingSplashScreen from './components/OnboardingSplashScreen';
+import ProgressiveOnboarding from '@components/ProgressiveOnboarding';
+import OnboardingChecklist from '@components/OnboardingChecklist';
 import EmailCaptureModal from './components/EmailCaptureModal';
 import MobileInstallPrompt from './components/MobileInstallPrompt';
 import PullToRefresh from './components/PullToRefresh';
@@ -214,6 +216,11 @@ const App: React.FC = () => {
   const [isUPCScannerModalOpen, setIsUPCScannerModalOpen] = useState<boolean>(false); // For FoodLog's scanner
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
     return !localStorage.getItem('hasSeenOnboarding') && !userProfile.profileCreationDate;
+  });
+  const [showProgressiveOnboarding, setShowProgressiveOnboarding] = useState<boolean>(false);
+  const [showOnboardingChecklist, setShowOnboardingChecklist] = useState<boolean>(() => {
+    // Show checklist for new users who haven't dismissed it
+    return isInitialSetup && localStorage.getItem('onboardingChecklistDismissed') !== 'true';
   });
   const [isEmailCaptureModalOpen, setIsEmailCaptureModalOpen] = useState<boolean>(false);
 
@@ -1346,15 +1353,39 @@ const App: React.FC = () => {
       <OnboardingSplashScreen 
         onComplete={() => {
           setShowOnboarding(false);
-          localStorage.setItem('hasSeenOnboarding', 'true');
-          localStorage.setItem('onboardingCompletedAt', Date.now().toString());
-          trackEvent('onboarding_completed');
+          // After intro slides, show progressive profile setup
+          setShowProgressiveOnboarding(true);
+          trackEvent('onboarding_intro_completed');
         }}
         onStartFreeTrial={() => {
           setShowOnboarding(false);
-          localStorage.setItem('hasSeenOnboarding', 'true');
-          setIsUpgradeModalOpen(true);
+          // Even with trial, guide through profile setup
+          setShowProgressiveOnboarding(true);
+          // Open upgrade modal after profile setup
+          setTimeout(() => setIsUpgradeModalOpen(true), 100);
           trackEvent('onboarding_trial_started');
+        }}
+      />
+    );
+  }
+
+  // Show progressive profile setup
+  if (showProgressiveOnboarding) {
+    return (
+      <ProgressiveOnboarding
+        onComplete={(profileData) => {
+          // Update user profile with onboarding data
+          const updatedProfile = { ...userProfile, ...profileData };
+          setUserProfile(updatedProfile);
+          setShowProgressiveOnboarding(false);
+          localStorage.setItem('hasSeenOnboarding', 'true');
+          localStorage.setItem('onboardingCompletedAt', Date.now().toString());
+          trackEvent('onboarding_profile_completed');
+        }}
+        onSkip={() => {
+          setShowProgressiveOnboarding(false);
+          localStorage.setItem('hasSeenOnboarding', 'true');
+          trackEvent('onboarding_profile_skipped');
         }}
       />
     );
@@ -1515,6 +1546,27 @@ const App: React.FC = () => {
           </>
         )}
       </main>
+
+      {/* Onboarding Checklist for new users */}
+      {showOnboardingChecklist && (
+        <OnboardingChecklist
+          userProfile={userProfile}
+          foodLogCount={foodLog.length}
+          hasCustomFoods={myFoods.length > 0}
+          onNavigate={(tab) => {
+            const tabMap: Record<string, Tab> = {
+              'Profile': Tab.Profile,
+              'Log Food': Tab.Log,
+              'Food Library': Tab.FoodLibrary,
+              'Meal Ideas': Tab.Meals,
+            };
+            if (tabMap[tab]) {
+              handleTabChange(tabMap[tab]);
+            }
+          }}
+          onDismiss={() => setShowOnboardingChecklist(false)}
+        />
+      )}
 
        {isUPCScannerModalOpen && (
         <UPCScannerComponent
