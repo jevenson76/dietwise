@@ -16,7 +16,7 @@ import Modal from '@components/common/Modal';
 // Lazy load heavy components with preload capability
 import { lazyWithPreload, preloadComponents } from '@utils/lazyWithPreload';
 const MealPlannerComponent = lazyWithPreload(() => import('@components/MealPlannerComponent'));
-const ProgressTabComponent = lazyWithPreload(() => import('@components/ProgressTabComponent').then(module => ({ default: module.ProgressTabComponent })));
+const ProgressTabComponent = lazyWithPreload(() => import('../components/ProgressTabComponent').then(module => ({ default: module.ProgressTabComponent })));
 const UserStatusDashboard = lazyWithPreload(() => import('@components/UserStatusDashboard'));
 const MyLibraryComponent = lazyWithPreload(() => import('@components/MyLibraryComponent'));
 const ReviewPromptModal = lazyWithPreload(() => import('@components/ReviewPromptModal'));

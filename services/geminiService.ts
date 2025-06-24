@@ -20,32 +20,44 @@ const ai = new GoogleGenAI({ apiKey: API_KEY || MISSING_KEY_PLACEHOLDER_FOR_CONS
 const isApiKeyInvalid = () => !API_KEY || API_KEY === "MISSING_API_KEY" || API_KEY.length < 10 || API_KEY === MISSING_KEY_PLACEHOLDER_FOR_CONSTRUCTOR;
 
 export const getMealIdeas = async (calorieTarget: number, preferences?: string): Promise<{ ideas: string | null; error?: string }> => {
-  if (isApiKeyInvalid()) {
-    log.warn('API key invalid for meal ideas request', 'gemini-service', { calorieTarget, hasPreferences: !!preferences });
-    return { ideas: null, error: API_KEY_ERROR_MESSAGE };
-  }
-  
   log.time('getMealIdeas', 'gemini-service');
-  log.info('Requesting meal ideas', 'gemini-service', { calorieTarget, hasPreferences: !!preferences });
+  log.info('Requesting meal ideas via backend API', 'gemini-service', { calorieTarget, hasPreferences: !!preferences });
   
   try {
-    const prompt = `Suggest 3-4 healthy meal ideas for a day, totaling around ${calorieTarget} calories. ${preferences ? `Consider these preferences: ${preferences}.` : ''} Provide a brief description for each meal (breakfast, lunch, dinner, snack). Format the response as a list.`;
+    const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    
+    const requestBody = {
+      calorieTarget,
+      mealType: 'dinner', // Default meal type
+      preferences: preferences ? [preferences] : []
+    };
 
-    const response: GenerateContentResponse = await ai.models.generateContent({
-      model: GEMINI_MODEL_NAME,
-      contents: prompt,
+    const response = await fetch(`${API_BASE_URL}/api/v1/ai/meal-ideas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+      },
+      body: JSON.stringify(requestBody)
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
     
     log.timeEnd('getMealIdeas', 'gemini-service');
     log.info('Meal ideas request successful', 'gemini-service', { 
-      responseLength: response.text?.length || 0,
+      responseLength: data.data?.length || 0,
       calorieTarget 
     });
     
-    return { ideas: response.text ?? null, error: undefined };
+    return { ideas: data.data ?? null, error: undefined };
   } catch (error: any) {
     log.timeEnd('getMealIdeas', 'gemini-service');
-    log.error('Error fetching meal ideas from Gemini', 'gemini-service', { 
+    log.error('Error fetching meal ideas from backend', 'gemini-service', { 
       error: error.message,
       calorieTarget,
       hasPreferences: !!preferences
