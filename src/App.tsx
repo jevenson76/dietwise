@@ -36,6 +36,7 @@ import CustomMacroTargets from '@components/CustomMacroTargets';
 import UpgradePrompt from '@components/UpgradePrompt';
 import AuthModal from '@components/auth/AuthModal';
 import { filterByHistoricalLimit, getHistoricalLimitMessage } from '../utils/dataLimits';
+import SettingsTab from '@components/SettingsTab';
 import DietWiseSplashScreen from '@components/SplashScreen';
 import OnboardingSplashScreen from './components/OnboardingSplashScreen';
 import EmailCaptureModal from './components/EmailCaptureModal';
@@ -1072,204 +1073,45 @@ const App: React.FC = () => {
       case Tab.Settings:
         return (
           <>
-            {/* Settings tab content - moved from Profile */}
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
-                <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                    <i className="fas fa-palette mr-2.5 text-purple-500 dark:text-purple-400"></i>Appearance
-                </h3>
-                <div className="flex items-center justify-between">
-                    <span className="text-text-alt">Dark Mode</span>
-                    <button
-                        onClick={toggleTheme}
-                        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 ${currentTheme === 'dark' ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'}`}
-                        role="switch"
-                        aria-checked={currentTheme === 'dark'}
-                        aria-label={currentTheme === 'dark' ? 'Disable dark mode' : 'Enable dark mode'}
-                    >
-                        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${currentTheme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`}/>
-                    </button>
-                </div>
-            </div>
-
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                <i className="fas fa-bell mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Notification Settings
-              </h3>
-              {Notification.permission !== 'granted' && (
-                <button
-                  onClick={requestNotificationPermission}
-                  className="mb-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md"
-                >
-                  Enable Meal & Weigh-in Reminders
-                </button>
-              )}
-              {Object.entries(reminderSettings.mealReminders).map(([mealType, reminder]: [string, MealReminder]) => (
-                <div key={mealType} className="flex items-center justify-between py-2 border-b border-border-default last:border-b-0">
-                  <span className="text-text-alt capitalize">{mealType} Reminder</span>
-                  <div className="flex items-center space-x-2">
-                    <input 
-                      type="time" 
-                      value={reminder.time}
-                      disabled={!reminder.enabled || Notification.permission !== 'granted'}
-                      onChange={e => handleUpdateReminderSettings({ mealReminders: { ...reminderSettings.mealReminders, [mealType as keyof ReminderSettings['mealReminders']]: {...reminder, time: e.target.value }}})}
-                      className="p-1 border border-border-default rounded bg-bg-card text-text-default text-sm disabled:opacity-50 dark:[color-scheme:dark]"
-                      aria-label={`Set time for ${mealType} reminder`}
-                    />
-                    <button
-                        onClick={() => handleUpdateReminderSettings({ mealReminders: { ...reminderSettings.mealReminders, [mealType as keyof ReminderSettings['mealReminders']]: {...reminder, enabled: !reminder.enabled }}})}
-                        disabled={Notification.permission !== 'granted'}
-                        className={`relative inline-flex items-center h-5 rounded-full w-9 transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${reminder.enabled ? 'bg-teal-600' : 'bg-slate-300 dark:bg-slate-600'}`}
-                        role="switch"
-                        aria-checked={reminder.enabled}
-                        aria-label={`${reminder.enabled ? 'Disable' : 'Enable'} ${mealType} reminder`}
-                    >
-                        <span className={`inline-block w-3.5 h-3.5 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${reminder.enabled ? 'translate-x-5' : 'translate-x-1'}`}/>
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <div className="flex items-center justify-between py-2 mt-2">
-                  <span className="text-text-alt">Weigh-in Reminder Frequency</span>
-                   <select 
-                      value={reminderSettings.weighInFrequencyDays}
-                      onChange={e => handleUpdateReminderSettings({ weighInFrequencyDays: parseInt(e.target.value, 10) })}
-                      disabled={Notification.permission !== 'granted'}
-                      className="p-1 border border-border-default rounded bg-bg-card text-text-default text-sm disabled:opacity-50 dark:[color-scheme:dark]"
-                      aria-label="Set weigh-in reminder frequency"
-                    >
-                        <option value="1">Daily</option>
-                        <option value="3">Every 3 Days</option>
-                        <option value="7">Weekly</option>
-                        <option value="14">Bi-Weekly</option>
-                    </select>
-              </div>
-              {Notification.permission === 'denied' && <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">Notification permission is denied. You can change this in your browser settings.</p>}
-            </div>
-
-            {isPremiumUser && (
-              <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-                <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                    <i className="fas fa-file-export mr-2.5 text-green-500 dark:text-green-400"></i>Export Data
-                </h3>
-                <div className="space-y-3">
-                    <button 
-                        onClick={() => exportDataToCsv(filteredFoodLog.map((item: any) => ({...item, timestamp: new Date(item.timestamp).toLocaleString()})), 'dietwise_food_log.csv')}
-                        className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
-                    >
-                        Export Food Log (CSV)
-                    </button>
-                    <button 
-                        onClick={() => exportDataToCsv(filteredWeightLog, 'dietwise_weight_history.csv')}
-                        className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
-                    >
-                        Export Weight History (CSV)
-                    </button>
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <PDFExportButton
-                            foodLog={filteredFoodLog}
-                            userProfile={userProfile}
-                            weightLog={filteredWeightLog}
-                            isPremiumUser={isPremiumUser}
-                            onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-                            premiumLimits={{
-                                canExportData: premiumLimits.limits.canExportData,
-                                onExport: premiumLimits.increment.exports
-                            }}
-                        />
-                    </div>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                <i className="fas fa-shield-alt mr-2.5 text-blue-500 dark:text-blue-400"></i>Legal & Privacy
-              </h3>
-              <div className="space-y-3">
-                <a 
-                  href="/privacy-policy.html" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-hover transition-colors cursor-pointer"
-                >
-                  <span className="text-text-default">Privacy Policy</span>
-                  <i className="fas fa-external-link-alt text-text-alt text-sm"></i>
-                </a>
-                <a 
-                  href="/terms-of-service.html" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-hover transition-colors cursor-pointer"
-                >
-                  <span className="text-text-default">Terms of Service</span>
-                  <i className="fas fa-external-link-alt text-text-alt text-sm"></i>
-                </a>
-                <div className="pt-3 mt-3 border-t border-border-default">
-                  <p className="text-sm text-text-alt">
-                    <i className="fas fa-info-circle mr-2"></i>
-                    By using DietWise, you agree to our Terms of Service and Privacy Policy.
-                  </p>
-                  <p className="text-xs text-text-alt mt-2">
-                    Version 1.0.0 · © 2025 Wizard Tech LLC
-                  </p>
-                </div>
-              </div>
-
-              {/* Account Section */}
-              <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-                <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                  <i className="fas fa-user mr-2.5 text-indigo-500 dark:text-indigo-400"></i>Account
-                </h3>
-                {isAuthenticated && user ? (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <p className="text-sm text-text-alt">Signed in as</p>
-                      <p className="text-text-default font-semibold">{user.email}</p>
-                      {user.name && <p className="text-text-alt">{user.name}</p>}
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to sign out?')) {
-                          logout();
-                        }
-                      }}
-                      className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
-                    >
-                      <i className="fas fa-sign-out-alt mr-2"></i>
-                      Sign Out
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-text-alt">Sign in to sync your data across devices and access premium features.</p>
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => {
-                          setAuthModalMode('login');
-                          setIsAuthModalOpen(true);
-                        }}
-                        className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
-                      >
-                        <i className="fas fa-sign-in-alt mr-2"></i>
-                        Sign In
-                      </button>
-                      <button
-                        onClick={() => {
-                          setAuthModalMode('signup');
-                          setIsAuthModalOpen(true);
-                        }}
-                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
-                      >
-                        <i className="fas fa-user-plus mr-2"></i>
-                        Create Account
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <AdPlaceholder sizeLabel="Profile Tab Ad (e.g., 300x100)" className="mt-6" />
+            <SettingsTab
+              theme={currentTheme}
+              handleThemeToggle={toggleTheme}
+              notificationsEnabled={reminderSettings.mealReminders.breakfast.enabled || reminderSettings.mealReminders.lunch.enabled || reminderSettings.mealReminders.dinner.enabled}
+              setNotificationsEnabled={(enabled) => {
+                const newMealReminders = {
+                  breakfast: { ...reminderSettings.mealReminders.breakfast, enabled },
+                  lunch: { ...reminderSettings.mealReminders.lunch, enabled },
+                  dinner: { ...reminderSettings.mealReminders.dinner, enabled }
+                };
+                handleUpdateReminderSettings({ mealReminders: newMealReminders });
+              }}
+              appVersion="1.0.0"
+              exportData={() => {
+                if (isPremiumUser) {
+                  // This will trigger PDF export
+                  const exportButton = document.querySelector('[data-pdf-export]') as HTMLButtonElement;
+                  if (exportButton) exportButton.click();
+                } else {
+                  setIsUpgradeModalOpen(true);
+                }
+              }}
+              isPremiumUser={isPremiumUser}
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+              pdfExportButton={
+                <PDFExportButton
+                  foodLog={filteredFoodLog}
+                  userProfile={userProfile}
+                  weightLog={filteredWeightLog}
+                  isPremiumUser={isPremiumUser}
+                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                  premiumLimits={{
+                    canExportData: premiumLimits.limits.canExportData,
+                    onExport: premiumLimits.increment.exports
+                  }}
+                />
+              }
+            />
+            <AdPlaceholder sizeLabel="Settings Tab Ad (e.g., 300x100)" className="mt-6" />
           </>
         );
       case Tab.Log:
@@ -1533,7 +1375,7 @@ const App: React.FC = () => {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DietWise</h1>
                 <p className="text-xs sm:text-sm opacity-90 mt-0.5">
-                  {userProfile.name ? `Welcome back, ${userProfile.name}!` : 'Your Personal Nutrition Companion'}
+                  {userProfile.name ? `Welcome back, ${getFirstName()}!` : 'Your Personal Nutrition Companion'}
                   {calculatedMetrics.targetCalories && ` • ${calculatedMetrics.targetCalories} cal/day`}
                 </p>
               </div>

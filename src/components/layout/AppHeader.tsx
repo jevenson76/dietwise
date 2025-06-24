@@ -25,16 +25,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </span>
           )}
         </div>
-        {showDashboardToggle && (
-          <button
-            onClick={onToggleDashboard}
-            className="p-1.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 transition-colors"
-            aria-label={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
-            title={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
-          >
-            <i className={`fas ${isDashboardVisible ? 'fa-eye-slash' : 'fa-eye'} text-lg sm:text-xl fa-fw`}></i>
-          </button>
-        )}
       </div>
     </header>
   );
