@@ -83,7 +83,7 @@ test.describe('DietWise Full User Journey', () => {
     
     // Test print functionality
     const [newPage] = await Promise.all([
-      context.waitForEvent('page'),
+      page.context().waitForEvent('page'),
       page.click('button:has-text("Print List")')
     ]);
     await expect(newPage).toHaveURL(/print/);

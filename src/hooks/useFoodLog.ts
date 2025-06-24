@@ -56,9 +56,7 @@ export const useFoodLog = ({ onFoodAdded, onFoodRemoved }: UseFoodLogProps = {})
   }, [offlineFoodQueue]);
 
   const processFoodItemAddition = useCallback((foodItem: FoodItem): FoodItem => {
-    if (isPast(foodItem.date) && !foodItem.isRetrospective) {
-      return { ...foodItem, isRetrospective: true };
-    }
+    // Process food item if needed
     return foodItem;
   }, []);
 
@@ -76,8 +74,8 @@ export const useFoodLog = ({ onFoodAdded, onFoodRemoved }: UseFoodLogProps = {})
       foodName: processedFood.name,
       calories: processedFood.calories,
       hasAllMacros: !!(processedFood.protein && processedFood.carbs && processedFood.fat),
-      source: processedFood.source || 'manual',
-      date: format(processedFood.date, 'yyyy-MM-dd'),
+      source: 'manual',
+      date: format(new Date(processedFood.timestamp), 'yyyy-MM-dd'),
     });
   }, [isOnline, processFoodItemAddition, onFoodAdded]);
 
@@ -88,7 +86,7 @@ export const useFoodLog = ({ onFoodAdded, onFoodRemoved }: UseFoodLogProps = {})
         trackEvent('food_item_removed', {
           foodName: itemToRemove.name,
           calories: itemToRemove.calories,
-          source: itemToRemove.source || 'manual',
+          source: 'manual',
         });
       }
       return prevLog.filter(item => item.id !== id);

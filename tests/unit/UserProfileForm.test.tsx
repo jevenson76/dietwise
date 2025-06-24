@@ -8,12 +8,12 @@ describe('UserProfileForm', () => {
   const mockProfile: UserProfile = {
     age: 30,
     sex: 'male' as Sex,
-    height: 175,
+    height: { ft: 5, in: 9 },
     weight: 70,
-    activity_level: 'moderate',
-    goal_weight: 65,
-    goal_pace: 'moderate',
-    diet_plan: 'balanced',
+    activityLevel: 'moderate',
+    targetWeight: 65,
+    goalPace: 'moderate',
+    dietPlan: 'balanced',
   };
 
   const mockOnProfileChange = vi.fn();

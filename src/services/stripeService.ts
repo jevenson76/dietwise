@@ -59,7 +59,6 @@ export async function redirectToCheckout(priceId: string, customerEmail?: string
     successUrl: STRIPE_CONFIG.successUrl,
     cancelUrl: STRIPE_CONFIG.cancelUrl,
     customerEmail,
-    allowPromotion: true, // Allow discount codes
   });
 
   if (error) {

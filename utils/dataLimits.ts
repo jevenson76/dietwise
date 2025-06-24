@@ -19,3 +19,17 @@ export const FREE_TIER_LIMITS = {
   EXPORTS_PER_MONTH: 1,
   MEAL_PLANS_PER_MONTH: 1,
 };
+
+export function filterByHistoricalLimit(items: any[], dateField: string = 'timestamp', limit: number = FREE_TIER_LIMITS.HISTORICAL_DATA_DAYS): any[] {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - limit);
+  
+  return items.filter(item => {
+    const itemDate = new Date(item[dateField]);
+    return itemDate >= cutoffDate;
+  });
+}
+
+export function getHistoricalLimitMessage(limit: number = FREE_TIER_LIMITS.HISTORICAL_DATA_DAYS): string {
+  return `Free tier users can only view data from the last ${limit} days. Upgrade to Premium for unlimited historical data access.`;
+}

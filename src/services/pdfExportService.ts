@@ -41,14 +41,14 @@ export const exportFoodLogToPDF = (
   let filteredFoodLog = foodLog;
   if (options.dateRange) {
     filteredFoodLog = foodLog.filter(item => {
-      const itemDate = new Date(item.date);
+      const itemDate = new Date(item.timestamp);
       return itemDate >= options.dateRange!.start && itemDate <= options.dateRange!.end;
     });
   }
 
   // Group food items by date
   const groupedByDate = filteredFoodLog.reduce((acc, item) => {
-    const date = format(new Date(item.date), 'yyyy-MM-dd');
+    const date = format(new Date(item.timestamp), 'yyyy-MM-dd');
     if (!acc[date]) acc[date] = [];
     acc[date].push(item);
     return acc;
@@ -110,7 +110,7 @@ export const exportFoodLogToPDF = (
 
     const foodData = items.map(item => [
       item.name || 'Unknown',
-      item.brand || '-',
+      '-',
       (item.calories || 0).toFixed(0),
       (item.protein || 0).toFixed(1) + 'g',
       (item.carbs || 0).toFixed(1) + 'g',

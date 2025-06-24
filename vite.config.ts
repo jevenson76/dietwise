@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
             project: env.VITE_SENTRY_PROJECT,
             authToken: env.VITE_SENTRY_AUTH_TOKEN,
             silent: true,
-            sourceMaps: {
+            sourcemaps: {
               assets: ['./dist/**']
             }
           })

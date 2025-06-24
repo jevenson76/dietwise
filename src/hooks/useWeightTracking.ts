@@ -37,7 +37,6 @@ export const useWeightTracking = ({
   const handleAddWeightEntry = useCallback((weight: number, weightLbs: number, date?: Date) => {
     const newEntry: WeightEntry = {
       weight,
-      weightLbs,
       date: (date || new Date()).toISOString(),
       id: crypto.randomUUID(),
     };
@@ -53,7 +52,7 @@ export const useWeightTracking = ({
         const hasReachedBefore = prevLog.some(entry => entry.weight <= userProfile.targetWeight!);
         if (!hasReachedBefore) {
           addMilestone(
-            MilestoneType.TARGET_WEIGHT_REACHED,
+            MilestoneType.REACHED_TARGET_WEIGHT,
             "Target Weight Reached! 🎯",
             `${weight} kg`
           );
@@ -69,7 +68,7 @@ export const useWeightTracking = ({
 
         if (currentMilestone > previousMilestone && currentMilestone > 0) {
           addMilestone(
-            MilestoneType.WEIGHT_LOSS_MILESTONE,
+            MilestoneType.WEIGHT_LOSS_X_LBS,
             `Lost ${currentMilestone} kg!`,
             `${currentMilestone} kg`
           );

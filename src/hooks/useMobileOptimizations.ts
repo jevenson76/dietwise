@@ -16,9 +16,9 @@ interface MobileOptimizations {
   supportsHaptics: boolean;
   orientation: 'portrait' | 'landscape';
   swipeHandlers: {
-    onTouchStart: (e: TouchEvent) => void;
-    onTouchMove: (e: TouchEvent) => void;
-    onTouchEnd: (e: TouchEvent) => void;
+    onTouchStart: (e: React.TouchEvent) => void;
+    onTouchMove: (e: React.TouchEvent) => void;
+    onTouchEnd: (e: React.TouchEvent) => void;
   };
   vibrate: (pattern?: number | number[]) => void;
   showIOSInstallPrompt: boolean;
@@ -102,13 +102,13 @@ export const useMobileOptimizations = (
   }, []);
 
   // Touch handlers for swipe gestures
-  const handleTouchStart = useCallback((e: TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
     touchData.current.startX = touch.clientX;
     touchData.current.startY = touch.clientY;
   }, []);
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (e.touches.length > 1) return; // Ignore multi-touch
     
     const touch = e.touches[0];

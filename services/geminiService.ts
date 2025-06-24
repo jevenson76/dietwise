@@ -185,7 +185,7 @@ Ensure the JSON is valid.
 
     const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
     const sources = groundingMetadata?.groundingChunks || [];
-    let jsonStr = response.text.trim();
+    let jsonStr = response.text?.trim() || '';
 
     // Remove markdown fences if present
     const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
@@ -200,12 +200,12 @@ Ensure the JSON is valid.
         return { planData: parsedData, sources };
       } else {
 
-        return { planData: null, error: "Received plan data in an unexpected format. Please try again. Raw: " + response.text.substring(0,100), sources };
+        return { planData: null, error: "Received plan data in an unexpected format. Please try again. Raw: " + (response.text?.substring(0,100) || 'No response'), sources };
       }
     } catch (e: any) {
       console.error("Failed to parse JSON response for meal plan:", e);
        // Log the problematic text
-      return { planData: null, error: `Failed to parse meal plan data. Please try again. Error: ${e.message}. Raw: ${response.text.substring(0,100)}...`, sources };
+      return { planData: null, error: `Failed to parse meal plan data. Please try again. Error: ${e.message}. Raw: ${response.text?.substring(0,100) || 'No response'}...`, sources };
     }
 
   } catch (error: any) {

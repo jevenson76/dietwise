@@ -71,7 +71,6 @@ export const useUserProfile = ({ onProfileChange, addMilestone }: UseUserProfile
     handleProfileChange({
       ...userProfile,
       targetWeight,
-      targetWeightLbs,
       targetDate: targetDate ?? userProfile.targetDate,
     });
   }, [userProfile, handleProfileChange]);
@@ -82,9 +81,9 @@ export const useUserProfile = ({ onProfileChange, addMilestone }: UseUserProfile
 
   const handleUpdateMacroTargets = useCallback((newTargets: Partial<UserProfile>) => {
     trackEvent('macro_targets_updated', {
-      customProtein: newTargets.customProteinTarget !== undefined,
-      customCarbs: newTargets.customCarbTarget !== undefined,
-      customFat: newTargets.customFatTarget !== undefined,
+      customProtein: newTargets.customMacroTargets?.protein !== undefined,
+      customCarbs: newTargets.customMacroTargets?.carbs !== undefined,
+      customFat: newTargets.customMacroTargets?.fat !== undefined,
     });
     handleProfileChange({ ...userProfile, ...newTargets });
   }, [userProfile, handleProfileChange]);

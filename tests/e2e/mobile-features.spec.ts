@@ -55,9 +55,11 @@ test.describe('Mobile-specific features', () => {
     
     // Perform swipe
     await page.touchscreen.tap(startX, startY);
-    await page.touchscreen.down();
-    await page.touchscreen.move(endX, startY);
-    await page.touchscreen.up();
+    // Swipe gesture
+    await page.locator('body').dragTo(page.locator('body'), {
+      sourcePosition: { x: startX, y: startY },
+      targetPosition: { x: endX, y: startY }
+    });
     
     // Verify tab changed
     await expect(page.locator('[data-testid="active-tab"]')).toHaveAttribute('data-tab', 'progress');
@@ -68,9 +70,11 @@ test.describe('Mobile-specific features', () => {
     
     // Perform pull-to-refresh gesture
     await page.touchscreen.tap(200, 100);
-    await page.touchscreen.down();
-    await page.touchscreen.move(200, 400);
-    await page.touchscreen.up();
+    // Pull down gesture
+    await page.locator('body').dragTo(page.locator('body'), {
+      sourcePosition: { x: 200, y: 100 },
+      targetPosition: { x: 200, y: 400 }
+    });
     
     // Verify refresh indicator
     await expect(page.locator('[data-testid="refresh-spinner"]')).toBeVisible();

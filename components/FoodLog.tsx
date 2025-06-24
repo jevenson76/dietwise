@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { FoodItem, MyMeal } from '../types';
 import Modal from './common/Modal';
 import UPCScannerComponent from './UPCScannerComponent'; // Import for modal usage
-import { getSmartFoodSuggestions, getTimeBasedGreeting, FoodSuggestion } from '@utils/smartSuggestions';
+import { getSmartFoodSuggestions, getTimeBasedGreeting, FoodSuggestion } from '../utils/smartSuggestions';
 
 interface FoodLogProps {
   loggedItems: FoodItem[];
@@ -82,7 +82,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
       id: `suggestion-${Date.now()}`,
       name: suggestion.name,
       calories: suggestion.calories,
-      servingSize: suggestion.servingSize,
+      servingSize: undefined,
       protein: suggestion.protein,
       carbs: suggestion.carbs,
       fat: suggestion.fat,
@@ -100,7 +100,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
   };
 
   const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
-  const greeting = getTimeBasedGreeting(userName);
+  const greeting = getTimeBasedGreeting();
   const smartSuggestions = useMemo(() => getSmartFoodSuggestions(targetCalories), [targetCalories]);
 
   const actionButtonClass = "bg-gradient-to-r text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
@@ -224,7 +224,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
             Quick Add Suggestions
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {smartSuggestions.map((suggestion, index) => (
+            {smartSuggestions.map((suggestion: any, index: number) => (
               <button
                 key={index}
                 onClick={() => handleSuggestionAdd(suggestion)}

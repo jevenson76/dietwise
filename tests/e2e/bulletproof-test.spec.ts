@@ -175,8 +175,8 @@ test.describe('🛡️ BULLETPROOF DietWise Tests', () => {
     // Get initial memory usage
     const getMemoryUsage = async () => {
       return await page.evaluate(() => {
-        if (performance.memory) {
-          return performance.memory.usedJSHeapSize;
+        if ((performance as any).memory) {
+          return (performance as any).memory.usedJSHeapSize;
         }
         return 0;
       });

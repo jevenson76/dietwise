@@ -34,7 +34,7 @@ import PDFExportButton from '@components/PDFExportButton';
 import CustomMacroTargets from '@components/CustomMacroTargets';
 import UpgradePrompt from '@components/UpgradePrompt';
 import AuthModal from '@components/auth/AuthModal';
-import { filterByHistoricalLimit, getHistoricalLimitMessage } from '@utils/dataLimits';
+import { filterByHistoricalLimit, getHistoricalLimitMessage } from '../utils/dataLimits';
 import DietWiseSplashScreen from '@components/SplashScreen';
 import OnboardingSplashScreen from './components/OnboardingSplashScreen';
 import EmailCaptureModal from './components/EmailCaptureModal';
@@ -246,11 +246,11 @@ const App: React.FC = () => {
 
   // Apply historical data limits for free users
   const filteredFoodLog = useMemo(() => {
-    return filterByHistoricalLimit(foodLog, isPremiumUser);
+    return isPremiumUser ? foodLog : filterByHistoricalLimit(foodLog);
   }, [foodLog, isPremiumUser]);
 
   const filteredWeightLog = useMemo(() => {
-    return filterByHistoricalLimit(actualWeightLog, isPremiumUser);
+    return isPremiumUser ? actualWeightLog : filterByHistoricalLimit(actualWeightLog);
   }, [actualWeightLog, isPremiumUser]);
 
   const reviewManagerRef = useRef(new ReviewManagementSystem());
@@ -520,21 +520,21 @@ const App: React.FC = () => {
     trackEvent('weight_entry_added', { date: entry.date, weight: entry.weight });
 
     if(userProfile.targetWeight !== null && userProfile.startWeight !== null) {
-      const startW = userProfile.startWeight;
+      const startW = userProfile.startWeight!;
       const targetW = userProfile.targetWeight;
       const currentW = entry.weight;
 
-      if (currentW <= targetW && startW > targetW) { 
+      if (startW && currentW <= targetW && startW > targetW) { 
          if (!milestones.find(m => m.type === MilestoneType.REACHED_TARGET_WEIGHT)) {
            addMilestone(MilestoneType.REACHED_TARGET_WEIGHT, `Reached Target Weight of ${targetW} lbs!`);
          }
-      } else if (currentW >= targetW && startW < targetW) { 
+      } else if (startW && currentW >= targetW && startW < targetW) { 
          if (!milestones.find(m => m.type === MilestoneType.REACHED_TARGET_WEIGHT)) {
            addMilestone(MilestoneType.REACHED_TARGET_WEIGHT, `Reached Target Weight of ${targetW} lbs!`);
          }
       }
       else { 
-        const weightLost = startW - currentW; 
+        const weightLost = startW ? startW - currentW : 0; 
         // const weightGained = currentW - startW; 
 
         if (startW > targetW && weightLost > 0) { 
@@ -1073,7 +1073,7 @@ const App: React.FC = () => {
                 </h3>
                 <div className="space-y-3">
                     <button 
-                        onClick={() => exportDataToCsv(filteredFoodLog.map(item => ({...item, timestamp: new Date(item.timestamp).toLocaleString()})), 'dietwise_food_log.csv')}
+                        onClick={() => exportDataToCsv(filteredFoodLog.map((item: any) => ({...item, timestamp: new Date(item.timestamp).toLocaleString()})), 'dietwise_food_log.csv')}
                         className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow"
                     >
                         Export Food Log (CSV)
@@ -1297,7 +1297,6 @@ const App: React.FC = () => {
               isProfileComplete={isProfileCompleteForFunctionality} 
               apiKeyStatus={apiKeyStatus}
               apiKeyMissing={apiKeyStatus === 'missing'}
-              userName={userProfile.name}
               onPlanGenerated={(planName) => {
                 const shareText = `Just generated my 7-day meal plan "${planName || 'Awesome Plan'}" with DietWise! Ready for a healthy week. #DietWise #MealPlanning #HealthyLifestyle`;
                 displayGlobalSuccessMessage({
@@ -1391,8 +1390,7 @@ const App: React.FC = () => {
     // Always allow access to Profile tab
     if (tab !== Tab.Profile && isProfileIncomplete) {
       displayGlobalSuccessMessage({
-        message: "Please complete your profile first to access other features.",
-        icon: "fas fa-exclamation-circle"
+        message: "Please complete your profile first to access other features."
       });
       return;
     }
@@ -1675,7 +1673,7 @@ const App: React.FC = () => {
               setIsUpgradeModalOpen(false);
               trackEvent('stripe_checkout_closed');
             }}
-            customerEmail={user?.email || userProfile.email}
+            customerEmail={user?.email || userProfile.email || undefined}
             selectedPlan="yearly"
           />
         </Suspense>
