@@ -2,9 +2,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '../utils/logger';
 
 // Supabase configuration
-const supabaseUrl = process.env.SUPABASE_URL || 'https://jabsotyzukoaqynmwscv.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImphYnNvdHl6dWtvYXF5bm13c2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5ODYzOTYsImV4cCI6MjA2MzU2MjM5Nn0.FZcrFbQTxZ7zlEVa-0euQCvpaQb5bHdcu1hPERz4rIM';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase configuration. Please check your environment variables.');

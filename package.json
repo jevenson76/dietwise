@@ -36,6 +36,7 @@
     "@sentry/vite-plugin": "^3.5.0",
     "@stripe/react-stripe-js": "^3.7.0",
     "@stripe/stripe-js": "^7.3.1",
+    "@types/react-router-dom": "^5.3.3",
     "@zxing/library": "^0.21.3",
     "chart.js": "^4.4.9",
     "chartjs-adapter-date-fns": "^3.0.0",
@@ -43,7 +44,8 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

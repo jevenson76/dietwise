@@ -36,7 +36,7 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
     } else {
       const numValue = parseFloat(value);
       if (!isNaN(numValue)) {
-        onTargetWeightChange(Math.max(minTargetWeight, Math.min(maxTargetWeight, numValue)));
+        onTargetWeightChange(numValue);
       }
     }
   };
@@ -55,37 +55,17 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
       </h2>
       <div className="space-y-6">
         <div>
-          <label htmlFor="targetWeight" className="block text-sm font-medium text-text-alt">
-            Target Weight: 
-            <span className="ml-2 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-500 dark:from-teal-500 dark:to-cyan-400">
-              {profile.targetWeight !== null ? `${profile.targetWeight} lbs` : 'Not set'}
-            </span>
+          <label htmlFor="targetWeightInput" className="block text-sm font-medium text-text-alt mb-2">
+            Target Weight (lbs)
           </label>
-          <div className="flex items-center space-x-3 mt-3">
-            <span className="text-xs text-slate-500 dark:text-slate-400">{minTargetWeight} lbs</span>
-            <input
-              type="range"
-              id="targetWeight"
-              name="targetWeight"
-              min={minTargetWeight}
-              max={maxTargetWeight}
-              step="1"
-              value={currentTargetWeightSetting}
-              onChange={handleSliderChange}
-              className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-500"
-              disabled={!profile.weight}
-              aria-label="Target weight slider"
-            />
-            <span className="text-xs text-slate-500 dark:text-slate-400">{maxTargetWeight} lbs</span>
-          </div>
-           <input
+          <input
             type="number"
             name="targetWeightInput"
             id="targetWeightInput"
             value={profile.targetWeight === null ? '' : profile.targetWeight}
             onChange={handleInputChange}
-            className={`${inputClass} mt-4 ${error ? 'border-red-500' : ''}`}
-            placeholder={`Enter target weight (${minTargetWeight}-${maxTargetWeight} lbs)`}
+            className={`${inputClass} text-2xl font-bold text-center py-4 ${error ? 'border-red-500' : ''}`}
+            placeholder="Enter target weight"
             disabled={!profile.weight}
             min={minTargetWeight}
             max={maxTargetWeight}
@@ -97,6 +77,28 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
               {error}
             </p>
           )}
+          <div className="mt-4">
+            <label htmlFor="targetWeight" className="block text-xs font-medium text-text-alt mb-2">
+              Or use slider to adjust
+            </label>
+            <div className="flex items-center space-x-3">
+              <span className="text-xs text-slate-500 dark:text-slate-400">{minTargetWeight}</span>
+              <input
+                type="range"
+                id="targetWeight"
+                name="targetWeight"
+                min={minTargetWeight}
+                max={maxTargetWeight}
+                step="1"
+                value={currentTargetWeightSetting}
+                onChange={handleSliderChange}
+                className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-600 dark:accent-teal-500 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-600 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-teal-600 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0"
+                disabled={!profile.weight}
+                aria-label="Target weight slider"
+              />
+              <span className="text-xs text-slate-500 dark:text-slate-400">{maxTargetWeight}</span>
+            </div>
+          </div>
         </div>
 
         <div>

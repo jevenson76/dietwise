@@ -54,6 +54,16 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           output: {
+            assetFileNames: (assetInfo) => {
+              const name = assetInfo.name || '';
+              const extType = name.split('.')[1];
+              if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+                return `assets/[name]-[hash][extname]`;
+              }
+              return `assets/[name]-[hash]-${Date.now()}[extname]`;
+            },
+            chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+            entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
             manualChunks: {
               // Vendor chunks for large libraries
               'react-vendor': ['react', 'react-dom'],

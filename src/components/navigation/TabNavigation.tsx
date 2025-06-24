@@ -39,6 +39,10 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
 }) => {
   const handleTabChange = (tab: Tab) => {
     if (tab !== activeTab) {
+      // Haptic feedback for mobile
+      if ('vibrate' in navigator) {
+        navigator.vibrate(25);
+      }
       trackEvent('tab_changed', { from: activeTab, to: tab });
       onTabChange(tab);
     }

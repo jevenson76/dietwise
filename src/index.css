@@ -107,3 +107,82 @@ html {
   display: flex;
   flex-direction: column;
 }
+
+/* Custom radio button styles */
+.custom-radio-input:checked + .custom-radio-label {
+  border-color: #0d9488;
+  background-color: #0d9488;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.custom-radio-label {
+  transition: all 0.2s ease;
+}
+
+.custom-radio-label:hover {
+  border-color: #14b8a6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+}
+
+.dark .custom-radio-input:checked + .custom-radio-label {
+  background-color: #14b8a6;
+  border-color: #14b8a6;
+}
+
+/* Custom range slider styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Slider track */
+input[type="range"]::-webkit-slider-track {
+  background: #e2e8f0;
+  height: 8px;
+  border-radius: 4px;
+}
+
+input[type="range"]::-moz-range-track {
+  background: #e2e8f0;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.dark input[type="range"]::-webkit-slider-track {
+  background: #475569;
+}
+
+.dark input[type="range"]::-moz-range-track {
+  background: #475569;
+}
+
+/* Slider thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #0d9488;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  margin-top: -6px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  border: none;
+  background: #0d9488;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  background: #14b8a6;
+}
+
+input[type="range"]:hover::-moz-range-thumb {
+  background: #14b8a6;
+}

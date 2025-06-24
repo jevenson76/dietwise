@@ -52,7 +52,7 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
     let expectedWeightData: { x: number; y: number }[] = [];
     const targetWeight = userProfile.targetWeight;
     let projectionStartDateObj: Date;
-    let projectionStartWeight: number | null = userProfile.startWeight;
+    let projectionStartWeight: number | null = userProfile.startWeight ?? null;
 
     if (!projectionStartWeight && sortedActualWeights.length > 0) {
         projectionStartWeight = sortedActualWeights[0].weight;
@@ -195,7 +195,7 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
           },
           { 
             label: 'Target Weight',
-            data: (targetWeight !== null && allDates.length > 0) ? [
+            data: (targetWeight !== null && allDatesExist) ? [
                     { x: minDate, y: targetWeight },
                     { x: maxDate, y: targetWeight }
                 ] : [],
@@ -307,7 +307,7 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
   }, [userProfile, actualWeightLog, currentTheme]);
 
   return (
-    <div className="bg-bg-card p-4 sm:p-6 rounded-xl shadow-xl min-h-[350px] sm:min-h-[450px]">
+    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl min-h-[350px] sm:min-h-[450px]">
       <h3 className="text-xl font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
         <i className="fas fa-chart-line mr-2.5 text-teal-600 dark:text-teal-400"></i>Weight Progress
       </h3>

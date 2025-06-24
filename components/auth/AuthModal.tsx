@@ -20,6 +20,13 @@ const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login' 
 }) => {
   const [mode, setMode] = useState<AuthMode>(initialMode);
+  
+  // Reset mode when modal opens with a different initial mode
+  React.useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+    }
+  }, [isOpen, initialMode]);
 
   const handleSuccess = () => {
     onSuccess();
@@ -53,7 +60,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Account" size="lg">
       <div className="p-6">
         {renderContent()}
       </div>

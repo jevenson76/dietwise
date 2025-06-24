@@ -36,7 +36,12 @@ import UpgradePrompt from '@components/UpgradePrompt';
 import AuthModal from '@components/auth/AuthModal';
 import { filterByHistoricalLimit, getHistoricalLimitMessage } from '@utils/dataLimits';
 import DietWiseSplashScreen from '@components/SplashScreen';
+import OnboardingSplashScreen from './components/OnboardingSplashScreen';
+import EmailCaptureModal from './components/EmailCaptureModal';
+import MobileInstallPrompt from './components/MobileInstallPrompt';
+import PullToRefresh from './components/PullToRefresh';
 import { useSplashScreen } from '@hooks/useSplashScreen';
+import { useMobileOptimizations } from './hooks/useMobileOptimizations';
 
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
@@ -169,6 +174,17 @@ const App: React.FC = () => {
   });
 
   const [isInitialSetup, setIsInitialSetup] = useState<boolean>(!userProfile.profileCreationDate);
+  const [hasJustCompletedOnboarding] = useState<boolean>(() => {
+    // Check if user just completed onboarding in this session
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding') === 'true';
+    const onboardingTimestamp = localStorage.getItem('onboardingCompletedAt');
+    if (hasSeenOnboarding && onboardingTimestamp) {
+      const timeSinceOnboarding = Date.now() - parseInt(onboardingTimestamp);
+      // Consider it "just completed" if less than 30 minutes ago
+      return timeSinceOnboarding < 30 * 60 * 1000;
+    }
+    return false;
+  });
   const [activeTab, setActiveTab] = useState<Tab>(isInitialSetup ? Tab.Profile : Tab.Log); // Default to Profile if initial setup
   const [apiKeyStatus, setApiKeyStatus] = useState<'checking' | 'ok' | 'missing'>('checking');
   const [isDashboardVisible, setIsDashboardVisible] = useState<boolean>(true);
@@ -193,6 +209,28 @@ const App: React.FC = () => {
   const [isReviewPromptModalOpen, setIsReviewPromptModalOpen] = useState<boolean>(false);
   const [isLogFromMyMealModalOpen, setIsLogFromMyMealModalOpen] = useState<boolean>(false);
   const [isUPCScannerModalOpen, setIsUPCScannerModalOpen] = useState<boolean>(false); // For FoodLog's scanner
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    return !localStorage.getItem('hasSeenOnboarding') && !userProfile.profileCreationDate;
+  });
+  const [isEmailCaptureModalOpen, setIsEmailCaptureModalOpen] = useState<boolean>(false);
+
+  // Mobile optimizations
+  const mobile = useMobileOptimizations(
+    () => {
+      // Swipe left - next tab
+      const currentIndex = tabOrder.indexOf(activeTab);
+      if (currentIndex < tabOrder.length - 1) {
+        setActiveTab(tabOrder[currentIndex + 1]);
+      }
+    },
+    () => {
+      // Swipe right - previous tab
+      const currentIndex = tabOrder.indexOf(activeTab);
+      if (currentIndex > 0) {
+        setActiveTab(tabOrder[currentIndex - 1]);
+      }
+    }
+  );
 
   // Premium limits hook
   const premiumLimits = usePremiumLimits(isPremiumUser);
@@ -294,7 +332,7 @@ const App: React.FC = () => {
 
   // Memoize today's food log to avoid recalculating on every render
   const todaysLog = useMemo(() => {
-    return filteredFoodLog.filter(item => differenceInCalendarDays(new Date(), new Date(item.timestamp)) === 0);
+    return filteredFoodLog.filter((item: any) => differenceInCalendarDays(new Date(), new Date(item.timestamp)) === 0);
   }, [filteredFoodLog]);
 
   // Memoize today's unfiltered food log for streak calculations
@@ -335,6 +373,16 @@ const App: React.FC = () => {
     });
 
   }, [foodLog, streakData, userProfile.profileCreationDate, addMilestone, milestones]);
+
+  // Debug upgrade modal state
+  useEffect(() => {
+    if (isUpgradeModalOpen) {
+      console.log('Upgrade modal opened!');
+      console.log('Current activeTab:', activeTab);
+      console.log('isPremiumUser:', isPremiumUser);
+      console.trace('Modal opened from');
+    }
+  }, [isUpgradeModalOpen, activeTab, isPremiumUser]);
 
   const processFoodItemAddition = useCallback((foodItem: FoodItem, source: 'manual' | 'scan' | 'my_meal', isOfflineSync: boolean = false) => {
     setFoodLog(prevLog => [...prevLog, foodItem].sort((a,b) => b.timestamp - a.timestamp));
@@ -719,6 +767,21 @@ const App: React.FC = () => {
       });
   }, [milestones, isInitialSetup, isReviewPromptModalOpen, reminderSettings.lastReviewPromptDate, reminderSettings.hasGivenFeedback, userProfile.email, handleUpdateReminderSettings]);
 
+  // Email capture after first week completion
+  useEffect(() => {
+    const hasCompletedFirstWeek = milestones.some(m => m.type === MilestoneType.FIRST_WEEK_COMPLETED);
+    const hasEmailCaptured = localStorage.getItem('hasEmailCaptured');
+    const hasSkippedEmailCapture = localStorage.getItem('hasSkippedEmailCapture');
+    
+    if (hasCompletedFirstWeek && !hasEmailCaptured && !hasSkippedEmailCapture && !userProfile.email && !isEmailCaptureModalOpen) {
+      // Small delay to let milestone celebration finish
+      setTimeout(() => {
+        setIsEmailCaptureModalOpen(true);
+        trackEvent('email_capture_modal_shown', { trigger: 'first_week_completion' });
+      }, 2000);
+    }
+  }, [milestones, userProfile.email, isEmailCaptureModalOpen]);
+
   useEffect(() => {
     if (Notification.permission === 'granted') {
       scheduleMealReminders(); 
@@ -756,7 +819,7 @@ const App: React.FC = () => {
     }
   };
 
-  const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Planner, Tab.Progress, Tab.Profile];
+  const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Progress, Tab.Planner, Tab.Profile];
 
   const AdPlaceholder: React.FC<{sizeLabel?: string; className?: string}> = ({ sizeLabel = "Banner Ad (e.g., 320x50)", className=""}) => (
     <div className={`bg-slate-200 dark:bg-slate-700 border-2 border-dashed border-slate-400 dark:border-slate-500 text-slate-500 dark:text-slate-400 text-sm flex flex-col items-center justify-center h-20 sm:h-24 my-6 rounded-md shadow text-center p-2 ${className}`}>
@@ -810,10 +873,42 @@ const App: React.FC = () => {
     }
   };
 
+  const handleEmailSubmit = async (email: string) => {
+    try {
+      // Update user profile with email
+      setUserProfile(prev => ({ ...prev, email }));
+      localStorage.setItem('hasEmailCaptured', 'true');
+      displayGlobalSuccessMessage('Thanks! You\'ll receive weekly progress summaries every Sunday.');
+      trackEvent('email_captured', { source: 'first_week_modal' });
+    } catch (error) {
+      console.error('Email submission failed:', error);
+      throw error;
+    }
+  };
+
+  // Handle refresh for pull-to-refresh
+  const handleRefresh = async () => {
+    try {
+      if (mobile?.vibrate) {
+        mobile.vibrate(50); // Haptic feedback
+      }
+      // Simulate data refresh
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      displayGlobalSuccessMessage('Data refreshed!');
+      trackEvent('pull_to_refresh_used');
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    }
+  };
+
   const renderTabContent = () => {
+    // DEBUG: Log what tab is being rendered
+    console.log('renderTabContent called for:', activeTab);
+    
     switch (activeTab) {
       case Tab.Profile:
         const welcomeName = userProfile.name ? `, ${userProfile.name}` : '';
+        console.log('Rendering Profile tab content');
         return (
           <>
             {apiKeyStatus === 'missing' && (
@@ -845,6 +940,8 @@ const App: React.FC = () => {
                 isPremiumUser={isPremiumUser}
                 onUpgradeClick={() => setIsUpgradeModalOpen(true)}
                 targetCalories={calculatedMetrics.targetCalories}
+                isInitialSetup={isInitialSetup || hasJustCompletedOnboarding}
+                profileCreationDate={userProfile.profileCreationDate}
               />
             </div>
 
@@ -969,18 +1066,11 @@ const App: React.FC = () => {
               {Notification.permission === 'denied' && <p className="text-xs text-orange-600 dark:text-orange-400 mt-2">Notification permission is denied. You can change this in your browser settings.</p>}
             </div>
 
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+            {isPremiumUser && (
+              <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
                 <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
                     <i className="fas fa-file-export mr-2.5 text-green-500 dark:text-green-400"></i>Export Data
                 </h3>
-                {!isPremiumUser && (
-                  <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      <i className="fas fa-info-circle mr-2"></i>
-                      Free users can only export data from the last 30 days. Upgrade to access your complete history.
-                    </p>
-                  </div>
-                )}
                 <div className="space-y-3">
                     <button 
                         onClick={() => exportDataToCsv(filteredFoodLog.map(item => ({...item, timestamp: new Date(item.timestamp).toLocaleString()})), 'dietwise_food_log.csv')}
@@ -1008,7 +1098,8 @@ const App: React.FC = () => {
                         />
                     </div>
                 </div>
-            </div>
+              </div>
+            )}
 
             <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
               <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
@@ -1087,7 +1178,7 @@ const App: React.FC = () => {
                           setAuthModalMode('signup');
                           setIsAuthModalOpen(true);
                         }}
-                        className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-2.5 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+                        className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
                       >
                         <i className="fas fa-user-plus mr-2"></i>
                         Create Account
@@ -1148,6 +1239,8 @@ const App: React.FC = () => {
                 onDeleteMeal={handleDeleteMyMeal}
                 onLogMeal={(mealId: string) => handleLogMyMeal(mealId)}
                 apiKeyMissing={apiKeyStatus === 'missing'}
+                userName={userProfile.name}
+                targetCalories={calculatedMetrics.targetCalories}
               />
             </Suspense>
             <AdPlaceholder sizeLabel="Food Library Ad (e.g., 300x100)" className="mt-6"/>
@@ -1170,6 +1263,10 @@ const App: React.FC = () => {
           </>
         );
       case Tab.Planner:
+        console.log('PLANNER TAB RENDER - THIS SHOULD NOT SHOW WHEN PROFILE IS ACTIVE!');
+        console.log('Current activeTab:', activeTab);
+        console.log('Tab.Planner value:', Tab.Planner);
+        console.log('Tab.Profile value:', Tab.Profile);
         if (!isPremiumUser) {
           if (!isUpgradeModalOpen) setIsUpgradeModalOpen(true); 
           return (
@@ -1200,6 +1297,7 @@ const App: React.FC = () => {
               isProfileComplete={isProfileCompleteForFunctionality} 
               apiKeyStatus={apiKeyStatus}
               apiKeyMissing={apiKeyStatus === 'missing'}
+              userName={userProfile.name}
               onPlanGenerated={(planName) => {
                 const shareText = `Just generated my 7-day meal plan "${planName || 'Awesome Plan'}" with DietWise! Ready for a healthy week. #DietWise #MealPlanning #HealthyLifestyle`;
                 displayGlobalSuccessMessage({
@@ -1225,15 +1323,29 @@ const App: React.FC = () => {
               </div>
             )}
             <Suspense fallback={<LoadingSpinner message="Loading Progress..." />}>
-              <ProgressTabComponent
-                userProfile={userProfile}
-                actualWeightLog={filteredWeightLog}
-                onAddWeightEntry={handleAddWeightEntry}
-                reminderSettings={reminderSettings}
-                onUpdateReminderSettings={handleUpdateReminderSettings}
-                isProfileComplete={isProfileCompleteForFunctionality}
-                currentTheme={currentTheme}
-              />
+              {(() => {
+                try {
+                  return (
+                    <ProgressTabComponent
+                      userProfile={userProfile}
+                      actualWeightLog={filteredWeightLog}
+                      onAddWeightEntry={handleAddWeightEntry}
+                      reminderSettings={reminderSettings}
+                      onUpdateReminderSettings={handleUpdateReminderSettings}
+                      isProfileComplete={isProfileCompleteForFunctionality}
+                      currentTheme={currentTheme}
+                    />
+                  );
+                } catch (error) {
+                  console.error('Progress tab error:', error);
+                  return (
+                    <div className="p-4 text-center">
+                      <p className="text-red-500">Error loading Progress tab</p>
+                      <p className="text-sm text-gray-500 mt-2">{error?.toString()}</p>
+                    </div>
+                  );
+                }
+              })()}
             </Suspense>
           </>
         );
@@ -1269,11 +1381,29 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: Tab) => {
+    console.log('handleTabChange called with:', tab, 'isPremiumUser:', isPremiumUser);
+    
+    // Check if profile has required fields (name, age, sex, weight, height)
+    const isProfileIncomplete = !userProfile.name || !userProfile.age || !userProfile.sex || 
+                              !userProfile.weight || !userProfile.height || 
+                              !userProfile.height.ft || !userProfile.height.in;
+    
+    // Always allow access to Profile tab
+    if (tab !== Tab.Profile && isProfileIncomplete) {
+      displayGlobalSuccessMessage({
+        message: "Please complete your profile first to access other features.",
+        icon: "fas fa-exclamation-circle"
+      });
+      return;
+    }
+    
     trackEvent('tab_navigation', { tab_name: tab });
     if ((tab === Tab.Planner || tab === Tab.Analytics) && !isPremiumUser) {
+      console.log('Opening upgrade modal for premium tab:', tab);
       setIsUpgradeModalOpen(true);
       trackEvent('upgrade_modal_opened_from_tab_click', { tab_name: tab });
     } else {
+      console.log('Setting active tab to:', tab);
       setActiveTab(tab);
     }
   };
@@ -1291,19 +1421,52 @@ const App: React.FC = () => {
     return <DietWiseSplashScreen onComplete={hideSplash} />;
   }
 
+  // Show onboarding if needed
+  if (showOnboarding) {
+    return (
+      <OnboardingSplashScreen 
+        onComplete={() => {
+          setShowOnboarding(false);
+          localStorage.setItem('hasSeenOnboarding', 'true');
+          localStorage.setItem('onboardingCompletedAt', Date.now().toString());
+          trackEvent('onboarding_completed');
+        }}
+        onStartFreeTrial={() => {
+          setShowOnboarding(false);
+          localStorage.setItem('hasSeenOnboarding', 'true');
+          setIsUpgradeModalOpen(true);
+          trackEvent('onboarding_trial_started');
+        }}
+      />
+    );
+  }
+
   return (
-    <div className={`min-h-screen bg-bg-default text-text-default flex flex-col theme-${currentTheme}`}>
+    <div 
+      className={`min-h-screen bg-bg-default text-text-default flex flex-col theme-${currentTheme}`}
+      onTouchStart={mobile.swipeHandlers.onTouchStart}
+      onTouchMove={mobile.swipeHandlers.onTouchMove}
+      onTouchEnd={mobile.swipeHandlers.onTouchEnd}
+    >
       <header className="bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 dark:from-teal-700 dark:via-cyan-700 dark:to-sky-700 text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
-          <div className="flex items-center">
-            <i className="fas fa-leaf mr-3 text-3xl opacity-90"></i>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DietWise</h1>
-            {!isOnline && <span className="ml-3 text-xs font-normal bg-orange-500 text-white px-2 py-0.5 rounded-full animate-pulse">Offline Mode</span>}
+          <div className="flex-1">
+            <div className="flex items-center">
+              <i className="fas fa-leaf mr-3 text-3xl opacity-90"></i>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DietWise</h1>
+                <p className="text-xs sm:text-sm opacity-90 mt-0.5">
+                  {userProfile.name ? `Welcome back, ${userProfile.name}!` : 'Your Personal Nutrition Companion'}
+                  {calculatedMetrics.targetCalories && ` • ${calculatedMetrics.targetCalories} cal/day`}
+                </p>
+              </div>
+              {!isOnline && <span className="ml-3 text-xs font-normal bg-orange-500 text-white px-2 py-0.5 rounded-full animate-pulse">Offline Mode</span>}
+            </div>
           </div>
           {showDashboardToggle && (
             <button
               onClick={toggleDashboardVisibility}
-              className="p-1.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 transition-colors"
+              className="p-1.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 transition-colors ml-4"
               aria-label={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
               title={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
             >
@@ -1334,60 +1497,104 @@ const App: React.FC = () => {
       </nav>
 
       <main className="container mx-auto max-w-5xl p-4 md:p-6 flex-grow w-full">
-        {/* Strategic upgrade prompt - show after user has logged 10+ items and is not premium */}
-        {!isPremiumUser && foodLog.length >= 10 && activeTab === Tab.Log && (
-          <div className="mb-4">
-            <UpgradePrompt
-              feature="You're doing great!"
-              message="Unlock unlimited barcode scans, advanced analytics, and more premium features to supercharge your diet tracking."
-              icon="fas fa-chart-line"
-              variant="banner"
-              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-            />
-          </div>
-        )}
-        {globalSuccessMessage && (
-          <Alert 
-            type="success" 
-            message={globalSuccessMessage.message} 
-            shareData={globalSuccessMessage.shareData}
-            onClose={() => setGlobalSuccessMessage(null)} 
-            className="mb-4" 
-          />
-        )}
-        {apiKeyStatus === 'checking' && activeTab !== Tab.Profile && 
-            <Alert type="info" message="Verifying AI integration status..." className="mb-4" />
-        }
+        {mobile?.isMobile ? (
+          <PullToRefresh onRefresh={handleRefresh}>
+            {/* Strategic upgrade prompt - show after user has logged 10+ items and is not premium */}
+            {!isPremiumUser && foodLog.length >= 10 && activeTab === Tab.Log && (
+              <div className="mb-4">
+                <UpgradePrompt
+                  feature="You're doing great!"
+                  message="Unlock unlimited barcode scans, advanced analytics, and more premium features to supercharge your diet tracking."
+                  icon="fas fa-chart-line"
+                  variant="banner"
+                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                />
+              </div>
+            )}
+            {globalSuccessMessage && (
+              <Alert 
+                type="success" 
+                message={globalSuccessMessage.message} 
+                shareData={globalSuccessMessage.shareData}
+                onClose={() => setGlobalSuccessMessage(null)} 
+                className="mb-4" 
+              />
+            )}
+            {apiKeyStatus === 'checking' && activeTab !== Tab.Profile && 
+                <Alert type="info" message="Verifying AI integration status..." className="mb-4" />
+            }
 
-        {showDashboardToggle && isDashboardVisible && (
-          <Suspense fallback={<LoadingSpinner message="Loading Dashboard..." />}>
-            <UserStatusDashboard 
-              userProfile={userProfile}
-              actualWeightLog={actualWeightLog}
-              reminderSettings={reminderSettings}
-              streakData={streakData}
-              onNavigateToMealIdeas={() => handleTabChange(Tab.Meals)}
-            />
-          </Suspense>
-        )}
-         {milestones.length > 0 && activeTab === Tab.Progress && (
-            <div className="mt-8 bg-bg-card p-6 rounded-xl shadow-xl">
+            {showDashboardToggle && isDashboardVisible && (
+              <Suspense fallback={<LoadingSpinner message="Loading Dashboard..." />}>
+                <UserStatusDashboard 
+                  userProfile={userProfile}
+                  actualWeightLog={actualWeightLog}
+                  reminderSettings={reminderSettings}
+                  streakData={streakData}
+                  onNavigateToMealIdeas={() => handleTabChange(Tab.Meals)}
+                />
+              </Suspense>
+            )}
+            {milestones.length > 0 && activeTab === Tab.Progress && (
+                <div className="mt-8 bg-bg-card p-6 rounded-xl shadow-xl">
+                    <h3 className="text-xl font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+                        <i className="fas fa-trophy mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Achievements
+                    </h3>
+                    <ul className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar">
+                        {milestones.slice().reverse().map(m => (
+                            <li key={m.id} className="p-3 bg-slate-100 dark:bg-slate-700 rounded-md shadow-sm text-sm">
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                    {format(parseISO(m.dateAchieved), 'MMM d, yyyy')}:
+                                </span> {m.description}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {renderTabContent()}
+          </PullToRefresh>
+        ) : (
+          <>
+            {/* Strategic upgrade prompt - show after user has logged 10+ items and is not premium */}
+            {!isPremiumUser && foodLog.length >= 10 && activeTab === Tab.Log && (
+              <div className="mb-4">
+                <UpgradePrompt
+                  feature="You're doing great!"
+                  message="Unlock unlimited barcode scans, advanced analytics, and more premium features to supercharge your diet tracking."
+                  icon="fas fa-chart-line"
+                  variant="banner"
+                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                />
+              </div>
+            )}
+            {globalSuccessMessage && (
+              <Alert 
+                type="success" 
+                message={globalSuccessMessage.message} 
+                shareData={globalSuccessMessage.shareData}
+                onClose={() => setGlobalSuccessMessage(null)} 
+              />
+            )}
+            {milestones.length > 0 && activeTab === Tab.Progress && (
+              <div className="mt-8 bg-bg-card p-6 rounded-xl shadow-xl">
                 <h3 className="text-xl font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                    <i className="fas fa-trophy mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Achievements
+                  <i className="fas fa-trophy mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Achievements
                 </h3>
                 <ul className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar">
-                    {milestones.slice().reverse().map(m => (
-                        <li key={m.id} className="p-3 bg-slate-100 dark:bg-slate-700 rounded-md shadow-sm text-sm">
-                            <span className="font-semibold text-green-600 dark:text-green-400">
-                                {format(parseISO(m.dateAchieved), 'MMM d, yyyy')}:
-                            </span> {m.description}
-                        </li>
-                    ))}
+                  {milestones.slice().reverse().map(m => (
+                    <li key={m.id} className="p-3 bg-slate-100 dark:bg-slate-700 rounded-md shadow-sm text-sm">
+                      <span className="font-semibold text-green-600 dark:text-green-400">
+                        {format(parseISO(m.dateAchieved), 'MMM d, yyyy')}:
+                      </span> {m.description}
+                    </li>
+                  ))}
                 </ul>
-            </div>
+              </div>
+            )}
+            {renderTabContent()}
+          </>
         )}
-
-        {renderTabContent()}
       </main>
 
        {isUPCScannerModalOpen && (
@@ -1483,6 +1690,26 @@ const App: React.FC = () => {
         }}
         initialMode={authModalMode}
       />
+
+      <EmailCaptureModal
+        isOpen={isEmailCaptureModalOpen}
+        onClose={() => {
+          setIsEmailCaptureModalOpen(false);
+          localStorage.setItem('hasSkippedEmailCapture', 'true');
+        }}
+        onEmailSubmit={handleEmailSubmit}
+        userName={userProfile.name}
+      />
+
+      <MobileInstallPrompt
+        isVisible={mobile.showIOSInstallPrompt || !!mobile.deferredPrompt}
+        isIOS={mobile.isIOS}
+        onDismiss={() => {
+          // This will be handled by the component itself
+        }}
+        onInstall={mobile.showInstallPrompt}
+      />
+
 
       <footer className="bg-slate-800 dark:bg-slate-900 text-slate-300 dark:text-slate-400 text-center p-8 mt-16 border-t border-slate-700 dark:border-slate-600">
         <p className="text-sm">&copy; {new Date().getFullYear()} Wizard Tech, LLC.</p>

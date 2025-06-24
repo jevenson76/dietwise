@@ -95,7 +95,7 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
   };
 
   return (
-    <div className="bg-bg-card p-5 sm:p-6 rounded-xl shadow-lg mb-6 sm:mb-8 border border-border-default">
+    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-lg mb-6 sm:mb-8 border border-border-default">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
         <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-2 sm:mb-0">
           Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-500 dark:from-teal-500 dark:to-cyan-400">{userProfile.name}!</span>

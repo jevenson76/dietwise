@@ -22,6 +22,8 @@ interface MyLibraryComponentProps {
   onDeleteMeal: (mealId: string) => void;
   onLogMeal: (mealId: string) => void;
   apiKeyMissing: boolean;
+  userName: string | null;
+  targetCalories: number | null;
 }
 
 const AdPlaceholder: React.FC<{sizeLabel?: string; className?: string}> = ({ sizeLabel = "Banner Ad (e.g., 320x50)", className=""}) => (
@@ -36,7 +38,8 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
   myFoods, myMeals,
   onAddFood, onUpdateFood, onDeleteFood,
   onAddMeal, onUpdateMeal, onDeleteMeal,
-  onLogMeal, apiKeyMissing
+  onLogMeal, apiKeyMissing,
+  userName, targetCalories
 }) => {
   const [isFoodModalOpen, setIsFoodModalOpen] = useState(false);
   const [isMealModalOpen, setIsMealModalOpen] = useState(false);
@@ -147,7 +150,7 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
     setIsFoodModalOpen(true); 
   };
 
-  const inputClass = "mt-1 block w-full px-3 py-2 border border-border-default rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
+  const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
   const buttonClass = "bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors disabled:opacity-50";
   const dangerButtonClass = "bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-3 rounded text-xs shadow";
 
@@ -244,6 +247,10 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
             <i className="fas fa-plus mr-1.5"></i>Add Food
           </button>
         </div>
+        <p className="text-sm text-text-alt mb-4">
+          {userName ? `${userName}, save your favorite foods here for quick logging.` : 'Save your favorite foods here for quick logging.'}
+          {targetCalories && ` Remember, your daily goal is ${targetCalories.toLocaleString()} calories.`}
+        </p>
         {myFoods.length === 0 ? (
           <p className="text-text-alt text-center py-4">No custom foods saved yet. Add your frequently eaten items!</p>
         ) : (
@@ -274,6 +281,10 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
              <i className="fas fa-plus mr-1.5"></i>Create Meal
           </button>
         </div>
+        <p className="text-sm text-text-alt mb-4">
+          {userName ? `${userName}, create meal combinations for faster tracking.` : 'Create meal combinations for faster tracking.'}
+          {myMeals.length > 0 && ` You have ${myMeals.length} meal${myMeals.length === 1 ? '' : 's'} saved.`}
+        </p>
         {myMeals.length === 0 ? (
           <p className="text-text-alt text-center py-4">No custom meals created yet. Combine your foods into meals!</p>
         ) : (

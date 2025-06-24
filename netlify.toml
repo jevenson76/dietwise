@@ -4,9 +4,17 @@
 
 # Fix MIME types for JavaScript modules
 [[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+[[headers]]
   for = "/assets/*.js"
   [headers.values]
     Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "no-cache, no-store, must-revalidate"
     
 [[headers]]
   for = "*.js"

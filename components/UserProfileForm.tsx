@@ -75,7 +75,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
 
   const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
   const selectClass = inputClass;
-  const radioLabelBaseClass = "custom-radio-label block w-full text-center px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm cursor-pointer hover:border-teal-400";
+  const radioLabelBaseClass = "custom-radio-label block w-full text-center px-4 py-2.5 border border-slate-300 rounded-lg cursor-pointer hover:border-teal-400 transition-all";
 
   return (
     <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
@@ -179,55 +179,12 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
             </div>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-text-alt">Height</label>
-            <div className="grid grid-cols-2 gap-x-4">
-                <div>
-                    <label htmlFor="height_ft" className="block text-xs font-medium text-text-alt">Feet</label>
-                    <input
-                        type="number"
-                        name="height_ft"
-                        id="height_ft"
-                        value={profile.height?.ft ?? ''}
-                        onChange={handleChange}
-                        className={`${inputClass} ${errors.height_ft ? 'border-red-500' : ''}`}
-                        placeholder="e.g., 5"
-                        min="1"
-                        max="8"
-                    />
-                    {errors.height_ft && (
-                      <p className="mt-1 text-sm text-red-500" role="alert">
-                        <i className="fas fa-exclamation-circle mr-1"></i>
-                        {errors.height_ft}
-                      </p>
-                    )}
-                </div>
-                <div>
-                    <label htmlFor="height_in" className="block text-xs font-medium text-text-alt">Inches</label>
-                    <input
-                        type="number"
-                        name="height_in"
-                        id="height_in"
-                        value={profile.height?.in ?? ''}
-                        onChange={handleChange}
-                        className={`${inputClass} ${errors.height_in ? 'border-red-500' : ''}`}
-                        placeholder="e.g., 8"
-                        min="0"
-                        max="11"
-                        step="0.1"
-                    />
-                    {errors.height_in && (
-                      <p className="mt-1 text-sm text-red-500" role="alert">
-                        <i className="fas fa-exclamation-circle mr-1"></i>
-                        {errors.height_in}
-                      </p>
-                    )}
-                </div>
-            </div>
-          </div>
+        </div>
 
+        {/* Weight and Height Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
           <div>
-            <label htmlFor="weight" className="block text-sm font-medium text-text-alt">Current Weight (lbs)</label>
+            <label htmlFor="weight" className="block text-sm font-medium text-text-alt mb-1">Current Weight (lbs)</label>
             <input
               type="number"
               name="weight"
@@ -247,6 +204,54 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileCha
               </p>
             )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text-alt mb-1">Height</label>
+            <div className="grid grid-cols-2 gap-x-3">
+                <div>
+                    <input
+                        type="number"
+                        name="height_ft"
+                        id="height_ft"
+                        value={profile.height?.ft ?? ''}
+                        onChange={handleChange}
+                        className={`${inputClass} ${errors.height_ft ? 'border-red-500' : ''}`}
+                        placeholder="Feet"
+                        min="1"
+                        max="8"
+                    />
+                    {errors.height_ft && (
+                      <p className="mt-1 text-sm text-red-500" role="alert">
+                        <i className="fas fa-exclamation-circle mr-1"></i>
+                        {errors.height_ft}
+                      </p>
+                    )}
+                </div>
+                <div>
+                    <input
+                        type="number"
+                        name="height_in"
+                        id="height_in"
+                        value={profile.height?.in ?? ''}
+                        onChange={handleChange}
+                        className={`${inputClass} ${errors.height_in ? 'border-red-500' : ''}`}
+                        placeholder="Inches"
+                        min="0"
+                        max="11"
+                        step="0.1"
+                    />
+                    {errors.height_in && (
+                      <p className="mt-1 text-sm text-red-500" role="alert">
+                        <i className="fas fa-exclamation-circle mr-1"></i>
+                        {errors.height_in}
+                      </p>
+                    )}
+                </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
           <div className="md:col-span-2">
             <label htmlFor="activityLevel" className="block text-sm font-medium text-text-alt">Activity Level</label>
             <select

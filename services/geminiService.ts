@@ -42,7 +42,7 @@ export const getMealIdeas = async (calorieTarget: number, preferences?: string):
       calorieTarget 
     });
     
-    return { ideas: response.text, error: undefined };
+    return { ideas: response.text ?? null, error: undefined };
   } catch (error: any) {
     log.timeEnd('getMealIdeas', 'gemini-service');
     log.error('Error fetching meal ideas from Gemini', 'gemini-service', { 
@@ -87,6 +87,10 @@ If some nutritional values are missing, omit them from the JSON structure or set
     const textResponse = response.text;
     const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
     const sources = groundingMetadata?.groundingChunks || [];
+
+    if (!textResponse) {
+      return { foodInfo: null, error: "No response from AI service.", sources };
+    }
 
     if (textResponse.includes("Product not found for this UPC")) {
       return { foodInfo: null, error: "Product information not found for this UPC.", sources };

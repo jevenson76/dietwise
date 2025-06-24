@@ -6,7 +6,7 @@ interface SplashScreenConfig {
 }
 
 export const useSplashScreen = (config: SplashScreenConfig = {}) => {
-  const { duration = 3000, skipOnDev = false } = config;
+  const { duration = 4000, skipOnDev = false } = config;
   const [showSplash, setShowSplash] = useState(true);
   const [isAppReady, setIsAppReady] = useState(false);
 
@@ -24,10 +24,10 @@ export const useSplashScreen = (config: SplashScreenConfig = {}) => {
     // Simulate app initialization
     const initTimer = setTimeout(() => {
       setIsAppReady(true);
-    }, 1000);
+    }, duration);
 
     return () => clearTimeout(initTimer);
-  }, [skipOnDev]);
+  }, [skipOnDev, duration]);
 
   const hideSplash = () => {
     setShowSplash(false);

@@ -31,7 +31,7 @@ interface SplashScreenProps {
 
 const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({ 
   onComplete, 
-  duration = 5000 // Increased from 3000ms to 5000ms
+  duration = 4000 // Increased from 3000ms to 4000ms
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [logoScale, setLogoScale] = useState(0.5);
@@ -79,7 +79,7 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-green-400 via-blue-500 to-purple-600"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-teal-600 via-cyan-600 to-blue-700"
       style={{
         opacity,
         transition: 'opacity 0.5s ease-in-out',
@@ -93,7 +93,7 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="text-center z-10">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 text-center">
         {/* Logo Container */}
         <div
           className="mb-8 flex items-center justify-center"
@@ -168,11 +168,12 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
           </div>
         </div>
 
-        {/* Version */}
-        <p className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">
-          v1.0.0
-        </p>
       </div>
+      
+      {/* Version - moved outside main content */}
+      <p className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">
+        v1.0.0
+      </p>
 
       {/* Mobile-specific elements - will be hidden on web */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 hidden">

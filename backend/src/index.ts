@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import healthRoutes from './routes/health.routes';
 import stripeRoutes from './routes/stripe.routes';
+import webhooksRoutes from './routes/webhooks';
 import { setupSwagger } from './config/swagger';
 
 // Load environment variables
@@ -35,7 +36,7 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Stripe webhook needs raw body - must be before body parsing
-app.use('/api/v1/stripe/webhook', express.raw({ type: 'application/json' }));
+app.use('/api/v1/webhooks', webhooksRoutes);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

@@ -66,3 +66,6 @@ stripe.env
 # Service account keys
 *-service-account.json
 serviceAccountKey.json
+
+# Local Netlify folder
+.netlify

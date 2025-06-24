@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Refreshing DietWise...</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        <h2>Clearing cache and reloading DietWise...</h2>
+        <p>This will only take a moment.</p>
+    </div>
+    
+    <script>
+        // Clear all caches and service workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(reg => reg.unregister());
+            });
+        }
+        
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                Promise.all(names.map(name => caches.delete(name))).then(() => {
+                    console.log('All caches cleared');
+                });
+            });
+        }
+        
+        // Redirect to main app after cache clearing
+        setTimeout(() => {
+            window.location.href = '/?v=' + Date.now();
+        }, 2000);
+    </script>
+</body>
+</html>

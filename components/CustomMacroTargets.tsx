@@ -14,6 +14,8 @@ interface CustomMacroTargetsProps {
   isPremiumUser: boolean;
   onUpgradeClick: () => void;
   targetCalories: number | null;
+  isInitialSetup?: boolean;
+  profileCreationDate?: string;
 }
 
 const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
@@ -21,7 +23,9 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
   onUpdateTargets,
   isPremiumUser,
   onUpgradeClick,
-  targetCalories
+  targetCalories,
+  isInitialSetup = false,
+  profileCreationDate
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempTargets, setTempTargets] = useState<MacroTargets>(currentTargets);
@@ -149,7 +153,18 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
         )}
       </div>
 
-      {!isPremiumUser && !isEditing && (
+      {!isPremiumUser && !isEditing && !isInitialSetup && (() => {
+        // Check if profile was created recently (within last 30 minutes)
+        if (profileCreationDate) {
+          const createdAt = new Date(profileCreationDate).getTime();
+          const now = Date.now();
+          const thirtyMinutes = 30 * 60 * 1000;
+          if (now - createdAt < thirtyMinutes) {
+            return false; // Don't show lock if profile was just created
+          }
+        }
+        return true;
+      })() && (
         <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
           <div className="text-center p-4">
             <i className="fas fa-lock text-4xl text-gray-400 mb-2"></i>

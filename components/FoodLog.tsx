@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { FoodItem, MyMeal } from '../types';
 import Modal from './common/Modal';
 import UPCScannerComponent from './UPCScannerComponent'; // Import for modal usage
+import { getSmartFoodSuggestions, getTimeBasedGreeting, FoodSuggestion } from '@utils/smartSuggestions';
 
 interface FoodLogProps {
   loggedItems: FoodItem[];
@@ -76,6 +77,19 @@ const FoodLog: React.FC<FoodLogProps> = ({
     }
   };
 
+  const handleSuggestionAdd = (suggestion: FoodSuggestion) => {
+    onAddFood({
+      id: `suggestion-${Date.now()}`,
+      name: suggestion.name,
+      calories: suggestion.calories,
+      servingSize: suggestion.servingSize,
+      protein: suggestion.protein,
+      carbs: suggestion.carbs,
+      fat: suggestion.fat,
+      timestamp: Date.now(),
+    }, 'manual');
+  };
+
   const getProgressGradient = () => {
     if (targetCalories === null || totalCaloriesToday === 0) return 'bg-slate-300 dark:bg-slate-600';
     const percentage = (totalCaloriesToday / targetCalories) * 100;
@@ -85,8 +99,9 @@ const FoodLog: React.FC<FoodLogProps> = ({
     return 'bg-gradient-to-r from-sky-400 to-cyan-500'; 
   };
 
-  const inputClass = "mt-1 block w-full px-3 py-2 border border-border-default rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
-  const greeting = userName ? `What are you fueling yourself with today, ${userName}?` : "Log your meals for today.";
+  const inputClass = "mt-1 block w-full px-4 py-2.5 border border-border-default rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm placeholder-slate-400 bg-bg-card text-text-default dark:placeholder-slate-500";
+  const greeting = getTimeBasedGreeting(userName);
+  const smartSuggestions = useMemo(() => getSmartFoodSuggestions(targetCalories), [targetCalories]);
 
   const actionButtonClass = "bg-gradient-to-r text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
 
@@ -198,6 +213,29 @@ const FoodLog: React.FC<FoodLogProps> = ({
                     </button>
                 )}
             </div>
+        </div>
+      )}
+
+      {/* Smart Suggestions */}
+      {smartSuggestions.length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl border border-teal-200 dark:border-teal-700">
+          <h3 className="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-3 flex items-center">
+            <i className="fas fa-lightbulb mr-2"></i>
+            Quick Add Suggestions
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {smartSuggestions.map((suggestion, index) => (
+              <button
+                key={index}
+                onClick={() => handleSuggestionAdd(suggestion)}
+                className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-teal-200 dark:border-teal-600 hover:border-teal-300 dark:hover:border-teal-500 hover:shadow-md transition-all text-left"
+              >
+                <p className="font-medium text-xs text-gray-900 dark:text-white truncate">{suggestion.name}</p>
+                <p className="text-xs text-teal-600 dark:text-teal-400">{suggestion.calories} kcal</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{suggestion.servingSize}</p>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
