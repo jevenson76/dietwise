@@ -60,12 +60,13 @@ router.post('/stripe', express.raw({ type: 'application/json' }), async (req: Re
 
       default:
         logger.info(`Unhandled event type: ${event.type}`);
+        break;
     }
 
-    res.json({ received: true });
+    return res.json({ received: true });
   } catch (error) {
     logger.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
 
