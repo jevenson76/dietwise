@@ -37,6 +37,3 @@ const svgIcon = `
 
 // Write SVG to file
 fs.writeFileSync(path.join(__dirname, 'public', 'icon.svg'), svgIcon);
-
-console.log('Created SVG icon at public/icon.svg');
-console.log('You can convert this to PNG using an online converter or design tool.');

@@ -66,7 +66,7 @@ export const authenticateOptional = async (
     if (decoded.type === 'access') {
       req.userId = decoded.userId;
     }
-  } catch (_error) { // TODO: Consider logging optional auth errors if needed
+  } catch { // TODO: Consider logging optional auth errors if needed
     // Ignore errors for optional auth
   }
 

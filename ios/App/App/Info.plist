@@ -47,5 +47,17 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>DietWise uses the camera to scan food barcodes and nutrition labels for accurate dietary tracking.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>DietWise needs photo library access to select meal photos for your food diary</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>DietWise can save meal photos to your photo library</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This helps us provide you with personalized nutrition recommendations</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>DietWise uses Face ID to secure your health data</string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

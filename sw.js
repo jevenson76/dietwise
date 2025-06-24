@@ -16,45 +16,51 @@ const APP_SHELL_FILES = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log(`[Service Worker] Event: install - Version: ${CACHE_NAME}`);
+
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[Service Worker] Caching App Shell files...');
+
         const cachePromises = APP_SHELL_FILES.map(fileUrl => {
           return cache.add(fileUrl).catch(error => {
+            if (process.env.NODE_ENV !== 'production') {
             console.error(`[Service Worker] Failed to cache during install: ${fileUrl}`, error);
+            }
           });
         });
         return Promise.all(cachePromises);
       })
       .then(() => {
-        console.log('[Service Worker] App Shell cached successfully.');
+
         return self.skipWaiting(); 
       })
       .catch(error => {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('[Service Worker] Installation phase failed:', error);
+        }
       })
   );
 });
 
 self.addEventListener('activate', (event) => {
-  console.log(`[Service Worker] Event: activate - Version: ${CACHE_NAME}`);
+
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
+
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('[Service Worker] Activated and old caches cleaned.');
+
       return self.clients.claim(); 
     }).catch(error => {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('[Service Worker] Activation phase failed:', error);
+      }
     })
   );
 });
@@ -96,7 +102,9 @@ self.addEventListener('fetch', (event) => {
           return fetch(event.request).then((networkResponse) => {
             return networkResponse;
           }).catch(error => {
+            if (process.env.NODE_ENV !== 'production') {
             console.error('[Service Worker] Fetch failed for app shell resource (cache-first):', event.request.url, error);
+            }
             return new Response("Network error. Resource not available.", { status: 503, statusText: "Service Unavailable", headers: { 'Content-Type': 'text/plain' } });
           });
         })
@@ -125,7 +133,9 @@ self.addEventListener('fetch', (event) => {
   }
   else {
     event.respondWith(fetch(event.request).catch(error => {
+        if (process.env.NODE_ENV !== 'production') {
         console.warn('[Service Worker] Network request failed (cross-origin or API):', event.request.url, error.message);
+        }
         return new Response(JSON.stringify({ error: "Network error: Could not fetch resource." }), { 
             status: 503, 
             statusText: "Service Unavailable", 
@@ -136,7 +146,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push Received.');
+
   
   let payload;
   if (event.data) {
@@ -167,7 +177,7 @@ self.addEventListener('push', (event) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification click Received.', event.notification);
+
   event.notification.close(); 
 
   const notificationData = event.notification.data || {};

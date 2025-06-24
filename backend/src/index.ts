@@ -12,6 +12,7 @@ import userRoutes from './routes/user.routes';
 import healthRoutes from './routes/health.routes';
 import stripeRoutes from './routes/stripe.routes';
 import webhooksRoutes from './routes/webhooks';
+import aiRoutes from './routes/ai.routes';
 import { setupSwagger } from './config/swagger';
 
 // Load environment variables
@@ -53,6 +54,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/health', healthRoutes);
 app.use('/api/v1/stripe', stripeRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Swagger documentation
 setupSwagger(app);

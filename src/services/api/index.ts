@@ -55,7 +55,9 @@ export async function apiFetch<T = any>(
 
     return data;
   } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error('API fetch error:', error);
+    }
     throw error;
   }
 }

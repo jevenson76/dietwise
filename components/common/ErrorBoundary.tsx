@@ -22,7 +22,9 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error("Uncaught error:", error, errorInfo);
+    }
     this.setState({ error, errorInfo });
     // You could also log the error to an error reporting service here
     // trackEvent('react_error_boundary_triggered', { 

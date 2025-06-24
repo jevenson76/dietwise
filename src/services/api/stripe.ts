@@ -32,7 +32,9 @@ export const stripeApi = {
       const response = await api.post<CheckoutSessionResponse>('/stripe/create-checkout-session', params);
       return response;
     } catch (error: any) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Create checkout session error:', error);
+      }
       
       // Provide user-friendly error messages
       if (error.response?.status === 400) {
@@ -57,7 +59,9 @@ export const stripeApi = {
       });
       return response;
     } catch (error: any) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Create portal session error:', error);
+      }
       
       // Provide user-friendly error messages
       if (error.response?.status === 401) {
@@ -80,7 +84,9 @@ export const stripeApi = {
       const response = await api.get<SubscriptionStatus>('/stripe/subscription-status');
       return response;
     } catch (error: any) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Get subscription status error:', error);
+      }
       
       // For subscription status, we might want to fail gracefully
       if (error.response?.status === 401) {
@@ -106,7 +112,9 @@ export const stripeApi = {
       const { subscription } = await this.getSubscriptionStatus();
       return subscription.active;
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Check subscription error:', error);
+      }
       return false;
     }
   },

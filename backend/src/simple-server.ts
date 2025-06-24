@@ -62,7 +62,4 @@ app.post('/api/v1/auth/login', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 DietWise API Server running on http://localhost:${PORT}`);
-  console.log(`📚 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔧 API Status: http://localhost:${PORT}/api/v1/status`);
 });

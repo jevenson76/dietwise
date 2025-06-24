@@ -44,7 +44,9 @@ export const authApi = {
 
       return response;
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Login error:', error);
+      }
       throw error;
     }
   },
@@ -62,7 +64,9 @@ export const authApi = {
 
       return response;
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Signup error:', error);
+      }
       throw error;
     }
   },
@@ -72,7 +76,9 @@ export const authApi = {
     try {
       await api.post('/auth/logout');
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Logout error:', error);
+      }
     } finally {
       // Clear local storage
       localStorage.removeItem('authUser');
@@ -89,7 +95,9 @@ export const authApi = {
       const response = await api.get<{ user: AuthResponse['user'] }>('/auth/me');
       return response.user;
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Get current user error:', error);
+      }
       return null;
     }
   },
@@ -100,7 +108,9 @@ export const authApi = {
       const response = await api.post<{ message: string }>('/auth/reset-password', params);
       return response;
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Password reset request error:', error);
+      }
       throw error;
     }
   },
@@ -111,7 +121,9 @@ export const authApi = {
       const response = await api.put<{ message: string }>('/auth/update-password', params);
       return response;
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Update password error:', error);
+      }
       throw error;
     }
   },

@@ -24,7 +24,9 @@ const ShareButton: React.FC<ShareButtonProps> = ({
 
       } catch (error) {
         trackEvent('share_failed_native', { error: (error as Error).message });
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error sharing content:', error);
+        }
         // Fallback or specific error handling can be added here
         alert("Sharing failed. You can manually copy this: " + shareData.text + (shareData.url ? ` URL: ${shareData.url}` : ''));
       }
@@ -38,8 +40,6 @@ const ShareButton: React.FC<ShareButtonProps> = ({
         alert('Sharing not available, content copied to clipboard!');
         trackEvent('share_fallback_clipboard_copied');
       } catch (err) {
-
-        alert("Sharing not available. Content logged to console. You can copy it from there.");
         trackEvent('share_fallback_console_log');
       }
     }

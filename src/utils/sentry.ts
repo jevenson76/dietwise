@@ -54,7 +54,9 @@ export const captureException = (error: Error, context?: Record<string, any>) =>
     });
   } else {
     // In development, just log to console
+    if (process.env.NODE_ENV !== 'production') {
     console.error('Error captured:', error, context);
+    }
   }
 };
 
@@ -62,7 +64,7 @@ export const captureMessage = (message: string, level: 'info' | 'warning' | 'err
   if (import.meta.env.PROD) {
     Sentry.captureMessage(message, level);
   } else {
-    console.log(`[${level.toUpperCase()}]`, message);
+
   }
 };
 

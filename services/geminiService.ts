@@ -121,7 +121,9 @@ If some nutritional values are missing, omit them from the JSON structure or set
     return { foodInfo: { name: "Product (data extraction issue)", calories: undefined }, error: `Could not extract structured data. Details: ${textResponse.substring(0,150)}...`, sources };
 
   } catch (error: any) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error("Error fetching food info from UPC via Gemini:", error);
+    }
     const errorMessage = error.message || "Could not fetch food information for this UPC. Please try again.";
     return { foodInfo: null, error: errorMessage };
   }
@@ -203,13 +205,17 @@ Ensure the JSON is valid.
         return { planData: null, error: "Received plan data in an unexpected format. Please try again. Raw: " + (response.text?.substring(0,100) || 'No response'), sources };
       }
     } catch (e: any) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error("Failed to parse JSON response for meal plan:", e);
+      }
        // Log the problematic text
       return { planData: null, error: `Failed to parse meal plan data. Please try again. Error: ${e.message}. Raw: ${response.text?.substring(0,100) || 'No response'}...`, sources };
     }
 
   } catch (error: any) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error("Error fetching 7-day diet plan from Gemini:", error);
+    }
     const errorMessage = error.message || "Could not generate the 7-day meal plan. Please try again later.";
     return { planData: null, error: errorMessage };
   }

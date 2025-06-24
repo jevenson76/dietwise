@@ -28,7 +28,9 @@ const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({
       trackEvent('email_capture_submitted', { source: 'first_week_completion' });
       onClose();
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Email submission failed:', error);
+      }
     } finally {
       setIsSubmitting(false);
     }

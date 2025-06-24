@@ -141,7 +141,7 @@ export const useMobileOptimizations = (
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult: any) => {
         if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted the install prompt');
+
         }
         setDeferredPrompt(null);
       });

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import { UserProfile, CalculatedMetrics, FoodItem, WeightEntry, ReminderSettings, SharePayload, AppTheme, MyFoodItem, MyMeal, MealReminder, StreakData, Milestone, MilestoneType } from '@appTypes'; 
 import { defaultUserProfile, DEFAULT_REMINDER_SETTINGS, DEFAULT_STREAK_DATA, WEIGHT_MILESTONE_INCREMENT, STREAK_MILESTONES_DAYS, TOTAL_LOGGED_MEALS_MILESTONES } from '@constants';
 import { calculateAllMetrics, calculateDefaultMacroTargets } from '@services/calculationService';
@@ -13,12 +13,13 @@ import UPCScannerComponent from '@components/UPCScannerComponent';
 import FoodLog from '@components/FoodLog';
 import Alert from '@components/common/Alert';
 import Modal from '@components/common/Modal';
-// Lazy load heavy components
-const MealPlannerComponent = lazy(() => import('@components/MealPlannerComponent'));
-const ProgressTabComponent = lazy(() => import('@components/ProgressTabComponent').then(module => ({ default: module.ProgressTabComponent })));
-const UserStatusDashboard = lazy(() => import('@components/UserStatusDashboard'));
-const MyLibraryComponent = lazy(() => import('@components/MyLibraryComponent'));
-const ReviewPromptModal = lazy(() => import('@components/ReviewPromptModal'));
+// Lazy load heavy components with preload capability
+import { lazyWithPreload, preloadComponents } from '@utils/lazyWithPreload';
+const MealPlannerComponent = lazyWithPreload(() => import('@components/MealPlannerComponent'));
+const ProgressTabComponent = lazyWithPreload(() => import('@components/ProgressTabComponent').then(module => ({ default: module.ProgressTabComponent })));
+const UserStatusDashboard = lazyWithPreload(() => import('@components/UserStatusDashboard'));
+const MyLibraryComponent = lazyWithPreload(() => import('@components/MyLibraryComponent'));
+const ReviewPromptModal = lazyWithPreload(() => import('@components/ReviewPromptModal'));
 import { ReviewManagementSystem, ReviewPromptMetrics } from './aso/reviewManagement'; 
 import { differenceInCalendarDays, format, addDays, isPast, isToday, differenceInMinutes } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -28,8 +29,8 @@ import { usePremiumStatus } from '@hooks/usePremiumStatus';
 import { useAuth } from '@hooks/useAuth';
 import { PREMIUM_FEATURES, PREMIUM_MESSAGES } from './constants/premiumFeatures';
 // More lazy loaded components
-const StripeCheckout = lazy(() => import('@components/StripeCheckout'));
-const AdvancedAnalytics = lazy(() => import('@components/AdvancedAnalytics'));
+const StripeCheckout = lazyWithPreload(() => import('@components/StripeCheckout'));
+const AdvancedAnalytics = lazyWithPreload(() => import('@components/AdvancedAnalytics'));
 import PDFExportButton from '@components/PDFExportButton';
 import CustomMacroTargets from '@components/CustomMacroTargets';
 import UpgradePrompt from '@components/UpgradePrompt';
@@ -269,6 +270,16 @@ const App: React.FC = () => {
     } else {
       setApiKeyStatus('missing');
     }
+    
+    // Preload lazy components when the app is idle
+    preloadComponents([
+      MealPlannerComponent,
+      ProgressTabComponent,
+      UserStatusDashboard,
+      MyLibraryComponent,
+      AdvancedAnalytics,
+      StripeCheckout
+    ]);
   }, []);
 
   useEffect(() => {
@@ -377,10 +388,6 @@ const App: React.FC = () => {
   // Debug upgrade modal state
   useEffect(() => {
     if (isUpgradeModalOpen) {
-      console.log('Upgrade modal opened!');
-      console.log('Current activeTab:', activeTab);
-      console.log('isPremiumUser:', isPremiumUser);
-      console.trace('Modal opened from');
     }
   }, [isUpgradeModalOpen, activeTab, isPremiumUser]);
 
@@ -426,7 +433,9 @@ const App: React.FC = () => {
       displayGlobalSuccessMessage(`${successCount} item(s) synced successfully from offline queue!`);
       trackEvent('offline_sync_success', { syncedCount: successCount });
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error("Error syncing offline food log:", error);
+      }
       setOfflineFoodQueue(prevQueue => [...itemsToSync.slice(successCount), ...prevQueue]); 
       displayGlobalSuccessMessage({message: `Error syncing offline items. ${itemsToSync.length - successCount} items remain queued.`});
       trackEvent('offline_sync_failed', { error: (error as Error).message, remainingInQueue: itemsToSync.length - successCount });
@@ -811,7 +820,9 @@ const App: React.FC = () => {
           trackEvent('notification_permission_denied');
         }
       } catch (err) {
+          if (process.env.NODE_ENV !== 'production') {
           console.error("Error requesting notification permission:", err);
+          }
           displayGlobalSuccessMessage({message: "Could not request notification permission."});
       }
     } else {
@@ -867,7 +878,9 @@ const App: React.FC = () => {
           displayGlobalSuccessMessage({message: `${filename} exported successfully.`});
         }
     } catch (e) {
+        if (process.env.NODE_ENV !== 'production') {
         console.error("Error exporting data to CSV:", e);
+        }
         displayGlobalSuccessMessage({message: "Data export failed."});
         trackEvent('data_export_failed', { filename, error: (e as Error).message});
     }
@@ -881,7 +894,9 @@ const App: React.FC = () => {
       displayGlobalSuccessMessage('Thanks! You\'ll receive weekly progress summaries every Sunday.');
       trackEvent('email_captured', { source: 'first_week_modal' });
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Email submission failed:', error);
+      }
       throw error;
     }
   };
@@ -897,18 +912,20 @@ const App: React.FC = () => {
       displayGlobalSuccessMessage('Data refreshed!');
       trackEvent('pull_to_refresh_used');
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Refresh failed:', error);
+      }
     }
   };
 
   const renderTabContent = () => {
     // DEBUG: Log what tab is being rendered
-    console.log('renderTabContent called for:', activeTab);
+
     
     switch (activeTab) {
       case Tab.Profile:
         const welcomeName = userProfile.name ? `, ${userProfile.name}` : '';
-        console.log('Rendering Profile tab content');
+
         return (
           <>
             {apiKeyStatus === 'missing' && (
@@ -1263,10 +1280,6 @@ const App: React.FC = () => {
           </>
         );
       case Tab.Planner:
-        console.log('PLANNER TAB RENDER - THIS SHOULD NOT SHOW WHEN PROFILE IS ACTIVE!');
-        console.log('Current activeTab:', activeTab);
-        console.log('Tab.Planner value:', Tab.Planner);
-        console.log('Tab.Profile value:', Tab.Profile);
         if (!isPremiumUser) {
           if (!isUpgradeModalOpen) setIsUpgradeModalOpen(true); 
           return (
@@ -1336,7 +1349,9 @@ const App: React.FC = () => {
                     />
                   );
                 } catch (error) {
+                  if (process.env.NODE_ENV !== 'production') {
                   console.error('Progress tab error:', error);
+                  }
                   return (
                     <div className="p-4 text-center">
                       <p className="text-red-500">Error loading Progress tab</p>
@@ -1380,7 +1395,7 @@ const App: React.FC = () => {
   };
 
   const handleTabChange = (tab: Tab) => {
-    console.log('handleTabChange called with:', tab, 'isPremiumUser:', isPremiumUser);
+
     
     // Check if profile has required fields (name, age, sex, weight, height)
     const isProfileIncomplete = !userProfile.name || !userProfile.age || !userProfile.sex || 
@@ -1397,11 +1412,11 @@ const App: React.FC = () => {
     
     trackEvent('tab_navigation', { tab_name: tab });
     if ((tab === Tab.Planner || tab === Tab.Analytics) && !isPremiumUser) {
-      console.log('Opening upgrade modal for premium tab:', tab);
+
       setIsUpgradeModalOpen(true);
       trackEvent('upgrade_modal_opened_from_tab_click', { tab_name: tab });
     } else {
-      console.log('Setting active tab to:', tab);
+
       setActiveTab(tab);
     }
   };
@@ -1707,8 +1722,6 @@ const App: React.FC = () => {
         }}
         onInstall={mobile.showInstallPrompt}
       />
-
-
       <footer className="bg-slate-800 dark:bg-slate-900 text-slate-300 dark:text-slate-400 text-center p-8 mt-16 border-t border-slate-700 dark:border-slate-600">
         <p className="text-sm">&copy; {new Date().getFullYear()} Wizard Tech, LLC.</p>
         <p className="text-xs mt-2 opacity-80">

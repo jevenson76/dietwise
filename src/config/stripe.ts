@@ -4,7 +4,9 @@ import { loadStripe } from '@stripe/stripe-js';
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 if (!STRIPE_PUBLISHABLE_KEY) {
+  if (process.env.NODE_ENV !== 'production') {
   console.error('Missing VITE_STRIPE_PUBLISHABLE_KEY environment variable');
+  }
 }
 
 // Make sure to call loadStripe outside of a component's render to avoid
@@ -18,7 +20,9 @@ export const STRIPE_PRICES = {
 };
 
 if (!STRIPE_PRICES.monthly || !STRIPE_PRICES.yearly) {
+  if (process.env.NODE_ENV !== 'production') {
   console.error('Missing Stripe price IDs in environment variables');
+  }
 }
 
 export const STRIPE_CONFIG = {

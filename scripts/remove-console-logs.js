@@ -2,102 +2,77 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { glob } from 'glob';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Directories to exclude
+const excludeDirs = ['node_modules', 'dist', '.git', 'coverage', 'build'];
+const excludeFiles = ['test', 'spec', 'debug', 'logger', 'loggingService'];
 
-// Directories to process
-const directories = [
-  '../src',
-  '../components',
-  '../hooks',
-  '../services',
-  '../utils'
-];
+// Find all TypeScript and JavaScript files
+const patterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'];
 
-// File extensions to process
-const extensions = ['.js', '.jsx', '.ts', '.tsx'];
+let totalRemoved = 0;
+let filesModified = 0;
 
-// Patterns to remove (but keep console.error in catch blocks)
-const consolePatterns = [
-  /console\.log\s*\([^)]*\);?/g,
-  /console\.warn\s*\([^)]*\);?/g,
-  /console\.info\s*\([^)]*\);?/g,
-  /console\.debug\s*\([^)]*\);?/g,
-  /console\.trace\s*\([^)]*\);?/g,
-];
-
-let filesProcessed = 0;
-let statementsRemoved = 0;
-
-function processFile(filePath) {
-  let content = fs.readFileSync(filePath, 'utf8');
-  let originalContent = content;
-  let fileStatementsRemoved = 0;
-
-  // Check if this is a test file or contains console.error in catch blocks
-  const isTestFile = filePath.includes('.test.') || filePath.includes('.spec.');
-  
-  consolePatterns.forEach(pattern => {
-    const matches = content.match(pattern);
-    if (matches) {
-      matches.forEach(match => {
-        // Skip console.error in catch blocks
-        if (match.includes('console.error')) {
-          const beforeMatch = content.substring(0, content.indexOf(match));
-          const lastCatchIndex = beforeMatch.lastIndexOf('catch');
-          const lastTryIndex = beforeMatch.lastIndexOf('try');
-          
-          // If we're in a catch block, keep the console.error
-          if (lastCatchIndex > lastTryIndex) {
-            return;
-          }
-        }
-        
-        // Remove the console statement
-        content = content.replace(match, '');
-        fileStatementsRemoved++;
-      });
-    }
+patterns.forEach(pattern => {
+  const files = glob.sync(pattern, {
+    ignore: excludeDirs.map(dir => `**/${dir}/**`)
   });
 
-  // Clean up empty lines left behind
-  content = content.replace(/^\s*[\r\n]/gm, '\n');
-  content = content.replace(/\n\n\n+/g, '\n\n');
-
-  if (content !== originalContent && !isTestFile) {
-    fs.writeFileSync(filePath, content);
-    console.log(`✓ Processed ${filePath} - Removed ${fileStatementsRemoved} statements`);
-    statementsRemoved += fileStatementsRemoved;
-    filesProcessed++;
-  }
-}
-
-function processDirectory(dir) {
-  const files = fs.readdirSync(dir);
-  
   files.forEach(file => {
-    const filePath = path.join(dir, file);
-    const stat = fs.statSync(filePath);
+    // Skip test and debug files
+    if (excludeFiles.some(exclude => file.toLowerCase().includes(exclude))) {
+      return;
+    }
+
+    const content = fs.readFileSync(file, 'utf8');
+    const lines = content.split('\n');
+    let modified = false;
     
-    if (stat.isDirectory() && !file.startsWith('.') && file !== 'node_modules') {
-      processDirectory(filePath);
-    } else if (stat.isFile() && extensions.includes(path.extname(file))) {
-      processFile(filePath);
+    const newLines = lines.map(line => {
+      // Skip if line is a comment
+      if (line.trim().startsWith('//') || line.trim().startsWith('*')) {
+        return line;
+      }
+      
+      // Check if line contains console statement
+
+        // Preserve console.error and console.warn in production for critical issues
+        if (process.env.NODE_ENV !== 'production') {
+        if (line.includes('console.error') || line.includes('console.warn')) {
+        }
+          // Wrap in production check
+          if (!line.includes('NODE_ENV')) {
+            totalRemoved++;
+            modified = true;
+            const indent = line.match(/^\s*/)[0];
+            return `${indent}if (process.env.NODE_ENV !== 'production') {\n${line}\n${indent}}`;
+          }
+        } else {
+          // Remove other console statements
+          totalRemoved++;
+          modified = true;
+          return ''; // Remove the line
+        }
+      }
+      return line;
+    });
+
+    if (modified) {
+      filesModified++;
+      // Remove empty lines that result from deletion
+      const cleanedContent = newLines
+        .filter((line, index) => {
+          // Keep line if it's not empty or if previous/next line isn't empty
+          return line !== '' || (newLines[index - 1] !== '' && newLines[index + 1] !== '');
+        })
+        .join('\n');
+      
+      fs.writeFileSync(file, cleanedContent);
+
     }
   });
-}
-
-console.log('🧹 Removing console statements from production code...\n');
-
-directories.forEach(dir => {
-  const fullPath = path.join(__dirname, dir);
-  if (fs.existsSync(fullPath)) {
-    processDirectory(fullPath);
-  }
 });
-
-console.log(`\n✅ Complete! Processed ${filesProcessed} files and removed ${statementsRemoved} console statements.`);
-console.log('\n💡 Note: console.error statements in catch blocks were preserved.');
-console.log('💡 Test files were skipped.');
+if (process.env.NODE_ENV !== 'production') {
+console.log('\n⚠️  Note: console.error and console.warn are wrapped in production checks');
+}

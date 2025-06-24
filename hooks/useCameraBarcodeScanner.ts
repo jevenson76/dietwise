@@ -61,7 +61,9 @@ export const useCameraBarcodeScanner = ({ onScanSuccess, onScanError, videoEleme
             stopScan(); // Stop after successful scan
           }
           if (err && !(err instanceof NotFoundException)) {
+            if (process.env.NODE_ENV !== 'production') {
             console.error("Barcode scan error:", err);
+            }
             setError(err.message);
             if (onScanError) onScanError(err);
             // Don't stop scanning on NotFoundException, let it continue trying
@@ -69,7 +71,9 @@ export const useCameraBarcodeScanner = ({ onScanSuccess, onScanError, videoEleme
         }
       );
     } catch (err: any) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error("Error starting scanner:", err);
+      }
       let message = "Failed to start scanner.";
       if (err.name === 'NotAllowedError') {
         message = "Camera permission denied. Please allow camera access in your browser settings.";

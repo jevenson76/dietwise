@@ -62,7 +62,9 @@ export async function redirectToCheckout(priceId: string, customerEmail?: string
   });
 
   if (error) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error('Stripe checkout error:', error);
+    }
     throw new Error(error.message || 'Failed to redirect to checkout');
   }
 }
@@ -87,7 +89,9 @@ export async function getSubscriptionStatus(userId: string): Promise<{
 }> {
   // DEPRECATED: This function uses localStorage fallback for backwards compatibility
   // Production apps should use the API client in src/services/api/stripe.ts
+  if (process.env.NODE_ENV !== 'production') {
   console.warn('Using deprecated getSubscriptionStatus. Use stripeApi.getSubscriptionStatus() instead.');
+  }
   
   // Fallback to localStorage for backwards compatibility during migration
   const mockSubscription = localStorage.getItem(`subscription_${userId}`);

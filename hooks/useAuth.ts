@@ -60,7 +60,9 @@ export const useAuth = () => {
         });
       }
     } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Failed to initialize auth:', error);
+      }
       setAuthState({
         user: null,
         isAuthenticated: false,

@@ -28,8 +28,7 @@ export default defineConfig(({ mode }) => {
         ] : [])
       ],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        // API key removed - now handled securely by backend
       },
       resolve: {
         alias: {
@@ -52,6 +51,9 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
+        target: 'es2018', // Mobile browser compatibility
+        cssCodeSplit: true,
+        minify: true, // Use default minification
         rollupOptions: {
           output: {
             assetFileNames: (assetInfo) => {
@@ -77,7 +79,10 @@ export default defineConfig(({ mode }) => {
             }
           }
         },
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 500 // Stricter limit for mobile
+      },
+      optimizeDeps: {
+        include: ['react', 'react-dom', 'date-fns', 'chart.js'] // Pre-bundle common deps
       }
     };
 });

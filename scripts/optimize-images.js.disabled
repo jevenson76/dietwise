@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+
+// DISABLED: This script needs to be updated with safer image optimization libraries
+// The previous imagemin-pngquant and imagemin-gifsicle had security vulnerabilities
+// TODO: Replace with sharp or other secure alternatives before Phase 3
+
+// Original script moved here for reference
+import imagemin from 'imagemin';
+// import imageminPngquant from 'imagemin-pngquant'; // REMOVED - security vulnerability
+// import imageminGifsicle from 'imagemin-gifsicle'; // REMOVED - security vulnerability
+import { promises as fs } from 'fs';
+import path from 'path';
+
+const INPUT_PATHS = [
+  'ios/App/App/Assets.xcassets/**/*.png',
+  'android/app/src/main/res/**/splash.png',
+  'android/app/src/main/res/mipmap-*/*.png',
+  'public/icons/*.png'
+];
+
+const OUTPUT_DIR = 'optimized-images';
+
+async function optimizeImages() {
+  console.error('This script is disabled due to security vulnerabilities in dependencies.');
+  console.error('Please update to use safer image optimization libraries like sharp.');
+  process.exit(1);
+}
+
+optimizeImages();
