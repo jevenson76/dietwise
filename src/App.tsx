@@ -67,6 +67,7 @@ enum Tab {
   Progress = 'Progress',
   Analytics = 'Analytics', // Premium feature
   Profile = 'Profile', // Renamed from Settings
+  Settings = 'Settings', // App settings and preferences
 }
 
 interface GlobalSuccessPayload {
@@ -830,7 +831,7 @@ const App: React.FC = () => {
     }
   };
 
-  const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Progress, Tab.Planner, Tab.Profile];
+  const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Progress, Tab.Planner, Tab.Profile, Tab.Settings];
 
   const AdPlaceholder: React.FC<{sizeLabel?: string; className?: string}> = ({ sizeLabel = "Banner Ad (e.g., 320x50)", className=""}) => (
     <div className={`bg-slate-200 dark:bg-slate-700 border-2 border-dashed border-slate-400 dark:border-slate-500 text-slate-500 dark:text-slate-400 text-sm flex flex-col items-center justify-center h-20 sm:h-24 my-6 rounded-md shadow text-center p-2 ${className}`}>
@@ -965,6 +966,58 @@ const App: React.FC = () => {
               />
             </div>
 
+            {/* Account Section - moved per user feedback */}
+            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+                <i className="fas fa-user mr-2.5 text-blue-500 dark:text-blue-400"></i>Account
+              </h3>
+              {isAuthenticated && user ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <p className="text-text-default font-semibold">Signed in as {user.email}</p>
+                    <p className="text-sm text-text-alt">Your data is synced across devices</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (confirm('Are you sure you want to sign out?')) {
+                        logout();
+                      }
+                    }}
+                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
+                  >
+                    <i className="fas fa-sign-out-alt mr-2"></i>
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-text-alt">Sign in to sync your data across devices and access premium features.</p>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => {
+                        setAuthModalMode('login');
+                        setIsAuthModalOpen(true);
+                      }}
+                      className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
+                    >
+                      <i className="fas fa-sign-in-alt mr-2"></i>
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => {
+                        setAuthModalMode('signup');
+                        setIsAuthModalOpen(true);
+                      }}
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
+                    >
+                      <i className="fas fa-user-plus mr-2"></i>
+                      Create Account
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Premium Subscription Section */}
             <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
               <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
@@ -1013,7 +1066,14 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+            <AdPlaceholder sizeLabel="Profile Tab Ad (e.g., 300x100)" className="mt-6" />
+          </>
+        );
+      case Tab.Settings:
+        return (
+          <>
+            {/* Settings tab content - moved from Profile */}
+            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
                 <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
                     <i className="fas fa-palette mr-2.5 text-purple-500 dark:text-purple-400"></i>Appearance
                 </h3>
@@ -1387,6 +1447,7 @@ const App: React.FC = () => {
   const getTabIcon = (tab: Tab) => {
     switch (tab) {
       case Tab.Profile: return "fas fa-user-cog";
+      case Tab.Settings: return "fas fa-cog";
       case Tab.Log: return "fas fa-apple-alt"; 
       case Tab.FoodLibrary: return "fas fa-book-bookmark";
       case Tab.Meals: return "fas fa-lightbulb";
