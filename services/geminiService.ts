@@ -3,7 +3,7 @@ import { GEMINI_MODEL_NAME } from '../constants';
 import { ScannedFoodInfo, SevenDayPlanResponse } from "../types";
 import { log } from '../src/services/loggingService';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 export const API_KEY_ERROR_MESSAGE = "API Key not configured or invalid. AI-powered features are unavailable. Please ensure the API_KEY environment variable is set correctly by the application administrator.";
 const MISSING_KEY_PLACEHOLDER_FOR_CONSTRUCTOR = "MISSING_API_KEY_RUNTIME_CONSTRUCTOR_DietWise";
 

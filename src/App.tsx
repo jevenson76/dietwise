@@ -1163,7 +1163,7 @@ const App: React.FC = () => {
               }
               isOnline={isOnline}
               pendingItems={{
-                foodLog: offlineFoodLogQueue.length,
+                foodLog: offlineFoodQueue.length,
                 weight: 0, // TODO: Add weight queue if needed
                 goals: 0, // TODO: Add goals queue if needed
                 other: 0
@@ -1695,7 +1695,8 @@ const App: React.FC = () => {
         )}
       </Modal>
 
-      <Suspense fallback={<LoadingSpinner message="Loading Review Modal..." />}>
+{/* Temporarily commented out to fix React hooks error */}
+      {/*<Suspense fallback={<LoadingSpinner message="Loading Review Modal..." />}>
         <ReviewPromptModal
           isOpen={isReviewPromptModalOpen}
           onClose={() => setIsReviewPromptModalOpen(false)}
@@ -1710,7 +1711,7 @@ const App: React.FC = () => {
             setIsReviewPromptModalOpen(false);
           }}
         />
-      </Suspense>
+      </Suspense>*/}
 
       <Modal 
         isOpen={isUpgradeModalOpen && !isPremiumUser} 

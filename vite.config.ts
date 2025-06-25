@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => {
       ],
       define: {
         // API key removed - now handled securely by backend
+        // Provide fallback for process.env in browser environment
+        'process.env.NODE_ENV': JSON.stringify(mode),
       },
       resolve: {
         alias: {
