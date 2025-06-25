@@ -7,6 +7,7 @@ import { trackEvent } from '@services/analyticsService'; // Import analytics
 import { differenceInDays, format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { startOfDay } from 'date-fns/startOfDay';
+import EmptyState from '@components/common/EmptyState';
 
 interface ProgressTabComponentProps {
   userProfile: UserProfile;
@@ -110,12 +111,19 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
             <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-4">
                 <i className="fas fa-chart-line mr-2.5 text-sky-500 dark:text-sky-400"></i>Progress Tracking
             </h2>
-             <div className="bg-sky-50 dark:bg-sky-900/30 border-l-4 border-sky-400 text-sky-700 dark:text-sky-300 p-4 rounded-md text-center" role="alert">
-              <p className="font-medium">
-                <i className="fas fa-info-circle mr-2"></i>
-                Complete your profile in Settings to track your progress.
-              </p>
-            </div>
+            <EmptyState
+              icon="fas fa-user-check"
+              iconColor="text-sky-500 dark:text-sky-400"
+              title="Complete Your Profile"
+              description="We need a few more details to create your personalized progress tracking."
+              actionLabel="Go to Settings"
+              onAction={() => window.dispatchEvent(new CustomEvent('navigate-to-settings'))}
+              tips={[
+                "Add your current weight and height",
+                "Set your target weight goal",
+                "Select your activity level for accurate calculations"
+              ]}
+            />
         </div>
     );
   }
@@ -126,12 +134,19 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
             <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-4">
                 <i className="fas fa-chart-line mr-2.5 text-sky-500 dark:text-sky-400"></i>Progress Tracking
             </h2>
-            <div className="bg-orange-50 dark:bg-orange-900/30 border-l-4 border-orange-400 text-orange-700 dark:text-orange-300 p-4 rounded-md text-center" role="alert">
-              <p className="font-medium">
-                <i className="fas fa-exclamation-triangle mr-2"></i>
-                Please set a target weight in Settings to enable progress tracking.
-              </p>
-            </div>
+            <EmptyState
+              icon="fas fa-bullseye"
+              iconColor="text-orange-500 dark:text-orange-400"
+              title="Set Your Goal"
+              description="Define your target weight to start tracking your progress and see how far you've come."
+              actionLabel="Set Target Weight"
+              onAction={() => window.dispatchEvent(new CustomEvent('navigate-to-settings'))}
+              tips={[
+                "Set a realistic and healthy weight goal",
+                "Track your progress with regular weigh-ins",
+                "Visualize your journey with progress charts"
+              ]}
+            />
         </div>
     );
   }

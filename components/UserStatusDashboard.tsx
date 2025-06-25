@@ -4,6 +4,9 @@ import { UserProfile, WeightEntry, ReminderSettings, StreakData } from '../types
 import { differenceInDays, addDays, format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { startOfDay } from 'date-fns/startOfDay';
+import EmptyState from './common/EmptyState';
+import ResponsiveGrid from './common/ResponsiveGrid';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface UserStatusDashboardProps {
   userProfile: UserProfile;
@@ -20,8 +23,25 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
   streakData,
   onNavigateToMealIdeas 
 }) => {
+  const { isMobile, isTablet } = useResponsive();
   if (!userProfile.name || userProfile.weight === null || userProfile.targetWeight === null) {
-    return null; 
+    return (
+      <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-lg mb-6 sm:mb-8 border border-border-default">
+        <EmptyState
+          icon="fas fa-user-circle"
+          iconColor="text-teal-500 dark:text-teal-400"
+          title="Complete Your Profile"
+          description="Add your name, current weight, and target weight to see your personalized dashboard."
+          actionLabel="Go to Settings"
+          onAction={() => window.dispatchEvent(new CustomEvent('navigate-to-settings'))}
+          tips={[
+            "See your progress at a glance",
+            "Track your weight loss journey",
+            "Get personalized meal suggestions"
+          ]}
+        />
+      </div>
+    );
   }
 
   const currentWeight = typeof userProfile.weight === 'number' 
@@ -95,41 +115,45 @@ const UserStatusDashboard: React.FC<UserStatusDashboardProps> = ({
   };
 
   return (
-    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-lg mb-6 sm:mb-8 border border-border-default">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-        <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-2 sm:mb-0">
+    <div className={`bg-bg-card rounded-xl shadow-lg border border-border-default mb-6 ${isMobile ? 'p-4' : isTablet ? 'p-6' : 'p-8'}`}>
+      <div className={`flex ${isMobile ? 'flex-col' : 'flex-col sm:flex-row'} justify-between items-start sm:items-center mb-4`}>
+        <h2 className={`${isMobile ? 'text-lg' : isTablet ? 'text-xl' : 'text-2xl'} font-semibold text-text-default mb-2 sm:mb-0`}>
           Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-500 dark:from-teal-500 dark:to-cyan-400">{userProfile.name}!</span>
         </h2>
         <button 
           onClick={onNavigateToMealIdeas}
-          className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all whitespace-nowrap mt-2 sm:mt-0"
+          className={`bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all whitespace-nowrap mt-2 sm:mt-0 ${isMobile ? 'w-full py-3 px-4 text-base' : 'py-2 px-4 text-sm'}`}
         >
           <i className="fas fa-utensils fa-fw mr-1.5"></i>Next Meal Idea
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
-        <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm">
-          <p className="text-xs text-text-alt uppercase tracking-wider">Current Weight</p>
-          <p className="text-2xl font-bold text-text-default">{currentWeight.toFixed(1)} <span className="text-sm font-normal">lbs</span></p>
+      <ResponsiveGrid
+        cols={{ xs: 2, sm: 2, md: 4 }}
+        gap={4}
+        className="mb-4 text-center"
+      >
+        <div className={`${isMobile ? 'p-2' : 'p-3'} bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm`}>
+          <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-text-alt uppercase tracking-wider`}>Current Weight</p>
+          <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-text-default`}>{currentWeight.toFixed(1)} <span className="text-sm font-normal">lbs</span></p>
         </div>
-        <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm">
-          <p className="text-xs text-text-alt uppercase tracking-wider">Target Weight</p>
-          <p className="text-2xl font-bold text-text-default">{targetWeight.toFixed(1)} <span className="text-sm font-normal">lbs</span></p>
+        <div className={`${isMobile ? 'p-2' : 'p-3'} bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm`}>
+          <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-text-alt uppercase tracking-wider`}>Target Weight</p>
+          <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold text-text-default`}>{targetWeight.toFixed(1)} <span className="text-sm font-normal">lbs</span></p>
         </div>
-        <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm">
-          <p className="text-xs text-text-alt uppercase tracking-wider">Next Weigh-In</p>
-          <p className={`text-2xl font-bold ${nextWeighInStatus === "Overdue!" || nextWeighInStatus === "Today!" ? 'text-orange-500 dark:text-orange-400' : 'text-text-default'}`}>
+        <div className={`${isMobile ? 'p-2' : 'p-3'} bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm`}>
+          <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-text-alt uppercase tracking-wider`}>Next Weigh-In</p>
+          <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold ${nextWeighInStatus === "Overdue!" || nextWeighInStatus === "Today!" ? 'text-orange-500 dark:text-orange-400' : 'text-text-default'}`}>
             {nextWeighInStatus}
           </p>
         </div>
-        <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm">
-          <p className="text-xs text-text-alt uppercase tracking-wider">Logging Streak</p>
-          <p className={`text-2xl font-bold ${streakData.foodLogStreak > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-text-default'}`}>
+        <div className={`${isMobile ? 'p-2' : 'p-3'} bg-slate-50 dark:bg-slate-700/50 rounded-lg shadow-sm`}>
+          <p className={`${isMobile ? 'text-xs' : 'text-xs'} text-text-alt uppercase tracking-wider`}>Logging Streak</p>
+          <p className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold ${streakData.foodLogStreak > 0 ? 'text-teal-600 dark:text-teal-400' : 'text-text-default'}`}>
             {streakData.foodLogStreak > 0 ? <><i className="fas fa-fire mr-1 text-red-500"></i>{streakData.foodLogStreak} Day{streakData.foodLogStreak > 1 ? 's' : ''}</> : "-"}
           </p>
         </div>
-      </div>
+      </ResponsiveGrid>
 
       {startWeightNum && startWeightNum !== targetWeight && (
         <div className="mb-2">

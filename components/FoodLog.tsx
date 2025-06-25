@@ -2,8 +2,16 @@
 import React, { useState, useMemo } from 'react';
 import { FoodItem, MyMeal } from '../types';
 import Modal from './common/Modal';
+import EmptyState from './common/EmptyState';
 import UPCScannerComponent from './UPCScannerComponent'; // Import for modal usage
 import { getSmartFoodSuggestions, getTimeBasedGreeting, FoodSuggestion } from '../utils/smartSuggestions';
+import AnimatedButton from './common/AnimatedButton';
+import AnimatedCard from './common/AnimatedCard';
+import AnimatedList from './common/AnimatedList';
+import FeedbackAnimations from './common/FeedbackAnimations';
+import ProgressIndicator from './common/ProgressIndicator';
+import SearchBar from './common/SearchBar';
+import FilterPanel, { FilterGroup, ActiveFilter } from './common/FilterPanel';
 
 interface FoodLogProps {
   loggedItems: FoodItem[];
@@ -43,6 +51,13 @@ const FoodLog: React.FC<FoodLogProps> = ({
   const [manualProtein, setManualProtein] = useState<number | ''>('');
   const [manualCarbs, setManualCarbs] = useState<number | ''>('');
   const [manualFat, setManualFat] = useState<number | ''>('');
+  const [itemAdded, setItemAdded] = useState(false);
+  const [itemRemoved, setItemRemoved] = useState('');
+
+  // Search and Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Memoize expensive calculations to avoid recalculating on every render
   const reversedOfflineQueue = useMemo(() => [...offlineQueue].reverse(), [offlineQueue]);
@@ -72,6 +87,8 @@ const FoodLog: React.FC<FoodLogProps> = ({
         fat: manualFat !== '' ? Number(manualFat) : undefined,
         timestamp: Date.now(),
       }, 'manual');
+      setItemAdded(true);
+      setTimeout(() => setItemAdded(false), 1500);
       resetManualForm();
       setIsManualAddModalOpen(false);
     }
@@ -88,6 +105,8 @@ const FoodLog: React.FC<FoodLogProps> = ({
       fat: suggestion.fat,
       timestamp: Date.now(),
     }, 'manual');
+    setItemAdded(true);
+    setTimeout(() => setItemAdded(false), 1500);
   };
 
   const getProgressGradient = () => {
@@ -104,6 +123,136 @@ const FoodLog: React.FC<FoodLogProps> = ({
   const smartSuggestions = useMemo(() => getSmartFoodSuggestions(targetCalories), [targetCalories]);
 
   const actionButtonClass = "bg-gradient-to-r text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed";
+
+  // Filter configurations
+  const filterGroups: FilterGroup[] = [
+    {
+      id: 'calories',
+      label: 'Calories',
+      type: 'range',
+      min: 0,
+      max: 1000,
+      step: 10,
+      unit: ' kcal'
+    },
+    {
+      id: 'protein',
+      label: 'Protein',
+      type: 'range',
+      min: 0,
+      max: 100,
+      step: 1,
+      unit: 'g'
+    },
+    {
+      id: 'timeOfDay',
+      label: 'Time of Day',
+      type: 'select',
+      options: [
+        { id: 'morning', label: 'Morning (6AM-12PM)', value: 'morning' },
+        { id: 'afternoon', label: 'Afternoon (12PM-6PM)', value: 'afternoon' },
+        { id: 'evening', label: 'Evening (6PM-12AM)', value: 'evening' },
+        { id: 'night', label: 'Night (12AM-6AM)', value: 'night' }
+      ]
+    },
+    {
+      id: 'hasMacros',
+      label: 'Has Macro Info',
+      type: 'toggle'
+    },
+    {
+      id: 'hasServingSize',
+      label: 'Has Serving Size',
+      type: 'toggle'
+    }
+  ];
+
+  // Get time category for filtering
+  const getTimeCategory = (timestamp: number) => {
+    const hour = new Date(timestamp).getHours();
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 18) return 'afternoon';
+    if (hour >= 18 && hour < 24) return 'evening';
+    return 'night';
+  };
+
+  // Filter and search logic
+  const filterItems = (items: FoodItem[]) => {
+    return items.filter(item => {
+      // Search filter
+      if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+
+      // Apply active filters
+      for (const filter of activeFilters) {
+        switch (filter.groupId) {
+          case 'calories':
+            if (item.calories < filter.value[0] || item.calories > filter.value[1]) return false;
+            break;
+          case 'protein':
+            if (!item.protein || item.protein < filter.value[0] || item.protein > filter.value[1]) return false;
+            break;
+          case 'timeOfDay':
+            if (getTimeCategory(item.timestamp) !== filter.value) return false;
+            break;
+          case 'hasMacros':
+            if (filter.value && (!item.protein || !item.carbs || !item.fat)) return false;
+            break;
+          case 'hasServingSize':
+            if (filter.value && !item.servingSize) return false;
+            break;
+        }
+      }
+      return true;
+    });
+  };
+
+  const filteredLoggedItems = filterItems(reversedLoggedItems);
+  const filteredOfflineQueue = filterItems(reversedOfflineQueue);
+
+  // Filter handlers
+  const handleFilterChange = (groupId: string, value: any) => {
+    const existingFilterIndex = activeFilters.findIndex(f => f.groupId === groupId);
+    const filterGroup = filterGroups.find(g => g.id === groupId);
+    if (!filterGroup) return;
+
+    let label = '';
+    if (filterGroup.type === 'range') {
+      label = `${filterGroup.label}: ${value[0]}${filterGroup.unit || ''} - ${value[1]}${filterGroup.unit || ''}`;
+    } else if (filterGroup.type === 'toggle') {
+      label = `${filterGroup.label}: ${value ? 'Yes' : 'No'}`;
+    } else if (filterGroup.type === 'select') {
+      const option = filterGroup.options?.find(opt => opt.value === value);
+      label = option ? `${filterGroup.label}: ${option.label}` : `${filterGroup.label}: ${value}`;
+    }
+
+    const newFilter: ActiveFilter = {
+      groupId,
+      value,
+      label
+    };
+
+    if (existingFilterIndex >= 0) {
+      const newFilters = [...activeFilters];
+      newFilters[existingFilterIndex] = newFilter;
+      setActiveFilters(newFilters);
+    } else {
+      setActiveFilters([...activeFilters, newFilter]);
+    }
+  };
+
+  const clearFilters = () => setActiveFilters([]);
+
+  const clearFilter = (groupId: string) => {
+    setActiveFilters(activeFilters.filter(f => f.groupId !== groupId));
+  };
+
+  // Generate food suggestions for search
+  const allItems = [...loggedItems, ...offlineQueue];
+  const foodSuggestions = Array.from(new Set(allItems.map(item => item.name)))
+    .filter(name => name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .slice(0, 5);
 
   const renderFoodListItem = (item: FoodItem, isOffline: boolean) => (
     <li 
@@ -135,60 +284,126 @@ const FoodLog: React.FC<FoodLogProps> = ({
   );
 
   return (
-    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-      <div className="flex flex-wrap justify-between items-center mb-4 pb-3 border-b border-border-default">
-        <h2 className="text-xl sm:text-2xl font-semibold text-text-default">
-          <i className="fas fa-apple-alt mr-2.5 text-green-500 dark:text-green-400"></i>Today's Food Log
-        </h2>
-        <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-          <button 
-              onClick={onOpenLogFromMyMeals}
-              className={`${actionButtonClass} from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 focus:ring-purple-500`}
+    <FeedbackAnimations trigger={itemAdded} type="success" animation="bounce">
+      <AnimatedCard 
+        title="Today's Food Log" 
+        icon="fas fa-apple-alt" 
+        iconColor="text-green-500 dark:text-green-400"
+        animation="lift"
+        className="mt-6 sm:mt-8"
+      >
+        <div className="flex flex-wrap gap-2 mb-4">
+          <AnimatedButton 
+            onClick={onOpenLogFromMyMeals}
+            variant="primary"
+            icon="fas fa-book-open"
+            animation="scale"
+            className="from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600"
           >
-              <i className="fas fa-book-open fa-fw mr-1.5"></i> Log My Meal
-          </button>
-          <button
+            Log My Meal
+          </AnimatedButton>
+          <AnimatedButton
             onClick={onOpenUPCScanner}
             disabled={apiKeyMissing || (canScanBarcode && !canScanBarcode.allowed)}
-            className={`${actionButtonClass} from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 focus:ring-teal-500 relative`}
+            variant="primary"
+            icon="fas fa-barcode"
+            animation="scale"
+            className="from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 relative"
           >
-            <i className="fas fa-barcode mr-1.5"></i> 
             Scan UPC
             {canScanBarcode && !isPremiumUser && (
-              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold">
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold animate-pulse">
                 {canScanBarcode.remaining}
               </span>
             )}
-          </button>
-          <button 
-              onClick={() => setIsManualAddModalOpen(true)}
-              className={`${actionButtonClass} from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 focus:ring-sky-500`}
-              data-tooltip="add-food-button"
+          </AnimatedButton>
+          <AnimatedButton 
+            onClick={() => setIsManualAddModalOpen(true)}
+            variant="primary"
+            icon="fas fa-plus"
+            animation="scale"
+            className="from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600"
+            data-tooltip="add-food-button"
           >
-              <i className="fas fa-plus fa-fw mr-1.5"></i> Add Manually
-          </button>
+            Add Manually
+          </AnimatedButton>
+          <AnimatedButton
+            onClick={() => setShowFilters(!showFilters)}
+            variant="ghost"
+            icon="fas fa-filter"
+            animation="scale"
+            className={`border-2 ${activeFilters.length > 0 ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300' : 'border-gray-300 dark:border-gray-600'} relative`}
+          >
+            Filter
+            {activeFilters.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                {activeFilters.length}
+              </span>
+            )}
+          </AnimatedButton>
         </div>
-      </div>
+
+        {/* Search and Filter Controls */}
+        {(loggedItems.length > 0 || offlineQueue.length > 0) && (
+          <div className="mb-4 space-y-4">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onClear={() => setSearchQuery('')}
+              placeholder="Search your food log..."
+              suggestions={foodSuggestions}
+              onSuggestionSelect={setSearchQuery}
+              icon="fas fa-search"
+              variant="compact"
+              size="md"
+            />
+            
+            {showFilters && (
+              <FilterPanel
+                filterGroups={filterGroups}
+                activeFilters={activeFilters}
+                onFilterChange={handleFilterChange}
+                onClearFilters={clearFilters}
+                onClearFilter={clearFilter}
+                variant="inline"
+                showActiveCount={true}
+              />
+            )}
+
+            {(searchQuery || activeFilters.length > 0) && (
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Showing {filteredLoggedItems.length + filteredOfflineQueue.length} of {loggedItems.length + offlineQueue.length} food entries
+                {(searchQuery || activeFilters.length > 0) && (
+                  <button
+                    onClick={() => { setSearchQuery(''); clearFilters(); }}
+                    className="ml-2 text-teal-600 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-200 underline"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       <p className="text-sm text-text-alt mb-6">{greeting}</p>
 
       {targetCalories !== null && (
         <div className="mb-6" data-tooltip="calorie-summary">
-          <div className="flex justify-between text-sm font-medium text-text-alt mb-1.5">
-            <span>{totalCaloriesToday.toLocaleString()} kcal consumed</span>
-            <span className="font-semibold text-teal-700 dark:text-teal-400">Target: {targetCalories.toLocaleString()} kcal</span>
-          </div>
-          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-4 shadow-inner overflow-hidden">
-            <div 
-                className={`${getProgressGradient()} h-4 rounded-full transition-all duration-500 ease-out flex items-center justify-center text-xs text-white font-bold`}
-                style={{ width: `${targetCalories ? Math.min(100, (totalCaloriesToday/targetCalories)*100) : 0}%` }}
-                role="progressbar"
-                aria-valuenow={targetCalories ? Math.min(100, (totalCaloriesToday/targetCalories)*100) : 0}
-                aria-valuemin={0}
-                aria-valuemax={100}
-            >
-              {targetCalories && totalCaloriesToday > 0 && Math.min(100, (totalCaloriesToday/targetCalories)*100).toFixed(0)}%
-            </div>
-          </div>
+          <ProgressIndicator
+            value={totalCaloriesToday}
+            max={targetCalories}
+            showPercentage={true}
+            showValue={true}
+            label="Daily Calorie Progress"
+            color={
+              (totalCaloriesToday / targetCalories) > 1.1 ? 'danger' :
+              (totalCaloriesToday / targetCalories) > 0.9 ? 'success' :
+              (totalCaloriesToday / targetCalories) > 0.6 ? 'warning' : 'primary'
+            }
+            animated={true}
+            striped={true}
+            className="animate-slide-up"
+          />
           {remainingCalories !== null && (
             <p className={`text-sm mt-1.5 text-right font-medium ${remainingCalories < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
               {remainingCalories < 0 ? `${Math.abs(remainingCalories).toLocaleString()} kcal over target` : `${remainingCalories.toLocaleString()} kcal remaining`}
@@ -219,38 +434,73 @@ const FoodLog: React.FC<FoodLogProps> = ({
 
       {/* Smart Suggestions */}
       {smartSuggestions.length > 0 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl border border-teal-200 dark:border-teal-700">
+        <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl border border-teal-200 dark:border-teal-700 animate-fade-in">
           <h3 className="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-3 flex items-center">
-            <i className="fas fa-lightbulb mr-2"></i>
+            <i className="fas fa-lightbulb mr-2 animate-pulse"></i>
             Quick Add Suggestions
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <AnimatedList animation="stagger" delay={150} className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {smartSuggestions.map((suggestion: any, index: number) => (
-              <button
+              <AnimatedButton
                 key={index}
                 onClick={() => handleSuggestionAdd(suggestion)}
-                className="p-3 bg-white dark:bg-gray-800 rounded-lg border border-teal-200 dark:border-teal-600 hover:border-teal-300 dark:hover:border-teal-500 hover:shadow-md transition-all text-left"
+                variant="ghost"
+                animation="scale"
+                className="p-3 bg-white dark:bg-gray-800 border border-teal-200 dark:border-teal-600 hover:border-teal-300 dark:hover:border-teal-500 text-left h-auto"
               >
-                <p className="font-medium text-xs text-gray-900 dark:text-white truncate">{suggestion.name}</p>
-                <p className="text-xs text-teal-600 dark:text-teal-400">{suggestion.calories} kcal</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{suggestion.servingSize}</p>
-              </button>
+                <div className="text-left">
+                  <p className="font-medium text-xs text-gray-900 dark:text-white truncate">{suggestion.name}</p>
+                  <p className="text-xs text-teal-600 dark:text-teal-400">{suggestion.calories} kcal</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{suggestion.servingSize}</p>
+                </div>
+              </AnimatedButton>
             ))}
-          </div>
+          </AnimatedList>
         </div>
       )}
 
       {(loggedItems.length === 0 && offlineQueue.length === 0) ? (
-        <div className="text-center py-8 bg-slate-50 dark:bg-slate-700/30 rounded-lg border border-border-default">
-            <i className="fas fa-utensils text-4xl text-slate-400 dark:text-slate-500 mb-3"></i>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">No food logged yet today.</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">Scan or add items to get started!</p>
-        </div>
+        <EmptyState
+          icon="fas fa-utensils"
+          iconColor="text-teal-500 dark:text-teal-400"
+          title="Start Your Food Journey"
+          description="Track your first meal to begin understanding your nutrition habits."
+          actionLabel="Add Your First Food"
+          onAction={() => setIsManualAddModalOpen(true)}
+          secondaryActionLabel={canScanBarcode?.allowed ? "Scan Barcode" : undefined}
+          onSecondaryAction={canScanBarcode?.allowed ? onOpenUPCScanner : undefined}
+          tips={[
+            "Start with breakfast to build a consistent tracking habit",
+            "Use the barcode scanner for packaged foods",
+            "Save frequently eaten foods to your library for quick access"
+          ]}
+          className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/30 dark:to-gray-900/30 rounded-lg py-8"
+        />
+      ) : (filteredLoggedItems.length === 0 && filteredOfflineQueue.length === 0) ? (
+        <EmptyState
+          icon="fas fa-search"
+          iconColor="text-gray-500 dark:text-gray-400"
+          title="No Food Entries Found"
+          description={searchQuery || activeFilters.length > 0 
+            ? "No food entries match your search criteria. Try adjusting your filters or search terms."
+            : "You don't have any food entries yet."
+          }
+          actionLabel={searchQuery || activeFilters.length > 0 ? "Clear Filters" : "Add Your First Food"}
+          onAction={searchQuery || activeFilters.length > 0 
+            ? () => { setSearchQuery(''); clearFilters(); }
+            : () => setIsManualAddModalOpen(true)
+          }
+          tips={[
+            "Use the search bar to find foods by name",
+            "Filter by time of day to see meal patterns",
+            "Apply calorie or macro filters to analyze your intake"
+          ]}
+        />
       ) : (
-        <ul className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 -mr-2 custom-scrollbar">
-          {reversedOfflineQueue.map((item) => renderFoodListItem(item, true))}
-          {reversedLoggedItems.map((item) => renderFoodListItem(item, false))}
-        </ul>
+        <AnimatedList animation="stagger" delay={100} className="space-y-3 max-h-[50vh] overflow-y-auto pr-2 -mr-2 custom-scrollbar">
+          {filteredOfflineQueue.map((item) => renderFoodListItem(item, true))}
+          {filteredLoggedItems.map((item) => renderFoodListItem(item, false))}
+        </AnimatedList>
       )}
        <Modal isOpen={isManualAddModalOpen} onClose={() => { resetManualForm(); setIsManualAddModalOpen(false); }} title="Add Food Manually">
         <div className="space-y-4">
@@ -313,7 +563,8 @@ const FoodLog: React.FC<FoodLogProps> = ({
             </button>
         </div>
       </Modal>
-    </div>
+      </AnimatedCard>
+    </FeedbackAnimations>
   );
 };
 

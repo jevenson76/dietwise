@@ -1,5 +1,7 @@
 import React from 'react';
 import { AppTheme } from '../types';
+import { useResponsive } from '../hooks/useResponsive';
+import OfflineStatus from './common/OfflineStatus';
 
 interface SettingsTabProps {
   theme: AppTheme;
@@ -11,6 +13,18 @@ interface SettingsTabProps {
   isPremiumUser: boolean;
   onUpgradeClick: () => void;
   pdfExportButton?: React.ReactNode;
+  isOnline?: boolean;
+  pendingItems?: {
+    foodLog?: number;
+    weight?: number;
+    goals?: number;
+    other?: number;
+  };
+  lastSyncTime?: string;
+  onSync?: () => void;
+  onRetryConnection?: () => void;
+  isSyncing?: boolean;
+  syncProgress?: number;
 }
 
 const SettingsTab: React.FC<SettingsTabProps> = ({
@@ -22,30 +36,40 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
   exportData,
   isPremiumUser,
   onUpgradeClick,
-  pdfExportButton
+  pdfExportButton,
+  isOnline = true,
+  pendingItems,
+  lastSyncTime,
+  onSync,
+  onRetryConnection,
+  isSyncing = false,
+  syncProgress = 0
 }) => {
+  const { isMobile, isTablet } = useResponsive();
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Appearance Settings */}
-      <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
-        <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-6 border-b border-border-default pb-4">
+      <div className={`bg-bg-card rounded-xl shadow-xl ${isMobile ? 'p-4' : isTablet ? 'p-6' : 'p-8'}`}>
+        <h2 className={`${isMobile ? 'text-lg' : isTablet ? 'text-xl' : 'text-2xl'} font-semibold text-text-default mb-6 border-b border-border-default pb-4`}>
           <i className="fas fa-palette mr-2.5 text-purple-600"></i>Appearance
         </h2>
-        <div className="flex items-center justify-between py-4">
+        <div className={`flex items-center justify-between ${isMobile ? 'py-3' : 'py-4'}`}>
           <div className="flex items-center">
-            <i className={`fas ${theme === 'dark' ? 'fa-moon' : 'fa-sun'} mr-3 text-lg text-text-alt`}></i>
-            <span className="text-base font-medium text-text-default">Theme</span>
+            <i className={`fas ${theme === 'dark' ? 'fa-moon' : 'fa-sun'} mr-3 ${isMobile ? 'text-base' : 'text-lg'} text-text-alt`}></i>
+            <span className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-text-default`}>Theme</span>
           </div>
           <button
             onClick={handleThemeToggle}
-            className="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-bg-default"
+            className={`relative inline-flex items-center rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-bg-default ${isMobile ? 'h-8 w-14' : 'h-6 w-11'}`}
             role="switch"
             aria-checked={theme === 'dark'}
             aria-label="Toggle dark mode"
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                theme === 'dark' ? 'translate-x-6' : 'translate-x-1'
+              className={`inline-block transform rounded-full bg-white transition-transform duration-200 ${
+                isMobile 
+                  ? `h-6 w-6 ${theme === 'dark' ? 'translate-x-7' : 'translate-x-1'}`
+                  : `h-4 w-4 ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`
               }`}
             />
           </button>
@@ -79,6 +103,23 @@ const SettingsTab: React.FC<SettingsTabProps> = ({
         <p className="text-sm text-text-alt mt-2">
           Get reminders for meal logging and weigh-ins
         </p>
+      </div>
+
+      {/* Offline Status */}
+      <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl">
+        <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-6 border-b border-border-default pb-4">
+          <i className="fas fa-wifi mr-2.5 text-blue-600"></i>Connection & Sync
+        </h2>
+        <OfflineStatus
+          isOnline={isOnline}
+          pendingItems={pendingItems}
+          lastSyncTime={lastSyncTime}
+          onSync={onSync}
+          onRetry={onRetryConnection}
+          isSyncing={isSyncing}
+          syncProgress={syncProgress}
+          compact={false}
+        />
       </div>
 
       {/* Data Export */}

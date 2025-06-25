@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { authApi, LoginData } from '@services/api/auth';
 import { useNavigate, Link } from 'react-router-dom';
+import ErrorMessage from '../common/ErrorMessage';
+import { getUserFriendlyError } from '../../utils/errorMessages';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -77,11 +79,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         </h2>
 
         {errors.general && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-600 dark:text-red-400">
-              <i className="fas fa-exclamation-circle mr-2"></i>
-              {errors.general}
-            </p>
+          <div className="mb-6">
+            {errors.general === 'invalid_credentials' ? (
+              <ErrorMessage
+                title="Login Failed"
+                message="The email or password you entered is incorrect."
+                suggestions={[
+                  'Double-check your email address for typos',
+                  'Make sure Caps Lock is off',
+                  'Try resetting your password if you\'ve forgotten it',
+                ]}
+                actions={[
+                  {
+                    label: 'Forgot Password?',
+                    action: () => navigate('/forgot-password'),
+                    variant: 'secondary',
+                  },
+                ]}
+                compact
+              />
+            ) : (
+              <ErrorMessage
+                message={errors.general}
+                compact
+              />
+            )}
           </div>
         )}
 

@@ -5,6 +5,9 @@ import { trackEvent } from '@services/analyticsService';
 import { SevenDayPlanResponse, DailyMealPlan, ShoppingListCategory, Meal, GroundingSource } from '@appTypes';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import Alert from '@components/common/Alert';
+import LoadingState from '@components/common/LoadingState';
+import ErrorMessage, { ErrorTemplates } from '@components/common/ErrorMessage';
+import { createContextualError } from '../utils/errorMessages';
 import type { GroundingChunk } from '@google/genai';
 
 interface MealPlannerComponentProps {
@@ -183,9 +186,52 @@ const MealPlannerComponent: React.FC<MealPlannerComponentProps> = ({ calorieTarg
       </button>
 
       {apiKeyStatus === 'missing' && !apiKeyMissing && <Alert type="warning" message="Gemini API Key is missing or invalid. Plan generation is disabled." className="mt-4" />}
-      {error && <Alert type="error" message={error} onClose={() => setError(null)} className="mt-4" />}
+      {error && (
+        <div className="mt-4">
+          <ErrorMessage
+            {...createContextualError('meal-generation', error, { item: 'meal plan' })}
+            actions={[
+              {
+                label: 'Try Again',
+                action: generatePlan,
+                icon: 'fas fa-redo',
+              },
+              {
+                label: 'Adjust Preferences',
+                action: () => {
+                  setError(null);
+                  document.getElementById('planPreferences')?.focus();
+                },
+                variant: 'secondary',
+              },
+            ]}
+            onClose={() => setError(null)}
+            compact
+          />
+        </div>
+      )}
 
-      {isLoading && <div className="mt-8 text-center" aria-live="polite"><LoadingSpinner size="md" color="text-teal-600 dark:text-teal-400" /><p className="text-text-alt mt-3">Generating your personalized plan... this may take a moment.</p></div>}
+      {isLoading && (
+        <div className="mt-8" aria-live="polite">
+          <LoadingState
+            message="Creating Your Personalized Meal Plan"
+            submessage="Analyzing your preferences and nutritional needs..."
+            estimatedTime={15}
+            steps={{
+              current: 1,
+              total: 3,
+              currentStep: "Generating meal ideas"
+            }}
+            tips={[
+              "Calculating balanced nutrition for each meal",
+              "Ensuring variety across the week",
+              "Creating your shopping list with quantities",
+              "Considering your dietary preferences"
+            ]}
+            size="md"
+          />
+        </div>
+      )}
 
       {planData && !isLoading && (
         <div className="mt-8 pt-6 border-t border-border-default">

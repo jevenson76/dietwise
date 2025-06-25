@@ -4,10 +4,19 @@ import { MyFoodItem, MyMeal, ScannedFoodInfo, GroundingSource } from '@appTypes'
 import Modal from '@components/common/Modal';
 import Alert from '@components/common/Alert';
 import LoadingSpinner from '@components/common/LoadingSpinner';
+import EmptyState from '@components/common/EmptyState';
+import LoadingState from '@components/common/LoadingState';
 import { useCameraBarcodeScanner } from '@hooks/useCameraBarcodeScanner';
 import { getFoodInfoFromUPC, API_KEY_ERROR_MESSAGE } from '@services/geminiService';
 import { trackEvent } from '@services/analyticsService';
 import type { GroundingChunk } from '@google/genai';
+import AnimatedButton from './common/AnimatedButton';
+import AnimatedCard from './common/AnimatedCard';
+import AnimatedList from './common/AnimatedList';
+import HoverEffects from './common/HoverEffects';
+import StatusIndicator from './common/StatusIndicator';
+import SearchBar from './common/SearchBar';
+import FilterPanel, { FilterGroup, ActiveFilter } from './common/FilterPanel';
 
 const MYFOOD_SCANNER_VIDEO_ID = "myfood-barcode-video";
 
@@ -56,6 +65,14 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
   const [isMyFoodScannerLoadingApi, setIsMyFoodScannerLoadingApi] = useState(false);
   const [myFoodScannedUpc, setMyFoodScannedUpc] = useState<string | null>(null);
   const [myFoodScanGroundingSources, setMyFoodScanGroundingSources] = useState<GroundingSource[]>([]);
+
+  // Search and Filter states
+  const [foodSearchQuery, setFoodSearchQuery] = useState('');
+  const [mealSearchQuery, setMealSearchQuery] = useState('');
+  const [foodActiveFilters, setFoodActiveFilters] = useState<ActiveFilter[]>([]);
+  const [mealActiveFilters, setMealActiveFilters] = useState<ActiveFilter[]>([]);
+  const [showFoodFilters, setShowFoodFilters] = useState(false);
+  const [showMealFilters, setShowMealFilters] = useState(false);
 
   const handleMyFoodScanSuccess = useCallback((text: string) => {
     trackEvent('myfood_upc_scan_success', { upc: text });
@@ -235,6 +252,191 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
     }));
   };
 
+  // Filter configurations
+  const foodFilterGroups: FilterGroup[] = [
+    {
+      id: 'calories',
+      label: 'Calories',
+      type: 'range',
+      min: 0,
+      max: 1000,
+      step: 10,
+      unit: ' kcal'
+    },
+    {
+      id: 'protein',
+      label: 'Protein',
+      type: 'range',
+      min: 0,
+      max: 100,
+      step: 1,
+      unit: 'g'
+    },
+    {
+      id: 'hasServingSize',
+      label: 'Has Serving Size',
+      type: 'toggle'
+    },
+    {
+      id: 'hasMacros',
+      label: 'Has Macros Info',
+      type: 'toggle'
+    }
+  ];
+
+  const mealFilterGroups: FilterGroup[] = [
+    {
+      id: 'totalCalories',
+      label: 'Total Calories',
+      type: 'range',
+      min: 0,
+      max: 2000,
+      step: 50,
+      unit: ' kcal'
+    },
+    {
+      id: 'ingredientCount',
+      label: 'Number of Ingredients',
+      type: 'range',
+      min: 1,
+      max: 20,
+      step: 1,
+      unit: ''
+    },
+    {
+      id: 'hasDescription',
+      label: 'Has Description',
+      type: 'toggle'
+    }
+  ];
+
+  // Filter and search logic
+  const filteredFoods = myFoods.filter(food => {
+    // Search filter
+    if (foodSearchQuery && !food.name.toLowerCase().includes(foodSearchQuery.toLowerCase())) {
+      return false;
+    }
+
+    // Apply active filters
+    for (const filter of foodActiveFilters) {
+      switch (filter.groupId) {
+        case 'calories':
+          if (food.calories < filter.value[0] || food.calories > filter.value[1]) return false;
+          break;
+        case 'protein':
+          if (!food.protein || food.protein < filter.value[0] || food.protein > filter.value[1]) return false;
+          break;
+        case 'hasServingSize':
+          if (filter.value && !food.servingSize) return false;
+          break;
+        case 'hasMacros':
+          if (filter.value && (!food.protein || !food.carbs || !food.fat)) return false;
+          break;
+      }
+    }
+    return true;
+  });
+
+  const filteredMeals = myMeals.filter(meal => {
+    // Search filter
+    if (mealSearchQuery && !meal.name.toLowerCase().includes(mealSearchQuery.toLowerCase())) {
+      return false;
+    }
+
+    // Apply active filters
+    for (const filter of mealActiveFilters) {
+      switch (filter.groupId) {
+        case 'totalCalories':
+          const totalCals = meal.totalCalories || 0;
+          if (totalCals < filter.value[0] || totalCals > filter.value[1]) return false;
+          break;
+        case 'ingredientCount':
+          const ingredientCount = meal.ingredients?.length || 0;
+          if (ingredientCount < filter.value[0] || ingredientCount > filter.value[1]) return false;
+          break;
+        case 'hasDescription':
+          if (filter.value && !meal.description) return false;
+          break;
+      }
+    }
+    return true;
+  });
+
+  // Filter handlers
+  const handleFoodFilterChange = (groupId: string, value: any) => {
+    const existingFilterIndex = foodActiveFilters.findIndex(f => f.groupId === groupId);
+    const filterGroup = foodFilterGroups.find(g => g.id === groupId);
+    if (!filterGroup) return;
+
+    let label = '';
+    if (filterGroup.type === 'range') {
+      label = `${filterGroup.label}: ${value[0]}${filterGroup.unit || ''} - ${value[1]}${filterGroup.unit || ''}`;
+    } else if (filterGroup.type === 'toggle') {
+      label = `${filterGroup.label}: ${value ? 'Yes' : 'No'}`;
+    }
+
+    const newFilter: ActiveFilter = {
+      groupId,
+      value,
+      label
+    };
+
+    if (existingFilterIndex >= 0) {
+      const newFilters = [...foodActiveFilters];
+      newFilters[existingFilterIndex] = newFilter;
+      setFoodActiveFilters(newFilters);
+    } else {
+      setFoodActiveFilters([...foodActiveFilters, newFilter]);
+    }
+  };
+
+  const handleMealFilterChange = (groupId: string, value: any) => {
+    const existingFilterIndex = mealActiveFilters.findIndex(f => f.groupId === groupId);
+    const filterGroup = mealFilterGroups.find(g => g.id === groupId);
+    if (!filterGroup) return;
+
+    let label = '';
+    if (filterGroup.type === 'range') {
+      label = `${filterGroup.label}: ${value[0]}${filterGroup.unit || ''} - ${value[1]}${filterGroup.unit || ''}`;
+    } else if (filterGroup.type === 'toggle') {
+      label = `${filterGroup.label}: ${value ? 'Yes' : 'No'}`;
+    }
+
+    const newFilter: ActiveFilter = {
+      groupId,
+      value,
+      label
+    };
+
+    if (existingFilterIndex >= 0) {
+      const newFilters = [...mealActiveFilters];
+      newFilters[existingFilterIndex] = newFilter;
+      setMealActiveFilters(newFilters);
+    } else {
+      setMealActiveFilters([...mealActiveFilters, newFilter]);
+    }
+  };
+
+  const clearFoodFilters = () => setFoodActiveFilters([]);
+  const clearMealFilters = () => setMealActiveFilters([]);
+
+  const clearFoodFilter = (groupId: string) => {
+    setFoodActiveFilters(foodActiveFilters.filter(f => f.groupId !== groupId));
+  };
+
+  const clearMealFilter = (groupId: string) => {
+    setMealActiveFilters(mealActiveFilters.filter(f => f.groupId !== groupId));
+  };
+
+  // Generate food suggestions for search
+  const foodSuggestions = myFoods.map(food => food.name).filter(name => 
+    name.toLowerCase().includes(foodSearchQuery.toLowerCase())
+  ).slice(0, 5);
+
+  const mealSuggestions = myMeals.map(meal => meal.name).filter(name => 
+    name.toLowerCase().includes(mealSearchQuery.toLowerCase())
+  ).slice(0, 5);
+
   return (
     <div className="space-y-8">
       {/* My Foods Section */}
@@ -243,23 +445,108 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
           <h2 className="text-xl sm:text-2xl font-semibold text-text-default">
             <i className="fas fa-carrot mr-2.5 text-orange-500 dark:text-orange-400"></i>My Foods
           </h2>
-          <button onClick={() => handleOpenFoodModal()} className={buttonClass}>
-            <i className="fas fa-plus mr-1.5"></i>Add Food
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowFoodFilters(!showFoodFilters)}
+              className={`${buttonClass} ${foodActiveFilters.length > 0 ? 'bg-teal-600' : 'bg-gray-500 hover:bg-gray-600'} relative`}
+            >
+              <i className="fas fa-filter mr-1.5"></i>Filter
+              {foodActiveFilters.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  {foodActiveFilters.length}
+                </span>
+              )}
+            </button>
+            <button onClick={() => handleOpenFoodModal()} className={buttonClass}>
+              <i className="fas fa-plus mr-1.5"></i>Add Food
+            </button>
+          </div>
         </div>
+        
+        {/* Search and Filter Controls */}
+        <div className="mb-4 space-y-4">
+          <SearchBar
+            value={foodSearchQuery}
+            onChange={setFoodSearchQuery}
+            onClear={() => setFoodSearchQuery('')}
+            placeholder="Search your foods..."
+            suggestions={foodSuggestions}
+            onSuggestionSelect={setFoodSearchQuery}
+            icon="fas fa-search"
+            variant="default"
+            size="md"
+          />
+          
+          {showFoodFilters && (
+            <FilterPanel
+              filterGroups={foodFilterGroups}
+              activeFilters={foodActiveFilters}
+              onFilterChange={handleFoodFilterChange}
+              onClearFilters={clearFoodFilters}
+              onClearFilter={clearFoodFilter}
+              variant="inline"
+              showActiveCount={true}
+            />
+          )}
+        </div>
+
         <p className="text-sm text-text-alt mb-4">
           {userName ? `${userName}, save your favorite foods here for quick logging.` : 'Save your favorite foods here for quick logging.'}
           {targetCalories && ` Remember, your daily goal is ${targetCalories.toLocaleString()} calories.`}
+          {filteredFoods.length !== myFoods.length && (
+            <span className="block mt-1 text-teal-600 dark:text-teal-400">
+              Showing {filteredFoods.length} of {myFoods.length} foods
+            </span>
+          )}
         </p>
         {myFoods.length === 0 ? (
-          <p className="text-text-alt text-center py-4">No custom foods saved yet. Add your frequently eaten items!</p>
+          <EmptyState
+            icon="fas fa-apple-alt"
+            iconColor="text-orange-500 dark:text-orange-400"
+            title="Build Your Food Library"
+            description="Save your favorite foods for quick and easy logging."
+            actionLabel="Add Your First Food"
+            onAction={() => handleOpenFoodModal()}
+            tips={[
+              "Add foods you eat regularly for faster tracking",
+              "Include serving sizes for accurate portions",
+              "Add macros (protein, carbs, fat) for better insights"
+            ]}
+          />
+        ) : filteredFoods.length === 0 ? (
+          <EmptyState
+            icon="fas fa-search"
+            iconColor="text-gray-500 dark:text-gray-400"
+            title="No Foods Found"
+            description={foodSearchQuery || foodActiveFilters.length > 0 
+              ? "No foods match your search criteria. Try adjusting your filters or search terms."
+              : "You don't have any foods saved yet."
+            }
+            actionLabel={foodSearchQuery || foodActiveFilters.length > 0 ? "Clear Filters" : "Add Your First Food"}
+            onAction={foodSearchQuery || foodActiveFilters.length > 0 
+              ? () => { setFoodSearchQuery(''); clearFoodFilters(); }
+              : () => handleOpenFoodModal()
+            }
+            tips={[
+              "Use the search bar to find foods by name",
+              "Apply filters to narrow down by calories or macros",
+              "Clear filters to see all your saved foods"
+            ]}
+          />
         ) : (
           <ul className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-            {myFoods.map(food => (
+            {filteredFoods.map(food => (
               <li key={food.id} className="p-4 border border-border-default rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 flex justify-between items-center">
                 <div>
                   <p className="font-semibold text-text-default">{food.name}</p>
                   <p className="text-xs text-text-alt">{food.calories} kcal{food.servingSize ? ` / ${food.servingSize}` : ''}</p>
+                  {(food.protein || food.carbs || food.fat) && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      {food.protein ? `P: ${food.protein}g ` : ''}
+                      {food.carbs ? `C: ${food.carbs}g ` : ''}
+                      {food.fat ? `F: ${food.fat}g` : ''}
+                    </p>
+                  )}
                 </div>
                 <div className="space-x-2">
                   <button onClick={() => handleOpenFoodModal(food)} className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-1" aria-label={`Edit ${food.name}`}><i className="fas fa-edit"></i></button>
@@ -277,23 +564,106 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
           <h2 className="text-xl sm:text-2xl font-semibold text-text-default">
             <i className="fas fa-utensils mr-2.5 text-purple-500 dark:text-purple-400"></i>My Meals
           </h2>
-          <button onClick={() => handleOpenMealModal()} className={buttonClass}>
-             <i className="fas fa-plus mr-1.5"></i>Create Meal
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowMealFilters(!showMealFilters)}
+              className={`${buttonClass} ${mealActiveFilters.length > 0 ? 'bg-teal-600' : 'bg-gray-500 hover:bg-gray-600'} relative`}
+            >
+              <i className="fas fa-filter mr-1.5"></i>Filter
+              {mealActiveFilters.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                  {mealActiveFilters.length}
+                </span>
+              )}
+            </button>
+            <button onClick={() => handleOpenMealModal()} className={buttonClass}>
+               <i className="fas fa-plus mr-1.5"></i>Create Meal
+            </button>
+          </div>
         </div>
+        
+        {/* Search and Filter Controls */}
+        <div className="mb-4 space-y-4">
+          <SearchBar
+            value={mealSearchQuery}
+            onChange={setMealSearchQuery}
+            onClear={() => setMealSearchQuery('')}
+            placeholder="Search your meals..."
+            suggestions={mealSuggestions}
+            onSuggestionSelect={setMealSearchQuery}
+            icon="fas fa-search"
+            variant="default"
+            size="md"
+          />
+          
+          {showMealFilters && (
+            <FilterPanel
+              filterGroups={mealFilterGroups}
+              activeFilters={mealActiveFilters}
+              onFilterChange={handleMealFilterChange}
+              onClearFilters={clearMealFilters}
+              onClearFilter={clearMealFilter}
+              variant="inline"
+              showActiveCount={true}
+            />
+          )}
+        </div>
+
         <p className="text-sm text-text-alt mb-4">
           {userName ? `${userName}, create meal combinations for faster tracking.` : 'Create meal combinations for faster tracking.'}
           {myMeals.length > 0 && ` You have ${myMeals.length} meal${myMeals.length === 1 ? '' : 's'} saved.`}
+          {filteredMeals.length !== myMeals.length && (
+            <span className="block mt-1 text-purple-600 dark:text-purple-400">
+              Showing {filteredMeals.length} of {myMeals.length} meals
+            </span>
+          )}
         </p>
         {myMeals.length === 0 ? (
-          <p className="text-text-alt text-center py-4">No custom meals created yet. Combine your foods into meals!</p>
+          <EmptyState
+            icon="fas fa-utensils"
+            iconColor="text-purple-500 dark:text-purple-400"
+            title="Create Your First Meal"
+            description="Combine foods into meals for one-click logging of your favorite dishes."
+            actionLabel={myFoods.length > 0 ? "Create Meal" : "Add Foods First"}
+            onAction={myFoods.length > 0 ? () => handleOpenMealModal() : () => handleOpenFoodModal()}
+            secondaryActionLabel={myFoods.length === 0 ? "Learn More" : undefined}
+            onSecondaryAction={myFoods.length === 0 ? () => alert('Add individual foods first, then combine them into meals!') : undefined}
+            tips={[
+              myFoods.length === 0 ? "You need to add foods before creating meals" : "Group foods you often eat together",
+              "Perfect for meal prep or regular recipes",
+              "Meals calculate total nutrition automatically"
+            ]}
+          />
+        ) : filteredMeals.length === 0 ? (
+          <EmptyState
+            icon="fas fa-search"
+            iconColor="text-gray-500 dark:text-gray-400"
+            title="No Meals Found"
+            description={mealSearchQuery || mealActiveFilters.length > 0 
+              ? "No meals match your search criteria. Try adjusting your filters or search terms."
+              : "You don't have any meals saved yet."
+            }
+            actionLabel={mealSearchQuery || mealActiveFilters.length > 0 ? "Clear Filters" : "Create Your First Meal"}
+            onAction={mealSearchQuery || mealActiveFilters.length > 0 
+              ? () => { setMealSearchQuery(''); clearMealFilters(); }
+              : myFoods.length > 0 ? () => handleOpenMealModal() : () => handleOpenFoodModal()
+            }
+            tips={[
+              "Use the search bar to find meals by name",
+              "Apply filters to narrow down by calories or ingredients",
+              "Clear filters to see all your saved meals"
+            ]}
+          />
         ) : (
           <ul className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-            {myMeals.map(meal => (
+            {filteredMeals.map(meal => (
               <li key={meal.id} className="p-4 border border-border-default rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 flex justify-between items-center">
                 <div>
                   <p className="font-semibold text-text-default">{meal.name}</p>
                   <p className="text-xs text-text-alt">{meal.totalCalories?.toFixed(0) || 0} kcal. {meal.ingredients.length} ingredient{meal.ingredients.length === 1 ? '' : 's'}.</p>
+                  {meal.description && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 italic">"{meal.description}"</p>
+                  )}
                 </div>
                 <div className="space-x-2">
                   <button onClick={() => onLogMeal(meal.id)} className={`${buttonClass} text-xs py-1 px-2.5 bg-green-500 hover:bg-green-600`} aria-label={`Log ${meal.name}`}><i className="fas fa-plus-circle mr-1"></i>Log</button>
@@ -363,7 +733,21 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
                 )}
             </div>
             {myFoodScannerError && <Alert type="error" message={myFoodScannerError} onClose={() => setMyFoodScannerError(null)} className="w-full max-w-md"/>}
-            {isMyFoodScannerLoadingApi && <div className="my-4 text-center w-full max-w-md"><LoadingSpinner label={`Fetching info for UPC: ${myFoodScannedUpc}`}/> <p className="text-text-alt mt-2 text-sm">Fetching food info...</p></div>}
+            {isMyFoodScannerLoadingApi && (
+              <div className="my-4 w-full max-w-md">
+                <LoadingState
+                  message="Looking up product information"
+                  submessage={`UPC: ${myFoodScannedUpc}`}
+                  estimatedTime={5}
+                  tips={[
+                    "Searching nutritional databases...",
+                    "Cross-referencing product information...",
+                    "Verifying nutritional data..."
+                  ]}
+                  size="sm"
+                />
+              </div>
+            )}
             {myFoodScanGroundingSources.length > 0 && (
                 <div className="mt-4 p-3 bg-sky-50 dark:bg-sky-800/50 border border-sky-200 dark:border-sky-700 rounded-lg w-full max-w-md text-xs">
                   <h4 className="text-xs font-semibold text-sky-700 dark:text-sky-300 mb-1">Data Sources (from Google Search):</h4>

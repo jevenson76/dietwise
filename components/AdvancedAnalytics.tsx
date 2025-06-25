@@ -1,7 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import LoadingSpinner from './common/LoadingSpinner';
+import EmptyState from './common/EmptyState';
+import InteractiveChart from './common/InteractiveChart';
+import TrendChart from './common/TrendChart';
+import MetricsCard from './common/MetricsCard';
+import NutritionBreakdown from './common/NutritionBreakdown';
+import AnimatedCard from './common/AnimatedCard';
 
 Chart.register(...registerables);
 
@@ -18,6 +24,84 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
 }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
   const [selectedMetric, setSelectedMetric] = useState<'calories' | 'protein' | 'carbs' | 'fat'>('calories');
+
+  // Enhanced data processing for new components
+  const analyticsData = useMemo(() => {
+    const endDate = new Date();
+    let startDate: Date;
+
+    switch (selectedTimeRange) {
+      case '7d':
+        startDate = subDays(endDate, 7);
+        break;
+      case '30d':
+        startDate = subDays(endDate, 30);
+        break;
+      case '90d':
+        startDate = subDays(endDate, 90);
+        break;
+    }
+
+    const filteredLog = foodLog.filter(item => {
+      const itemDate = new Date(item.timestamp);
+      return isWithinInterval(itemDate, { start: startDate, end: endDate });
+    });
+
+    // Daily aggregation
+    const dailyData = eachDayOfInterval({ start: startDate, end: endDate }).map(date => {
+      const dayItems = filteredLog.filter(item => {
+        const itemDate = new Date(item.timestamp);
+        return format(itemDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+      });
+
+      const dayTotals = dayItems.reduce((acc, item) => ({
+        calories: acc.calories + (item.calories || 0),
+        protein: acc.protein + (item.protein || 0),
+        carbs: acc.carbs + (item.carbs || 0),
+        fat: acc.fat + (item.fat || 0)
+      }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+      return {
+        date: format(date, 'yyyy-MM-dd'),
+        label: format(date, 'MMM dd'),
+        ...dayTotals
+      };
+    });
+
+    // Weekly comparison data
+    const weeklyData = [];
+    for (let i = 0; i < Math.ceil(dailyData.length / 7); i++) {
+      const weekStart = i * 7;
+      const weekData = dailyData.slice(weekStart, weekStart + 7);
+      const weekTotals = weekData.reduce((acc, day) => ({
+        calories: acc.calories + day.calories,
+        protein: acc.protein + day.protein,
+        carbs: acc.carbs + day.carbs,
+        fat: acc.fat + day.fat
+      }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+      weeklyData.push({
+        label: `Week ${i + 1}`,
+        date: weekData[0]?.date || '',
+        ...weekTotals
+      });
+    }
+
+    // Overall metrics
+    const totalCalories = filteredLog.reduce((sum, item) => sum + (item.calories || 0), 0);
+    const totalProtein = filteredLog.reduce((sum, item) => sum + (item.protein || 0), 0);
+    const totalCarbs = filteredLog.reduce((sum, item) => sum + (item.carbs || 0), 0);
+    const totalFat = filteredLog.reduce((sum, item) => sum + (item.fat || 0), 0);
+    const avgCaloriesPerDay = dailyData.length > 0 ? totalCalories / dailyData.length : 0;
+
+    return {
+      dailyData,
+      weeklyData,
+      totals: { calories: totalCalories, protein: totalProtein, carbs: totalCarbs, fat: totalFat },
+      averages: { calories: avgCaloriesPerDay },
+      filteredLog
+    };
+  }, [foodLog, selectedTimeRange]);
 
   const caloriesTrendRef = useRef<HTMLCanvasElement>(null);
   const macroDistributionRef = useRef<HTMLCanvasElement>(null);
@@ -349,15 +433,42 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
     totalDays
   };
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h2 className="text-2xl font-bold text-text-default mb-4 sm:mb-0">
-          <i className="fas fa-chart-line mr-2 text-teal-500"></i>
-          Advanced Analytics
-        </h2>
+  // Handle empty state when no data
+  if (analyticsData.filteredLog.length === 0) {
+    return (
+      <AnimatedCard
+        title="Advanced Analytics"
+        icon="fas fa-chart-line"
+        iconColor="text-teal-500"
+        animation="fade"
+      >
+        <EmptyState
+          icon="fas fa-chart-pie"
+          iconColor="text-teal-500 dark:text-teal-400"
+          title="No Data to Analyze"
+          description={`Start logging your meals to see detailed analytics for the ${selectedTimeRange === '7d' ? 'last 7 days' : selectedTimeRange === '30d' ? 'last 30 days' : 'last 90 days'}.`}
+          actionLabel="Log Your First Meal"
+          onAction={() => window.dispatchEvent(new CustomEvent('navigate-to-foodlog'))}
+          tips={[
+            "Track meals consistently for meaningful insights",
+            "Add macros (protein, carbs, fat) for detailed analysis",
+            "Check back after a week of logging for trends"
+          ]}
+        />
+      </AnimatedCard>
+    );
+  }
 
-        <div className="flex flex-wrap gap-2">
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <AnimatedCard 
+        title="Advanced Analytics"
+        icon="fas fa-chart-line"
+        iconColor="text-teal-500"
+        animation="lift"
+      >
+        <div className="flex flex-wrap gap-2 mb-4">
           <select
             value={selectedTimeRange}
             onChange={(e) => setSelectedTimeRange(e.target.value as '7d' | '30d' | '90d')}
@@ -379,6 +490,93 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
             <option value="fat">Fat</option>
           </select>
         </div>
+      </AnimatedCard>
+
+      {/* Enhanced Analytics */}
+      <MetricsCard
+        title="Daily Averages"
+        metrics={[
+          {
+            label: 'Daily Calories',
+            value: analyticsData.averages.calories,
+            format: 'number',
+            unit: 'kcal',
+            color: 'bg-blue-500'
+          },
+          {
+            label: 'Daily Protein',
+            value: analyticsData.totals.protein / analyticsData.dailyData.length || 0,
+            format: 'decimal',
+            unit: 'g',
+            color: 'bg-red-500'
+          },
+          {
+            label: 'Daily Carbs',
+            value: analyticsData.totals.carbs / analyticsData.dailyData.length || 0,
+            format: 'decimal',
+            unit: 'g',
+            color: 'bg-green-500'
+          },
+          {
+            label: 'Daily Fat',
+            value: analyticsData.totals.fat / analyticsData.dailyData.length || 0,
+            format: 'decimal',
+            unit: 'g',
+            color: 'bg-yellow-500'
+          }
+        ]}
+        variant="compact"
+        showTrends={false}
+        animated={true}
+      />
+
+      {/* Nutrition Breakdown */}
+      <NutritionBreakdown
+        data={{
+          protein: analyticsData.totals.protein / analyticsData.dailyData.length || 0,
+          carbs: analyticsData.totals.carbs / analyticsData.dailyData.length || 0,
+          fat: analyticsData.totals.fat / analyticsData.dailyData.length || 0,
+          calories: analyticsData.averages.calories
+        }}
+        showPercentages={true}
+        showMacroRings={true}
+        variant="visual"
+      />
+
+      {/* Trend Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TrendChart
+          data={analyticsData.dailyData.map(day => ({
+            date: day.date,
+            value: day[selectedMetric],
+            label: day.label
+          }))}
+          title={`${selectedMetric.charAt(0).toUpperCase() + selectedMetric.slice(1)} Trend`}
+          subtitle={`Daily ${selectedMetric} over time`}
+          showTarget={false}
+          showDots={true}
+          showArea={true}
+          color="#14b8a6"
+          timeframe={selectedTimeRange === '7d' ? 'week' : selectedTimeRange === '30d' ? 'month' : 'quarter'}
+          unit={selectedMetric === 'calories' ? ' kcal' : ' g'}
+          height={250}
+        />
+
+        <InteractiveChart
+          data={analyticsData.weeklyData.map((week, index) => ({
+            label: week.label,
+            value: week[selectedMetric],
+            color: `hsl(${index * 60}, 70%, 50%)`
+          }))}
+          type="bar"
+          title="Weekly Comparison"
+          showGrid={true}
+          showTooltip={true}
+          showLegend={false}
+          animated={true}
+          height={250}
+          unit={selectedMetric === 'calories' ? ' kcal' : ' g'}
+        />
       </div>
 
       {/* Summary Stats */}
@@ -443,24 +641,38 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
       </div>
 
       {/* Pro Tips */}
-      <div className="mt-8 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700 rounded-lg p-4">
-        <h3 className="font-semibold text-teal-800 dark:text-teal-200 mb-2">
-          <i className="fas fa-lightbulb mr-2"></i>
-          Insights & Tips
-        </h3>
-        <ul className="text-sm text-teal-700 dark:text-teal-300 space-y-1">
-          {finalStats.avgCalories < 1500 && (
-            <li>• Your average calorie intake seems low. Consider consulting with a nutritionist.</li>
+      <AnimatedCard
+        title="Insights & Tips"
+        icon="fas fa-lightbulb"
+        iconColor="text-teal-500"
+        animation="fade"
+        className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-700"
+      >
+        <ul className="text-sm text-teal-700 dark:text-teal-300 space-y-2">
+          {analyticsData.averages.calories < 1500 && (
+            <li className="flex items-center space-x-2">
+              <i className="fas fa-exclamation-triangle text-yellow-500"></i>
+              <span>Your average calorie intake seems low. Consider consulting with a nutritionist.</span>
+            </li>
           )}
-          {stats.avgProtein < 50 && (
-            <li>• Try to increase your protein intake for better muscle maintenance.</li>
+          {(analyticsData.totals.protein / analyticsData.dailyData.length) < 50 && (
+            <li className="flex items-center space-x-2">
+              <i className="fas fa-dumbbell text-red-500"></i>
+              <span>Try to increase your protein intake for better muscle maintenance.</span>
+            </li>
           )}
-          {stats.totalDays < 7 && (
-            <li>• Track more days to get better insights into your eating patterns.</li>
+          {analyticsData.dailyData.length < 7 && (
+            <li className="flex items-center space-x-2">
+              <i className="fas fa-calendar-check text-blue-500"></i>
+              <span>Track more days to get better insights into your eating patterns.</span>
+            </li>
           )}
-          <li>• Consistent meal timing can help regulate your metabolism.</li>
+          <li className="flex items-center space-x-2">
+            <i className="fas fa-clock text-green-500"></i>
+            <span>Consistent meal timing can help regulate your metabolism.</span>
+          </li>
         </ul>
-      </div>
+      </AnimatedCard>
     </div>
   );
 };

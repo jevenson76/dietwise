@@ -46,6 +46,9 @@ import MobileInstallPrompt from './components/MobileInstallPrompt';
 import PullToRefresh from './components/PullToRefresh';
 import { useSplashScreen } from '@hooks/useSplashScreen';
 import { useMobileOptimizations } from './hooks/useMobileOptimizations';
+import OfflineIndicator from '@components/common/OfflineIndicator';
+import OfflineBanner from '@components/common/OfflineBanner';
+import OfflineStatus from '@components/common/OfflineStatus';
 
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
@@ -201,6 +204,13 @@ const App: React.FC = () => {
   const [hasShownSetupCompleteMessage, setHasShownSetupCompleteMessage] = useState<boolean>(() => {
     return localStorage.getItem('hasShownSetupCompleteMessage') === 'true';
   });
+
+  // Enhanced offline state management
+  const [lastSyncTime, setLastSyncTime] = useState<string>(() => {
+    return localStorage.getItem('lastSyncTime') || '';
+  });
+  const [showOfflineBanner, setShowOfflineBanner] = useState<boolean>(false);
+  const [isRetryingConnection, setIsRetryingConnection] = useState<boolean>(false);
 
   // Use auth hook
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
@@ -440,6 +450,12 @@ const App: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 50)); 
       }
       displayGlobalSuccessMessage(`${successCount} item(s) synced successfully from offline queue!`);
+      
+      // Update last sync time
+      const syncTime = new Date().toISOString();
+      setLastSyncTime(syncTime);
+      localStorage.setItem('lastSyncTime', syncTime);
+      
       trackEvent('offline_sync_success', { syncedCount: successCount });
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
@@ -455,7 +471,35 @@ const App: React.FC = () => {
     if (isOnline && offlineFoodQueue.length > 0) {
       syncOfflineFoodLog();
     }
-  }, [isOnline, offlineFoodQueue.length, syncOfflineFoodLog]); 
+  }, [isOnline, offlineFoodQueue.length, syncOfflineFoodLog]);
+
+  // Enhanced offline management
+  const retryConnection = useCallback(async () => {
+    setIsRetryingConnection(true);
+    try {
+      // Try to make a test request to check connectivity
+      const response = await fetch('/api/health', { 
+        method: 'HEAD',
+        cache: 'no-cache'
+      });
+      if (response.ok) {
+        setIsOnline(true);
+        trackEvent('connection_retry_success');
+      }
+    } catch (error) {
+      // Connection still failed
+      trackEvent('connection_retry_failed');
+    } finally {
+      setIsRetryingConnection(false);
+    }
+  }, []);
+
+  // Show offline banner when going offline
+  useEffect(() => {
+    if (!isOnline) {
+      setShowOfflineBanner(true);
+    }
+  }, [isOnline]); 
 
   const handleProfileChange = useCallback((newProfileData: UserProfile) => { 
     setUserProfile(prev => {
@@ -1117,6 +1161,18 @@ const App: React.FC = () => {
                   }}
                 />
               }
+              isOnline={isOnline}
+              pendingItems={{
+                foodLog: offlineFoodLogQueue.length,
+                weight: 0, // TODO: Add weight queue if needed
+                goals: 0, // TODO: Add goals queue if needed
+                other: 0
+              }}
+              lastSyncTime={lastSyncTime}
+              onSync={syncOfflineFoodLog}
+              onRetryConnection={retryConnection}
+              isSyncing={isRetryingConnection}
+              syncProgress={0} // TODO: Add real sync progress tracking
             />
             <AdPlaceholder sizeLabel="Settings Tab Ad (e.g., 300x100)" className="mt-6" />
           </>
@@ -1138,6 +1194,9 @@ const App: React.FC = () => {
                 apiKeyMissing={apiKeyStatus === 'missing'}
                 canScanBarcode={premiumLimits.limits.canScanBarcode()}
                 isPremiumUser={isPremiumUser}
+                lastSyncTime={lastSyncTime}
+                showOfflineBanner={showOfflineBanner}
+                onRetryConnection={retryConnection}
             />
             <AdPlaceholder />
           </>
@@ -1410,7 +1469,13 @@ const App: React.FC = () => {
                   {calculatedMetrics.targetCalories && ` • ${calculatedMetrics.targetCalories} cal/day`}
                 </p>
               </div>
-              {!isOnline && <span className="ml-3 text-xs font-normal bg-orange-500 text-white px-2 py-0.5 rounded-full animate-pulse">Offline Mode</span>}
+              <OfflineIndicator
+                isOnline={isOnline}
+                variant="badge"
+                size="sm"
+                pendingCount={offlineFoodQueue.length}
+                className="ml-3"
+              />
             </div>
           </div>
           {showDashboardToggle && (
@@ -1445,6 +1510,22 @@ const App: React.FC = () => {
           ))}
         </div>
       </nav>
+
+      {/* Enhanced Offline Banner */}
+      {showOfflineBanner && (
+        <OfflineBanner
+          isOnline={isOnline}
+          pendingCount={offlineFoodQueue.length}
+          lastSyncTime={lastSyncTime}
+          onSync={syncOfflineFoodLog}
+          onDismiss={() => setShowOfflineBanner(false)}
+          onRetryConnection={retryConnection}
+          position="top"
+          showFeatureList={true}
+          autoHide={isOnline}
+          autoHideDelay={8000}
+        />
+      )}
 
       <main className="container mx-auto max-w-5xl p-4 md:p-6 flex-grow w-full">
         {mobile?.isMobile ? (

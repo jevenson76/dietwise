@@ -1,11 +1,15 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Chart, ChartConfiguration, ChartTypeRegistry } from 'chart.js';
 import { UserProfile, WeightEntry, AppTheme } from '../types';
 import { LBS_PER_WEEK_TARGET_CHANGE } from '../constants';
 import { format, addWeeks, differenceInWeeks, addDays, differenceInCalendarDays } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { startOfDay } from 'date-fns/startOfDay';
+import EmptyState from './common/EmptyState';
+import TrendChart from './common/TrendChart';
+import MetricsCard from './common/MetricsCard';
+import InteractiveChart from './common/InteractiveChart';
 
 interface WeightChartComponentProps {
   userProfile: UserProfile | null;
@@ -16,6 +20,89 @@ interface WeightChartComponentProps {
 const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile, actualWeightLog, currentTheme }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<Chart | null>(null);
+
+  // Prepare data for new chart components
+  const chartData = useMemo(() => {
+    if (!actualWeightLog.length || !userProfile) return [];
+    
+    return actualWeightLog.map(entry => ({
+      date: format(new Date(entry.date), 'yyyy-MM-dd'),
+      value: entry.weight,
+      target: userProfile.targetWeight || undefined,
+      label: format(new Date(entry.date), 'MMM dd')
+    }));
+  }, [actualWeightLog, userProfile]);
+
+  const weightMetrics = useMemo(() => {
+    if (!actualWeightLog.length || !userProfile) return [];
+
+    const currentWeight = actualWeightLog[actualWeightLog.length - 1]?.weight || 0;
+    const startWeight = userProfile.startWeight || userProfile.weight || currentWeight;
+    const targetWeight = userProfile.targetWeight || currentWeight;
+    const previousWeight = actualWeightLog.length > 1 ? actualWeightLog[actualWeightLog.length - 2]?.weight : startWeight;
+
+    const totalLoss = startWeight - currentWeight;
+    const remainingLoss = currentWeight - targetWeight;
+    const progressPercentage = Math.abs(startWeight - targetWeight) > 0 
+      ? Math.min(Math.abs(totalLoss) / Math.abs(startWeight - targetWeight) * 100, 100)
+      : 0;
+
+    return [
+      {
+        label: 'Current Weight',
+        value: currentWeight,
+        previousValue: previousWeight,
+        format: 'decimal' as const,
+        unit: 'lbs',
+        color: 'bg-teal-500'
+      },
+      {
+        label: 'Weight Lost',
+        value: Math.max(0, totalLoss),
+        format: 'decimal' as const,
+        unit: 'lbs',
+        color: 'bg-green-500'
+      },
+      {
+        label: 'Progress',
+        value: progressPercentage,
+        target: 100,
+        format: 'percentage' as const,
+        color: 'bg-blue-500'
+      },
+      {
+        label: 'To Goal',
+        value: Math.abs(remainingLoss),
+        format: 'decimal' as const,
+        unit: 'lbs',
+        color: 'bg-orange-500'
+      }
+    ];
+  }, [actualWeightLog, userProfile]);
+
+  // Early return for empty state
+  if (!userProfile || userProfile.targetWeight === null) {
+    return (
+      <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl min-h-[350px] sm:min-h-[450px]">
+        <h3 className="text-xl font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+          <i className="fas fa-chart-line mr-2.5 text-teal-600 dark:text-teal-400"></i>Weight Progress
+        </h3>
+        <EmptyState
+          icon="fas fa-weight"
+          iconColor="text-teal-500 dark:text-teal-400"
+          title="Set Your Target Weight"
+          description="Define your weight goal to see your progress visualized on this chart."
+          actionLabel="Go to Settings"
+          onAction={() => window.dispatchEvent(new CustomEvent('navigate-to-settings'))}
+          tips={[
+            "Track your weight regularly for best results",
+            "See your projected path to your goal",
+            "Monitor your progress over time"
+          ]}
+        />
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -33,14 +120,10 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
     const titleColor = isDark ? 'rgb(241, 245, 249)' : 'rgb(51, 65, 85)';
     const legendColor = titleColor;
 
-    if (!userProfile || userProfile.targetWeight === null) {
-        ctx.clearRect(0, 0, chartRef.current.width, chartRef.current.height);
-        ctx.font = "16px Inter, sans-serif"; 
-        ctx.fillStyle = textColor; 
-        ctx.textAlign = "center";
-        ctx.fillText("Set a target weight in Profile to see your progress chart.", chartRef.current.width / 2, chartRef.current.height / 2);
-        return;
-    }
+    // This check is no longer needed as we handle it above
+    // if (!userProfile || userProfile.targetWeight === null) {
+    //     return;
+    // }
 
     const sortedActualWeights = [...actualWeightLog].sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
 
@@ -305,6 +388,49 @@ const WeightChartComponent: React.FC<WeightChartComponentProps> = ({ userProfile
       }
     };
   }, [userProfile, actualWeightLog, currentTheme]);
+
+  // Show enhanced visualizations if we have data
+  if (actualWeightLog.length > 0 && chartData.length > 0) {
+    return (
+      <div className="space-y-6">
+        {/* Metrics Overview */}
+        <MetricsCard
+          title="Weight Progress Overview"
+          metrics={weightMetrics}
+          icon="fas fa-weight"
+          variant="default"
+          showTrends={true}
+          showProgress={true}
+          animated={true}
+        />
+
+        {/* Trend Chart */}
+        <TrendChart
+          data={chartData}
+          title="Weight Trend"
+          subtitle="Track your progress over time"
+          showTarget={true}
+          showDots={true}
+          showArea={true}
+          color="#14b8a6"
+          targetColor="#ef4444"
+          timeframe="month"
+          unit=" lbs"
+          height={300}
+        />
+
+        {/* Fallback to original chart */}
+        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl min-h-[350px] sm:min-h-[450px]">
+          <h3 className="text-xl font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
+            <i className="fas fa-chart-line mr-2.5 text-teal-600 dark:text-teal-400"></i>Detailed Weight Chart
+          </h3>
+          <div className="relative h-[280px] sm:h-[380px]"> 
+            <canvas ref={chartRef} aria-label="Weight progress chart" role="img"></canvas>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl min-h-[350px] sm:min-h-[450px]">

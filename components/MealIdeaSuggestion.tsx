@@ -3,6 +3,7 @@ import { getMealIdeas, API_KEY_ERROR_MESSAGE } from '@services/geminiService';
 import { trackEvent } from '@services/analyticsService'; 
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import Alert from '@components/common/Alert';
+import LoadingState from '@components/common/LoadingState';
 
 interface MealIdeaSuggestionProps {
   calorieTarget: number | null;
@@ -241,6 +242,23 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
         )}
       </button>
       {error && error !== 'meal_limit_reached' && <Alert type="error" message={error} onClose={() => setError(null)} className="mt-4" />}
+
+      {isLoading && (
+        <div className="mt-6">
+          <LoadingState
+            message="Crafting Personalized Meal Ideas"
+            submessage={`Finding options around ${calorieTarget} calories${selectedProtein ? ` with ${selectedProtein}` : ''}${selectedDietType ? ` (${selectedDietType})` : ''}`}
+            estimatedTime={8}
+            tips={[
+              "Analyzing nutritional balance...",
+              "Considering your preferences...",
+              "Finding creative combinations...",
+              "Calculating accurate portions..."
+            ]}
+            size="sm"
+          />
+        </div>
+      )}
 
       {error === 'meal_limit_reached' && (
         <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">

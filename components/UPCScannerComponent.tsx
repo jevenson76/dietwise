@@ -3,6 +3,9 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Modal from '@components/common/Modal';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import Alert from '@components/common/Alert';
+import LoadingState from '@components/common/LoadingState';
+import ErrorMessage, { ErrorTemplates } from '@components/common/ErrorMessage';
+import { createContextualError } from '../utils/errorMessages';
 import { useCameraBarcodeScanner } from '@hooks/useCameraBarcodeScanner';
 import { getFoodInfoFromUPC, API_KEY_ERROR_MESSAGE } from '@services/geminiService'; 
 import { trackEvent } from '@services/analyticsService';
@@ -195,14 +198,34 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
             )}
           </div>
 
-          { currentError && currentError !== 'scan_limit_reached' &&
-            <Alert 
-              type="error" 
-              message={currentError} 
-              onClose={() => { setApiError(null); setScannerError(null); }}
-              className="w-full max-w-md"
-            />
-          }
+          {currentError && currentError !== 'scan_limit_reached' && (
+            <div className="w-full max-w-md">
+              <ErrorMessage
+                {...createContextualError('barcode-scan', currentError, { item: 'barcode' })}
+                actions={[
+                  {
+                    label: 'Try Again',
+                    action: () => {
+                      setApiError(null);
+                      setScannerError(null);
+                      if (videoRef.current) startScan().catch(err => setScannerError(`Retry failed: ${err.message}`));
+                    },
+                    icon: 'fas fa-redo',
+                  },
+                  {
+                    label: 'Enter Manually',
+                    action: () => {
+                      onClose();
+                      // Navigate to manual food entry
+                    },
+                    variant: 'secondary',
+                  },
+                ]}
+                onClose={() => { setApiError(null); setScannerError(null); }}
+                compact
+              />
+            </div>
+          )}
 
           {scannerError === 'scan_limit_reached' && (
             <div className="w-full max-w-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
@@ -241,7 +264,21 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
             </button>
           )}
 
-          {isLoadingApi && <div className="my-4 text-center w-full max-w-md"><LoadingSpinner color="text-teal-600 dark:text-teal-400" label={`Fetching info for UPC: ${scannedUpc}`}/> <p className="text-text-alt mt-2 text-sm">Fetching food info for UPC: {scannedUpc}...</p></div>}
+          {isLoadingApi && (
+            <div className="my-4 w-full max-w-md">
+              <LoadingState
+                message="Looking up product information"
+                submessage={`UPC: ${scannedUpc}`}
+                estimatedTime={5}
+                tips={[
+                  "Searching nutritional databases...",
+                  "Verifying product details...",
+                  "Calculating serving sizes..."
+                ]}
+                size="sm"
+              />
+            </div>
+          )}
 
           {foodInfo && !isLoadingApi && (
             <div className="mt-4 p-5 bg-slate-50 dark:bg-slate-700 rounded-lg w-full max-w-md shadow-md border border-border-default">
