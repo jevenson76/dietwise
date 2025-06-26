@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DietWise - Your Personal Dieting Companion</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Track your nutrition, monitor progress, and achieve your health goals with AI-powered meal suggestions.">
+  <meta name="theme-color" content="#0d9488">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="DietWise">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/dietwise/manifest.json">
+  
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/dietwise/icons/icon-72x72.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/dietwise/icons/icon-72x72.png">
+  <link rel="apple-touch-icon" href="/dietwise/icons/icon-192x192.png">
+  
+  <!-- FontAwesome disabled for GitHub Pages CSP compatibility -->
+  
+  <style>
+    @keyframes slide-up {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .animate-slide-up {
+      animation: slide-up 0.3s ease-out;
+    }
+  </style>
+  <!-- Google AdSense disabled for GitHub Pages demo -->
+  <script type="module" crossorigin src="/dietwise/assets/index-au6RCvUZ-1750953544695.js"></script>
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/react-vendor-DV_4xMyD-1750953544695.js">
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/stripe-vendor-k2uC0MiZ-1750953544695.js">
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/pdf-vendor-DBQ5i34H-1750953544695.js">
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/date-vendor-B5WjnTJ1-1750953544695.js">
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/ai-vendor-D-53sdHu-1750953544695.js">
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/scanner-vendor-UkOZGUfT-1750953544695.js">
+  <link rel="modulepreload" crossorigin href="/dietwise/assets/chart-vendor-CTH9GX88-1750953544695.js">
+  <link rel="stylesheet" crossorigin href="/dietwise/assets/index-zTu-EZrD-1750953549676.css">
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script>
+    // Simple service worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/dietwise/sw.js')
+          .then((registration) => {
+            console.log('SW registered: ', registration);
+          })
+          .catch((registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+name: Setup Capacitor for Mobile
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to setup'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+        - android
+        - ios
+        - both
+
+permissions:
+  contents: write
+
+jobs:
+  setup-capacitor:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Capacitor dependencies
+      run: |
+        npm install @capacitor/core @capacitor/cli @capacitor/camera
+        if [[ "${{ github.event.inputs.platform }}" == "android" || "${{ github.event.inputs.platform }}" == "both" ]]; then
+          npm install @capacitor/android
+        fi
+        if [[ "${{ github.event.inputs.platform }}" == "ios" || "${{ github.event.inputs.platform }}" == "both" ]]; then
+          npm install @capacitor/ios
+        fi
+        
+    - name: Initialize Capacitor
+      run: |
+        if [ ! -f "capacitor.config.ts" ]; then
+          npx cap init DietWise com.wizardtech.dietwise --web-dir=dist
+        fi
+        
+    - name: Create Capacitor config
+      run: |
+        cat > capacitor.config.ts << 'EOF'
+        import { CapacitorConfig } from '@capacitor/cli';
+
+        const config: CapacitorConfig = {
+          appId: 'com.wizardtech.dietwise',
+          appName: 'DietWise',
+          webDir: 'dist',
+          server: {
+            androidScheme: 'https'
+          },
+          plugins: {
+            Camera: {
+              permissions: ["camera"]
+            }
+          }
+        };
+
+        export default config;
+        EOF
+        
+    - name: Build web assets
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'dummy_key_for_setup' }}
+        
+    - name: Add Android platform
+      if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both'
+      run: |
+        npx cap add android
+        npx cap copy android
+        
+    - name: Configure Android permissions
+      if: github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both'
+      run: |
+        # Add camera permission to AndroidManifest.xml
+        sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
+        
+    - name: Add iOS platform
+      if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+      run: |
+        npx cap add ios
+        npx cap copy ios
+        
+    - name: Configure iOS permissions
+      if: github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'
+      run: |
+        # Add camera usage description to Info.plist
+        cat >> ios/App/App/Info.plist << 'EOF'
+        	<key>NSCameraUsageDescription</key>
+        	<string>DietWise uses the camera to scan food barcodes and nutrition labels for accurate dietary tracking.</string>
+        EOF
+        
+    - name: Create platform-specific gitignore entries
+      run: |
+        cat >> .gitignore << 'EOF'
+        
+        # Capacitor
+        .capacitor/
+        android/app/build/
+        android/.gradle/
+        android/local.properties
+        ios/App/build/
+        ios/App/Pods/
+        ios/App/App.xcworkspace/xcuserdata/
+        EOF
+        
+    - name: Commit Capacitor setup
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "feat: Setup Capacitor for mobile deployment
+
+        - Initialize Capacitor configuration
+        - Add ${{ github.event.inputs.platform }} platform(s)
+        - Configure camera permissions
+        - Update gitignore for mobile builds
+        
+        🤖 Generated with [Claude Code](https://claude.ai/code)
+        
+        Co-Authored-By: Claude <noreply@anthropic.com>" || echo "No changes to commit"
+        
+    - name: Push changes
+      run: |
+        git push origin ${{ github.ref_name }} || echo "No changes to push"
+        
+    - name: Create setup summary
+      run: |
+        echo "## Capacitor Setup Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Platform(s) configured: **${{ github.event.inputs.platform }}**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Set up signing certificates and provisioning profiles" >> $GITHUB_STEP_SUMMARY
+        echo "2. Configure store secrets in repository settings" >> $GITHUB_STEP_SUMMARY
+        echo "3. Run CI/CD pipeline to build mobile apps" >> $GITHUB_STEP_SUMMARY
+        echo "4. Test on physical devices" >> $GITHUB_STEP_SUMMARY

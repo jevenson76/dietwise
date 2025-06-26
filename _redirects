@@ -1,0 +1,6 @@
+# Cache clearing redirect for troubleshooting
+/clear-cache /refresh.html 200
+/refresh /refresh.html 200
+
+# SPA fallback
+/* /index.html 200

@@ -1,0 +1,196 @@
+name: BrowserStack Cross-Device Testing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      devices:
+        description: 'Specific devices to test (comma-separated, or "all")'
+        required: false
+        default: 'all'
+
+jobs:
+  browserstack-tests:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'browserstack'))
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Playwright BrowserStack
+      run: npm install -D @playwright/test browserstack-local
+      
+    - name: Build application
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        REACT_APP_ADSENSE_CLIENT_ID: ${{ secrets.ADSENSE_CLIENT_ID }}
+        
+    - name: Setup BrowserStack Local
+      uses: browserstack/github-actions/setup-local@master
+      with:
+        local-testing: start
+        local-logging-level: all-logs
+        local-identifier: github-${{ github.run_number }}
+        
+    - name: Run BrowserStack tests
+      env:
+        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        BROWSERSTACK_LOCAL_IDENTIFIER: github-${{ github.run_number }}
+        BROWSERSTACK_BUILD_NAME: DietWise-${{ github.run_number }}
+      run: |
+        if [ "${{ github.event.inputs.devices }}" != "all" ] && [ -n "${{ github.event.inputs.devices }}" ]; then
+          # Run specific device tests
+          IFS=',' read -ra DEVICES <<< "${{ github.event.inputs.devices }}"
+          for device in "${DEVICES[@]}"; do
+            echo "Testing on $device..."
+            npx playwright test --config=browserstack.config.ts --grep "@$device"
+          done
+        else
+          # Run all BrowserStack tests
+          npx playwright test --config=browserstack.config.ts
+        fi
+        
+    - name: Stop BrowserStack Local
+      if: always()
+      uses: browserstack/github-actions/setup-local@master
+      with:
+        local-testing: stop
+        
+    - name: Upload BrowserStack results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: browserstack-results
+        path: |
+          test-results/
+          playwright-report/
+        retention-days: 30
+        
+    - name: Create test summary
+      if: always()
+      run: |
+        echo "## 📱 BrowserStack Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f "test-results/browserstack-results.json" ]; then
+          echo "### Device Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "| Device | Status | Duration |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|----------|" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse JSON results and create summary
+          node -e "
+          const results = require('./test-results/browserstack-results.json');
+          const devices = {};
+          
+          results.suites.forEach(suite => {
+            const device = suite.title.split(' - ')[0];
+            if (!devices[device]) {
+              devices[device] = { passed: 0, failed: 0, duration: 0 };
+            }
+            suite.specs.forEach(spec => {
+              if (spec.ok) devices[device].passed++;
+              else devices[device].failed++;
+              devices[device].duration += spec.duration || 0;
+            });
+          });
+          
+          Object.entries(devices).forEach(([device, stats]) => {
+            const status = stats.failed === 0 ? '✅ Passed' : '❌ Failed';
+            const duration = (stats.duration / 1000).toFixed(2) + 's';
+            console.log(\`| \${device} | \${status} | \${duration} |\`);
+          });
+          "
+        else
+          echo "No test results found" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          let comment = '## 📱 BrowserStack Test Results\n\n';
+          
+          try {
+            const results = JSON.parse(fs.readFileSync('test-results/browserstack-results.json', 'utf8'));
+            const devices = {};
+            
+            results.suites.forEach(suite => {
+              const device = suite.title.split(' - ')[0];
+              if (!devices[device]) {
+                devices[device] = { passed: 0, failed: 0 };
+              }
+              suite.specs.forEach(spec => {
+                if (spec.ok) devices[device].passed++;
+                else devices[device].failed++;
+              });
+            });
+            
+            comment += '| Device | Tests Passed | Tests Failed | Status |\n';
+            comment += '|--------|--------------|--------------|--------|\n';
+            
+            Object.entries(devices).forEach(([device, stats]) => {
+              const status = stats.failed === 0 ? '✅' : '❌';
+              comment += `| ${device} | ${stats.passed} | ${stats.failed} | ${status} |\n`;
+            });
+            
+            comment += '\n[View full BrowserStack results](https://app.browserstack.com/dashboard)';
+          } catch (error) {
+            comment += '❌ Failed to parse test results\n';
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  browserstack-visual-tests:
+    runs-on: ubuntu-latest
+    needs: browserstack-tests
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -D @percy/cli @percy/playwright
+        
+    - name: Build application
+      run: npm run build
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        
+    - name: Run Percy visual tests on BrowserStack
+      env:
+        PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+      run: |
+        npx percy exec -- playwright test --config=browserstack.config.ts --grep "@visual"

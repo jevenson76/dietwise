@@ -1,0 +1,578 @@
+name: DietWise Comprehensive Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.9'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Run unit tests
+      run: |
+        cd validation
+        npm run test:unit
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./validation/coverage/
+        fail_ci_if_error: false
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Run integration tests
+      run: |
+        cd validation
+        npm run test:integration
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Install Playwright browsers
+      run: |
+        cd validation
+        npx playwright install --with-deps
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Start application
+      run: |
+        npm run preview &
+        sleep 10
+    
+    - name: Run E2E tests
+      run: |
+        cd validation
+        npm run test:e2e
+    
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: e2e-test-results
+        path: validation/test-results/
+
+  nutrition-api-validation:
+    name: Nutrition API Validation
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dietwise_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+        cd ../backend && npm install
+    
+    - name: Setup test database
+      run: |
+        cd backend
+        npm run migrate:test
+    
+    - name: Start backend server
+      run: |
+        cd backend
+        npm run dev &
+        sleep 15
+      env:
+        NODE_ENV: test
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dietwise_test
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    
+    - name: Run API validation
+      run: |
+        cd validation
+        npm run validate:backend
+      env:
+        API_URL: http://localhost:3001
+        API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Run npm audit
+      run: npm audit --audit-level moderate
+    
+    - name: Run backend security audit
+      run: cd backend && npm audit --audit-level moderate
+    
+    - name: Run frontend security audit
+      run: npm audit --audit-level moderate
+    
+    - name: Run validation security audit
+      run: cd validation && npm audit --audit-level moderate
+    
+    - name: Run custom security tests
+      run: |
+        cd validation
+        npm run validate:security
+      env:
+        API_URL: http://localhost:3001
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Start application
+      run: |
+        npm run preview &
+        sleep 10
+    
+    - name: Run performance tests
+      run: |
+        cd validation
+        npm run validate:performance
+      env:
+        TEST_URL: http://localhost:4173
+    
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports
+        path: validation/performance-reports/
+
+  lighthouse-audit:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Start application
+      run: |
+        npm run preview &
+        sleep 10
+    
+    - name: Install Lighthouse
+      run: npm install -g @lhci/cli@0.12.x
+    
+    - name: Run Lighthouse audit
+      run: |
+        cd validation
+        npm run test:lighthouse
+      env:
+        PWA_URL: http://localhost:4173
+    
+    - name: Upload Lighthouse reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: lighthouse-reports
+        path: validation/lighthouse-reports/
+
+  monetization-validation:
+    name: Monetization Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Run monetization tests
+      run: |
+        cd validation
+        npm run validate:monetization
+      env:
+        STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+        STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
+        STRIPE_MONTHLY_PRICE_ID: ${{ secrets.STRIPE_MONTHLY_PRICE_ID }}
+        STRIPE_YEARLY_PRICE_ID: ${{ secrets.STRIPE_YEARLY_PRICE_ID }}
+
+  mobile-testing:
+    name: Mobile Device Testing
+    runs-on: ubuntu-latest
+    if: ${{ secrets.BROWSERSTACK_USERNAME != '' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Run BrowserStack tests
+      run: |
+        cd validation
+        npm run test:browserstack
+      env:
+        BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+        BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        BROWSERSTACK_APP_URL: http://localhost:4173
+
+  accessibility-tests:
+    name: Accessibility Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+    
+    - name: Install Playwright browsers
+      run: |
+        cd validation
+        npx playwright install --with-deps
+    
+    - name: Build application
+      run: npm run build
+    
+    - name: Start application
+      run: |
+        npm run preview &
+        sleep 10
+    
+    - name: Run accessibility tests
+      run: |
+        cd validation
+        npm run test:a11y
+    
+    - name: Upload accessibility reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: accessibility-reports
+        path: validation/a11y-reports/
+
+  nutrition-data-validation:
+    name: Nutrition Data Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd validation && npm install
+        pip install pandas numpy requests
+    
+    - name: Validate nutrition database
+      run: |
+        cd validation
+        python scripts/validate-nutrition-data.py
+    
+    - name: Test nutrition calculations
+      run: |
+        cd validation
+        npm run test -- --testPathPattern="nutrition.*calculation"
+
+  # Aggregate all results
+  validation-summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs: [
+      unit-tests, 
+      integration-tests, 
+      e2e-tests, 
+      nutrition-api-validation, 
+      security-audit, 
+      performance-tests, 
+      lighthouse-audit, 
+      monetization-validation, 
+      accessibility-tests,
+      nutrition-data-validation
+    ]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Generate validation report
+      run: |
+        echo "# 🥗 DietWise Validation Summary" > validation-summary.md
+        echo "" >> validation-summary.md
+        echo "## Test Results" >> validation-summary.md
+        echo "- **Unit Tests**: ${{ needs.unit-tests.result }}" >> validation-summary.md
+        echo "- **Integration Tests**: ${{ needs.integration-tests.result }}" >> validation-summary.md
+        echo "- **E2E Tests**: ${{ needs.e2e-tests.result }}" >> validation-summary.md
+        echo "- **API Validation**: ${{ needs.nutrition-api-validation.result }}" >> validation-summary.md
+        echo "- **Security Audit**: ${{ needs.security-audit.result }}" >> validation-summary.md
+        echo "- **Performance Tests**: ${{ needs.performance-tests.result }}" >> validation-summary.md
+        echo "- **Lighthouse Audit**: ${{ needs.lighthouse-audit.result }}" >> validation-summary.md
+        echo "- **Monetization Tests**: ${{ needs.monetization-validation.result }}" >> validation-summary.md
+        echo "- **Accessibility Tests**: ${{ needs.accessibility-tests.result }}" >> validation-summary.md
+        echo "- **Nutrition Data Validation**: ${{ needs.nutrition-data-validation.result }}" >> validation-summary.md
+        echo "" >> validation-summary.md
+        echo "**Build Status**: ${{ job.status }}" >> validation-summary.md
+        echo "**Timestamp**: $(date)" >> validation-summary.md
+        echo "**Commit**: ${{ github.sha }}" >> validation-summary.md
+        echo "**Branch**: ${{ github.ref_name }}" >> validation-summary.md
+        
+        # Calculate overall success rate
+        TOTAL_JOBS=10
+        SUCCESS_COUNT=0
+        
+        if [[ "${{ needs.unit-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.integration-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.nutrition-api-validation.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.security-audit.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.performance-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.lighthouse-audit.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.monetization-validation.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.accessibility-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.nutrition-data-validation.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        
+        SUCCESS_RATE=$(( SUCCESS_COUNT * 100 / TOTAL_JOBS ))
+        
+        echo "" >> validation-summary.md
+        echo "**Overall Success Rate**: ${SUCCESS_RATE}%" >> validation-summary.md
+        
+        if [[ $SUCCESS_RATE -ge 90 ]]; then
+          echo "🟢 **Status**: Production Ready" >> validation-summary.md
+        elif [[ $SUCCESS_RATE -ge 80 ]]; then
+          echo "🟡 **Status**: Minor Issues - Review Required" >> validation-summary.md
+        else
+          echo "🔴 **Status**: Major Issues - Not Production Ready" >> validation-summary.md
+        fi
+    
+    - name: Upload validation summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-summary
+        path: validation-summary.md
+    
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('validation-summary.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+    
+    - name: Create validation badge
+      run: |
+        TOTAL_JOBS=10
+        SUCCESS_COUNT=0
+        
+        if [[ "${{ needs.unit-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.integration-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.e2e-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.nutrition-api-validation.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.security-audit.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.performance-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.lighthouse-audit.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.monetization-validation.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.accessibility-tests.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        if [[ "${{ needs.nutrition-data-validation.result }}" == "success" ]]; then ((SUCCESS_COUNT++)); fi
+        
+        SUCCESS_RATE=$(( SUCCESS_COUNT * 100 / TOTAL_JOBS ))
+        
+        if [[ $SUCCESS_RATE -ge 90 ]]; then
+          COLOR="brightgreen"
+        elif [[ $SUCCESS_RATE -ge 80 ]]; then
+          COLOR="yellow"
+        else
+          COLOR="red"
+        fi
+        
+        curl -s "https://img.shields.io/badge/DietWise%20Validation-${SUCCESS_RATE}%25-${COLOR}" > validation-badge.svg
+    
+    - name: Upload validation badge
+      uses: actions/upload-artifact@v3
+      with:
+        name: validation-badge
+        path: validation-badge.svg
+
+  notify-team:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: [validation-summary]
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Notify on validation failure
+      if: needs.validation-summary.result == 'failure'
+      run: |
+        echo "🚨 DietWise validation failed on main branch!"
+        echo "Check the workflow results and fix issues immediately."
+        # Add Slack/Discord notification here if needed

@@ -1,0 +1,71 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Capacitor
+.capacitor/
+android/app/build/
+android/.gradle/
+android/local.properties
+ios/App/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+
+# Android Release Signing
+*.keystore
+*.jks
+/android/keystore.properties
+/android/app/keystore/
+
+# Environment Variables and Secrets
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Test files with credentials
+backend/test-*.js
+backend/test-credentials/
+
+# Backup files
+*.backup
+*.bak
+*~
+.*.swp
+
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+# Stripe
+stripe.env
+
+# Service account keys
+*-service-account.json
+serviceAccountKey.json
+
+# Local Netlify folder
+.netlify
