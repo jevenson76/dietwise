@@ -4,9 +4,12 @@ import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
     const env = loadEnv(mode, '.', '');
+    const isGitHubPages = process.env.GITHUB_ACTIONS === 'true' || command === 'build' && process.argv.includes('--base=/dietwise/');
+    
     return {
+      base: isGitHubPages ? '/dietwise/' : '/',
       plugins: [
         react(),
         visualizer({

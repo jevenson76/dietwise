@@ -51,6 +51,8 @@ import { useMobileOptimizations } from './hooks/useMobileOptimizations';
 import OfflineIndicator from '@components/common/OfflineIndicator';
 import OfflineBanner from '@components/common/OfflineBanner';
 import OfflineStatus from '@components/common/OfflineStatus';
+import DemoBanner from './components/DemoBanner';
+import { isDemoMode, getDemoData } from './config/demo';
 
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
@@ -87,6 +89,11 @@ const OFFLINE_FOOD_LOG_QUEUE_KEY = 'offlineFoodLogQueue';
 
 const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
+    // Use demo data if in demo mode
+    if (isDemoMode()) {
+      return { ...defaultUserProfile, ...getDemoData().userProfile };
+    }
+    
     const savedProfile = localStorage.getItem('userProfile');
     try {
         if (savedProfile) {
@@ -109,6 +116,11 @@ const App: React.FC = () => {
   });
 
   const [foodLog, setFoodLog] = useState<FoodItem[]>(() => {
+    // Use demo data if in demo mode
+    if (isDemoMode()) {
+      return getDemoData().foodLog;
+    }
+    
     const savedLog = localStorage.getItem('foodLog');
     if (savedLog) {
       try {
@@ -1496,6 +1508,7 @@ const App: React.FC = () => {
       onTouchMove={mobile.swipeHandlers.onTouchMove}
       onTouchEnd={mobile.swipeHandlers.onTouchEnd}
     >
+      <DemoBanner />
       <header className="bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 dark:from-teal-700 dark:via-cyan-700 dark:to-sky-700 text-white shadow-lg sticky top-0 z-50">
         <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
           <div className="flex-1">
