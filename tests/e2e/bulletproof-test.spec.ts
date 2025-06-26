@@ -14,6 +14,17 @@ test.describe('🛡️ BULLETPROOF DietWise Tests', () => {
     await expect(page).toHaveTitle(/DietWise/);
     console.log('✅ App loaded successfully');
     
+    // Handle onboarding if present
+    try {
+      const skipButton = page.locator('button:has-text("Skip")');
+      if (await skipButton.isVisible({ timeout: 3000 })) {
+        await skipButton.click();
+        console.log('✅ Skipped onboarding');
+      }
+    } catch (e) {
+      console.log('No onboarding screen found, continuing...');
+    }
+    
     // Fill profile with error handling
     try {
       await page.fill('input[name="name"]', 'Test User', { timeout: 5000 });
@@ -40,6 +51,16 @@ test.describe('🛡️ BULLETPROOF DietWise Tests', () => {
   test('2️⃣ Handle errors gracefully', async ({ page }) => {
     console.log('Testing error handling...');
     await page.goto('/');
+    
+    // Handle onboarding if present
+    try {
+      const skipButton = page.locator('button:has-text("Skip")');
+      if (await skipButton.isVisible({ timeout: 3000 })) {
+        await skipButton.click();
+      }
+    } catch (e) {
+      // Continue without onboarding
+    }
     
     // Test empty form submission
     const submitButtons = await page.locator('button[type="submit"]').all();
@@ -72,6 +93,16 @@ test.describe('🛡️ BULLETPROOF DietWise Tests', () => {
   test('3️⃣ Security - XSS and injection prevention', async ({ page }) => {
     console.log('Testing security vulnerabilities...');
     await page.goto('/');
+    
+    // Handle onboarding if present
+    try {
+      const skipButton = page.locator('button:has-text("Skip")');
+      if (await skipButton.isVisible({ timeout: 3000 })) {
+        await skipButton.click();
+      }
+    } catch (e) {
+      // Continue without onboarding
+    }
     
     // Test XSS in name field
     const xssPayload = '<script>alert("XSS")</script>';

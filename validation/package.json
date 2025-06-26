@@ -1,0 +1,63 @@
+{
+  "name": "@dietwise/validation",
+  "version": "1.0.0",
+  "description": "Comprehensive validation suite for DietWise nutrition tracking app",
+  "private": true,
+  "scripts": {
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:unit": "jest tests/unit --coverage",
+    "test:integration": "jest tests/integration",
+    "test:e2e": "detox test",
+    "test:lighthouse": "node lighthouse-audit.ts",
+    "test:browserstack": "node browserstack.config.ts",
+    "validate:backend": "node backend-validation/nutrition-api-validation.ts",
+    "validate:monetization": "jest monetization/*.test.ts",
+    "validate:deployment": "node deployment/mobile-app-validation.ts",
+    "validate:analytics": "node analytics/nutrition-analytics-setup.ts",
+    "validate:security": "npm audit && node security/nutrition-security-audit.ts",
+    "validate:performance": "npm run test:lighthouse && node performance/nutrition-performance-tests.ts",
+    "setup": "npm install && npm run setup:detox",
+    "setup:detox": "detox clean-framework-cache && detox build-framework-cache",
+    "ci": "npm run validate:security && npm run test:all && npm run validate:backend"
+  },
+  "dependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "detox": "^20.13.0",
+    "lighthouse": "^12.0.0",
+    "stripe": "^16.12.0",
+    "puppeteer": "^23.8.0",
+    "axios": "^1.7.7",
+    "chart.js": "^4.4.9",
+    "date-fns": "^4.1.0",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.14.0",
+    "jest": "^30.0.2",
+    "jest-environment-jsdom": "^30.0.2",
+    "ts-jest": "^29.2.5",
+    "typescript": "~5.7.2",
+    "browserstack-local": "^1.5.7"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/config/jest.setup.js"],
+    "collectCoverageFrom": [
+      "tests/**/*.{ts,tsx}",
+      "!tests/**/*.d.ts",
+      "!tests/**/index.ts"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    }
+  }
+}

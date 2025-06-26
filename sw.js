@@ -131,6 +131,28 @@ self.addEventListener('fetch', (event) => {
         })
     );
   }
+  // Handle Google AdSense requests with Cloudflare optimization
+  else if (url.hostname.includes('googlesyndication.com') || url.hostname.includes('doubleclick.net')) {
+    event.respondWith(
+      fetch(event.request, {
+        // Add cache headers for Cloudflare optimization
+        headers: {
+          ...event.request.headers,
+          'Cache-Control': 'public, max-age=300', // 5 minutes cache
+        }
+      }).catch(error => {
+        // Fail gracefully if ads can't load
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[Service Worker] Ad request failed:', event.request.url, error.message);
+        }
+        // Return empty response to prevent breaking the page
+        return new Response('', { 
+          status: 204, 
+          statusText: 'No Content'
+        });
+      })
+    );
+  }
   else {
     event.respondWith(fetch(event.request).catch(error => {
         if (process.env.NODE_ENV !== 'production') {

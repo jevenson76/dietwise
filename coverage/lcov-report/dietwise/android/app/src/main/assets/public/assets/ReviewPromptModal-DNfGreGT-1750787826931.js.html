@@ -1,0 +1,88 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for dietwise/android/app/src/main/assets/public/assets/ReviewPromptModal-DNfGreGT-1750787826931.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../../../../../../prettify.css" />
+    <link rel="stylesheet" href="../../../../../../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../../../../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../../../../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../../../../../../index.html">All files</a> / <a href="index.html">dietwise/android/app/src/main/assets/public/assets</a> ReviewPromptModal-DNfGreGT-1750787826931.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import{j as e,M as f}from"./index-CCetcO3c-1750787826931.js";import{r as o}from"./stripe-vendor-B3HR4MyU-1750787826931.js";import"./react-vendor-DV_4xMyD-1750787826931.js";import"./pdf-vendor-DY8QywdO-1750787826931.js";import"./date-vendor-Ck9yc1TP-1750787826931.js";import"./ai-vendor-D-53sdHu-1750787826931.js";import"./scanner-vendor-UkOZGUfT-1750787826931.js";import"./chart-vendor-0DHGgTMd-1750787826931.js";const C=({isOpen:n,onClose:i,onSubmitFeedback:m})=&gt;{const[c,s]=o.useState(0),[x,r]=o.useState(""),[u,a]=o.useState("rating"),h=t=&gt;{s(t),t&gt;=4?a("appstore"):t&gt;0&amp;&amp;a("feedback")},d=()=&gt;{m(c,x),a("thankyou"),setTimeout(()=&gt;{n&amp;&amp;i(),s(0),r(""),a("rating")},3e3)},l=()=&gt;{i(),setTimeout(()=&gt;{s(0),r(""),a("rating")},300)},p=()=&gt;{switch(u){case"rating":return e.jsxs("div",{className:"text-center",children:[e.jsx("h3",{className:"text-lg font-medium text-text-default mb-2",children:"Enjoying DietWise?"}),e.jsx("p",{className:"text-sm text-text-alt mb-4",children:"Let us know how we're doing!"}),e.jsx("div",{className:"flex justify-center space-x-2 mb-4",children:[1,2,3,4,5].map(t=&gt;e.jsx("button",{onClick:()=&gt;h(t),className:`text-3xl transition-colors duration-150 ${t&lt;=c?"text-yellow-400":"text-slate-300 dark:text-slate-600 hover:text-yellow-300"}`,"aria-label":`Rate ${t} star${t&gt;1?"s":""}`,children:e.jsx("i",{className:"fas fa-star"})},t))}),e.jsx("button",{onClick:l,className:"text-xs text-text-alt hover:underline",children:"Maybe later"})]});case"feedback":return e.jsxs("div",{children:[e.jsx("h3",{className:"text-lg font-medium text-text-default mb-2",children:"Thanks for your feedback!"}),e.jsx("p",{className:"text-sm text-text-alt mb-3",children:"We're sorry to hear you're not fully satisfied. What can we do to improve your experience? (Optional)"}),e.jsx("textarea",{value:x,onChange:t=&gt;r(t.target.value),rows:4,className:"w-full p-2 border border-border-default rounded-md bg-bg-card text-text-default placeholder-slate-400 dark:placeholder-slate-500",placeholder:"Your suggestions..."}),e.jsx("button",{onClick:d,className:"mt-4 w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg shadow",children:"Submit Feedback"})]});case"appstore":return e.jsxs("div",{className:"text-center",children:[e.jsx("h3",{className:"text-lg font-medium text-text-default mb-2",children:"That's great to hear!"}),e.jsx("p",{className:"text-sm text-text-alt mb-4",children:"Your positive feedback helps others discover DietWise. If you have a moment, we'd love for you to share your experience."}),e.jsx("button",{onClick:d,className:"mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow",children:"Sounds Good!"}),e.jsx("button",{onClick:l,className:"mt-2 text-xs text-text-alt hover:underline",children:"No, thanks"})]});case"thankyou":return e.jsxs("div",{className:"text-center py-4",children:[e.jsx("i",{className:"fas fa-check-circle text-5xl text-green-500 dark:text-green-400 mb-4"}),e.jsx("h3",{className:"text-lg font-medium text-text-default mb-2",children:"Thank You!"}),e.jsx("p",{className:"text-sm text-text-alt",children:"We appreciate your feedback."})]})}};return e.jsx(f,{isOpen:n,onClose:l,title:"Rate Your Experience",children:p()})};export{C as default};<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-06-25T15:38:37.352Z
+            </div>
+        <script src="../../../../../../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../../../../../../sorter.js"></script>
+        <script src="../../../../../../../../block-navigation.js"></script>
+    </body>
+</html>
+    

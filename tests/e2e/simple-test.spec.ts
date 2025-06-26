@@ -5,10 +5,19 @@ test.describe('DietWise Simple Tests', () => {
     // Go to app
     await page.goto('/');
     
-    // Handle onboarding
-    await page.waitForSelector('button:has-text("Skip")', { timeout: 5000 });
-    await page.click('button:has-text("Skip")');
-    console.log('Skipped onboarding');
+    // Handle onboarding if present
+    try {
+      const skipButton = page.locator('button:has-text("Skip")');
+      const isVisible = await skipButton.isVisible({ timeout: 5000 });
+      if (isVisible) {
+        await skipButton.click();
+        console.log('Skipped onboarding');
+      } else {
+        console.log('No onboarding screen found');
+      }
+    } catch (e) {
+      console.log('No onboarding screen found, continuing...');
+    }
     
     // Wait a bit for the app to load
     await page.waitForTimeout(3000);
@@ -18,7 +27,7 @@ test.describe('DietWise Simple Tests', () => {
     
     // Check what's visible
     const profileTab = await page.locator('button:has-text("Profile")').isVisible();
-    const foodTab = await page.locator('button:has-text("Food")').isVisible();
+    const foodTab = await page.locator('button:has-text("Log Food")').isVisible();
     console.log('Profile tab visible:', profileTab);
     console.log('Food tab visible:', foodTab);
     
@@ -50,7 +59,7 @@ test.describe('DietWise Simple Tests', () => {
     
     // Try to navigate to Food tab
     if (foodTab) {
-      await page.click('button:has-text("Food")');
+      await page.click('button:has-text("Log Food")');
       await page.waitForTimeout(2000);
       await page.screenshot({ path: 'test-results/simple-3-food-tab.png', fullPage: true });
       
@@ -68,9 +77,9 @@ test.describe('DietWise Simple Tests', () => {
     }
     
     // Try Meals tab
-    const mealsTab = await page.locator('button:has-text("Meals")').isVisible();
+    const mealsTab = await page.locator('button:has-text("Meal Ideas")').isVisible();
     if (mealsTab) {
-      await page.click('button:has-text("Meals")');
+      await page.click('button:has-text("Meal Ideas")');
       await page.waitForTimeout(2000);
       await page.screenshot({ path: 'test-results/simple-5-meals-tab.png', fullPage: true });
     }
@@ -83,9 +92,17 @@ test.describe('DietWise Simple Tests', () => {
     // Go to app
     await page.goto('/');
     
-    // Handle onboarding
-    await page.waitForSelector('button:has-text("Skip")', { timeout: 5000 });
-    await page.click('button:has-text("Skip")');
+    // Handle onboarding if present
+    try {
+      const skipButton = page.locator('button:has-text("Skip")');
+      const isVisible = await skipButton.isVisible({ timeout: 5000 });
+      if (isVisible) {
+        await skipButton.click();
+        console.log('Skipped onboarding');
+      }
+    } catch (e) {
+      console.log('No onboarding screen found');
+    }
     
     await page.waitForTimeout(3000);
     

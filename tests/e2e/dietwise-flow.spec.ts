@@ -1,16 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { handleOnboarding, navigateToTab } from './helpers/onboarding';
 
 test.describe('DietWise User Flow', () => {
   test('complete user journey from onboarding to food logging', async ({ page }) => {
     // Navigate to the app
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
     
-    // Handle onboarding - click Skip button
-    const skipButton = page.getByRole('button', { name: 'Skip' });
-    await expect(skipButton).toBeVisible({ timeout: 5000 });
-    await skipButton.click();
-    console.log('Clicked Skip button');
+    // Handle onboarding
+    await handleOnboarding(page);
     
     // Wait for the main app to load
     await page.waitForTimeout(2000);
@@ -67,8 +64,7 @@ test.describe('DietWise User Flow', () => {
     }
     
     // Navigate to Food tab
-    const foodTab = page.getByRole('button', { name: /food/i }).first();
-    await foodTab.click();
+    await navigateToTab(page, 'Log Food');
     await page.waitForTimeout(1000);
     
     // Take screenshot of food page
@@ -142,7 +138,7 @@ test.describe('DietWise User Flow', () => {
     
     // Go to Food tab
     await page.waitForTimeout(2000);
-    const foodTab = page.getByRole('button', { name: /food/i }).first();
+    const foodTab = page.getByRole('button', { name: 'Log Food' });
     await foodTab.click();
     await page.waitForTimeout(1000);
     
@@ -174,7 +170,7 @@ test.describe('DietWise User Flow', () => {
     
     // Go to Progress tab
     await page.waitForTimeout(2000);
-    const progressTab = page.getByRole('button', { name: /progress/i }).first();
+    const progressTab = page.getByRole('button', { name: 'Progress' });
     await progressTab.click();
     await page.waitForTimeout(1000);
     

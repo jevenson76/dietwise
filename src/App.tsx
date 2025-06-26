@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, Suspense } from 'react';
 import { UserProfile, CalculatedMetrics, FoodItem, WeightEntry, ReminderSettings, SharePayload, AppTheme, MyFoodItem, MyMeal, MealReminder, StreakData, Milestone, MilestoneType } from '@appTypes'; 
 import { defaultUserProfile, DEFAULT_REMINDER_SETTINGS, DEFAULT_STREAK_DATA, WEIGHT_MILESTONE_INCREMENT, STREAK_MILESTONES_DAYS, TOTAL_LOGGED_MEALS_MILESTONES } from '@constants';
+import GoogleAdSense from './components/GoogleAdSense';
+import { ADSENSE_CONFIG, AD_PLACEMENTS, shouldShowAds } from './constants/adConfig';
 import { calculateAllMetrics, calculateDefaultMacroTargets } from '@services/calculationService';
 import { trackEvent } from '@services/analyticsService'; 
 // Removed unused import: API_KEY_ERROR_MESSAGE from '@services/geminiService'
@@ -885,13 +887,8 @@ const App: React.FC = () => {
 
   const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Progress, Tab.Planner, Tab.Profile, Tab.Settings];
 
-  const AdPlaceholder: React.FC<{sizeLabel?: string; className?: string}> = ({ sizeLabel = "Banner Ad (e.g., 320x50)", className=""}) => (
-    <div className={`bg-slate-200 dark:bg-slate-700 border-2 border-dashed border-slate-400 dark:border-slate-500 text-slate-500 dark:text-slate-400 text-sm flex flex-col items-center justify-center h-20 sm:h-24 my-6 rounded-md shadow text-center p-2 ${className}`}>
-      <i className="fas fa-ad text-2xl text-slate-400 dark:text-slate-500 mb-1"></i>
-      <p className="font-semibold">Advertisement</p>
-      <p className="text-xs">{sizeLabel}</p>
-    </div>
-  );
+  // Determine if we should show ads
+  const showAds = shouldShowAds(isPremiumUser);
 
   const toggleTheme = () => {
     setCurrentTheme(prev => prev === 'light' ? 'dark' : 'light');
@@ -1118,7 +1115,14 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <AdPlaceholder sizeLabel="Profile Tab Ad (e.g., 300x100)" className="mt-6" />
+            {showAds && (
+              <GoogleAdSense
+                adClient={ADSENSE_CONFIG.CLIENT_ID}
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.PROFILE_BANNER}
+                {...AD_PLACEMENTS.PROFILE}
+                testMode={ADSENSE_CONFIG.TEST_MODE}
+              />
+            )}
           </>
         );
       case Tab.Settings:
@@ -1174,7 +1178,14 @@ const App: React.FC = () => {
               isSyncing={isRetryingConnection}
               syncProgress={0} // TODO: Add real sync progress tracking
             />
-            <AdPlaceholder sizeLabel="Settings Tab Ad (e.g., 300x100)" className="mt-6" />
+            {showAds && (
+              <GoogleAdSense
+                adClient={ADSENSE_CONFIG.CLIENT_ID}
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.SETTINGS_BANNER}
+                {...AD_PLACEMENTS.SETTINGS}
+                testMode={ADSENSE_CONFIG.TEST_MODE}
+              />
+            )}
           </>
         );
       case Tab.Log:
@@ -1198,7 +1209,14 @@ const App: React.FC = () => {
                 showOfflineBanner={showOfflineBanner}
                 onRetryConnection={retryConnection}
             />
-            <AdPlaceholder />
+            {showAds && (
+              <GoogleAdSense
+                adClient={ADSENSE_CONFIG.CLIENT_ID}
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.FOOD_LOG_BANNER}
+                {...AD_PLACEMENTS.FOOD_LOG}
+                testMode={ADSENSE_CONFIG.TEST_MODE}
+              />
+            )}
           </>
         );
       case Tab.FoodLibrary:
@@ -1231,7 +1249,14 @@ const App: React.FC = () => {
                 targetCalories={calculatedMetrics.targetCalories}
               />
             </Suspense>
-            <AdPlaceholder sizeLabel="Food Library Ad (e.g., 300x100)" className="mt-6"/>
+            {showAds && (
+              <GoogleAdSense
+                adClient={ADSENSE_CONFIG.CLIENT_ID}
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.FOOD_LIBRARY_BANNER}
+                {...AD_PLACEMENTS.FOOD_LIBRARY}
+                testMode={ADSENSE_CONFIG.TEST_MODE}
+              />
+            )}
           </>
         );
       case Tab.Meals:
@@ -1247,7 +1272,14 @@ const App: React.FC = () => {
               onUpgradeClick={() => setIsUpgradeModalOpen(true)}
               isPremiumUser={isPremiumUser}
             />
-            <AdPlaceholder sizeLabel="Medium Rectangle Ad (e.g., 300x250)" />
+            {showAds && (
+              <GoogleAdSense
+                adClient={ADSENSE_CONFIG.CLIENT_ID}
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.MEAL_IDEAS_RECTANGLE}
+                {...AD_PLACEMENTS.MEAL_IDEAS}
+                testMode={ADSENSE_CONFIG.TEST_MODE}
+              />
+            )}
           </>
         );
       case Tab.Planner:
@@ -1344,7 +1376,14 @@ const App: React.FC = () => {
                 onUpgradeClick={() => setIsUpgradeModalOpen(true)}
               />
             </Suspense>
-            {isPremiumUser && <AdPlaceholder sizeLabel="Analytics Ad (e.g., 300x100)" className="mt-6"/>}
+            {isPremiumUser && showAds && (
+              <GoogleAdSense
+                adClient={ADSENSE_CONFIG.CLIENT_ID}
+                adSlot={ADSENSE_CONFIG.AD_SLOTS.ANALYTICS_BANNER}
+                {...AD_PLACEMENTS.ANALYTICS}
+                testMode={ADSENSE_CONFIG.TEST_MODE}
+              />
+            )}
           </>
         );
       default:

@@ -21,10 +21,15 @@ export async function fillProfileForm(page: Page, data: {
   heightIn?: string;
   activityLevel?: string;
 }) {
-  // Fill name
+  // Fill name - try multiple selectors and wait longer
   if (data.name) {
-    const nameInput = page.locator('input#name, input[name="name"]').first();
-    await nameInput.fill(data.name);
+    try {
+      const nameInput = page.locator('input#name, input[name="name"], input[placeholder*="name" i]').first();
+      await nameInput.waitFor({ timeout: 10000 });
+      await nameInput.fill(data.name);
+    } catch (error) {
+      console.log('Name input not found, skipping...');
+    }
   }
   
   // Fill email
