@@ -1,9 +1,12 @@
+import dotenv from 'dotenv';
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import { rateLimit } from 'express-rate-limit';
-import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import { testSupabaseConnection } from './config/supabase';
@@ -14,9 +17,6 @@ import stripeRoutes from './routes/stripe.routes';
 import webhooksRoutes from './routes/webhooks';
 import aiRoutes from './routes/ai.routes';
 import { setupSwagger } from './config/swagger';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DietWiseLogo from '../DietWiseLogo';
 
 interface MobileHeaderProps {
   title: string;
@@ -31,8 +32,9 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           <i className="fas fa-bars text-gray-600 dark:text-gray-400"></i>
         </button>
 
-        {/* Center - Title and status */}
+        {/* Center - Logo, Title and status */}
         <div className="flex items-center gap-2">
+          <DietWiseLogo size="small" className="w-8 h-8" />
           <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
             {title}
           </h1>

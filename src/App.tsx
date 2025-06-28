@@ -8,6 +8,8 @@ import { calculateAllMetrics, calculateDefaultMacroTargets } from '@services/cal
 import { trackEvent } from '@services/analyticsService'; 
 // Removed unused import: API_KEY_ERROR_MESSAGE from '@services/geminiService'
 import UserProfileForm from '@components/UserProfileForm';
+import UserProfileCard from '@components/UserProfileCard';
+import ProfileEditModal from '@components/ProfileEditModal';
 import CalculationsDisplay from '@components/CalculationsDisplay';
 import WeightGoalSetter from '@components/WeightGoalSetter';
 import MealIdeaSuggestion from '@components/MealIdeaSuggestion';
@@ -33,6 +35,7 @@ import { PREMIUM_FEATURES, PREMIUM_MESSAGES } from './constants/premiumFeatures'
 // More lazy loaded components
 const StripeCheckout = lazyWithPreload(() => import('@components/StripeCheckout'));
 const AdvancedAnalytics = lazyWithPreload(() => import('@components/AdvancedAnalytics'));
+const WeighInTab = lazyWithPreload(() => import('@components/WeighInTab'));
 import PDFExportButton from '@components/PDFExportButton';
 import CustomMacroTargets from '@components/CustomMacroTargets';
 import UpgradePrompt from '@components/UpgradePrompt';
@@ -40,6 +43,7 @@ import AuthModal from '@components/auth/AuthModal';
 import { filterByHistoricalLimit, getHistoricalLimitMessage } from '../utils/dataLimits';
 import SettingsTab from '@components/SettingsTab';
 import DietWiseSplashScreen from '@components/SplashScreen';
+import DietWiseLogo from './components/DietWiseLogo';
 import OnboardingSplashScreen from './components/OnboardingSplashScreen';
 import ProgressiveOnboarding from '@components/ProgressiveOnboarding';
 import OnboardingChecklist from '@components/OnboardingChecklist';
@@ -74,6 +78,7 @@ enum Tab {
   FoodLibrary = 'Food Library', // Renamed from My Library
   Meals = 'Meal Ideas',
   Planner = '7-Day Plan',
+  WeighIn = 'Weigh In', // Weight tracking and history
   Progress = 'Progress',
   Analytics = 'Analytics', // Premium feature
   Profile = 'Profile', // Renamed from Settings
@@ -207,7 +212,7 @@ const App: React.FC = () => {
     }
     return false;
   });
-  const [activeTab, setActiveTab] = useState<Tab>(isInitialSetup ? Tab.Profile : Tab.Log); // Default to Profile if initial setup
+  const [activeTab, setActiveTab] = useState<Tab>(Tab.Profile); // Default to Profile tab
   const [apiKeyStatus, setApiKeyStatus] = useState<'checking' | 'ok' | 'missing'>('checking');
   const [isDashboardVisible, setIsDashboardVisible] = useState<boolean>(true);
   
@@ -235,6 +240,8 @@ const App: React.FC = () => {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
+  const [justCompletedSignup, setJustCompletedSignup] = useState<boolean>(false);
+  const [isProfileEditModalOpen, setIsProfileEditModalOpen] = useState<boolean>(false);
   const [isReviewPromptModalOpen, setIsReviewPromptModalOpen] = useState<boolean>(false);
   const [isLogFromMyMealModalOpen, setIsLogFromMyMealModalOpen] = useState<boolean>(false);
   const [isUPCScannerModalOpen, setIsUPCScannerModalOpen] = useState<boolean>(false); // For FoodLog's scanner
@@ -296,7 +303,7 @@ const App: React.FC = () => {
   }, [currentTheme]);
 
   useEffect(() => {
-    const key = process.env.API_KEY; 
+    const key = import.meta.env.VITE_GEMINI_API_KEY; 
     const MISSING_KEY_PLACEHOLDER_FOR_CONSTRUCTOR = "MISSING_API_KEY_RUNTIME_CONSTRUCTOR_DietWise"; 
     if (key && key !== "MISSING_API_KEY" && key.length > 10 && key !== MISSING_KEY_PLACEHOLDER_FOR_CONSTRUCTOR && key !== "MISSING_API_KEY_RUNTIME") { 
       setApiKeyStatus('ok');
@@ -311,6 +318,7 @@ const App: React.FC = () => {
       UserStatusDashboard,
       MyLibraryComponent,
       AdvancedAnalytics,
+      WeighInTab,
       StripeCheckout
     ]);
   }, []);
@@ -897,7 +905,7 @@ const App: React.FC = () => {
     }
   };
 
-  const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Progress, Tab.Planner, Tab.Profile, Tab.Settings];
+  const tabOrder: Tab[] = [Tab.Log, Tab.FoodLibrary, Tab.Meals, Tab.Planner, Tab.WeighIn, Tab.Progress, Tab.Profile, Tab.Settings];
 
   // Determine if we should show ads
   const showAds = shouldShowAds(isPremiumUser);
@@ -993,10 +1001,10 @@ const App: React.FC = () => {
 
         return (
           <>
-            {apiKeyStatus === 'missing' && (
+            {apiKeyStatus === 'missing' && process.env.NODE_ENV === 'development' && (
                 <Alert 
-                    type="error" 
-                    message={<><strong>Critical: API Key Missing!</strong><br />DietWise AI features (meal ideas, UPC scanning, 7-day planner) will not work without a valid Gemini API Key. Please ensure the <code>API_KEY</code> environment variable is correctly set up for this application to function properly.</>} 
+                    type="warning" 
+                    message={<><strong>API Key Missing</strong><br />AI features (meal ideas, UPC scanning) will be limited. Add a Gemini API key to enable full functionality.</>} 
                     className="mb-6"
                 />
             )}
@@ -1007,19 +1015,22 @@ const App: React.FC = () => {
                 className="mb-6"
               />
             )}
-            <UserProfileForm profile={userProfile} onProfileChange={handleProfileChange} />
-            <WeightGoalSetter 
-              profile={userProfile} 
-              onTargetWeightChange={handleTargetWeightChange}
-              onTargetDateChange={handleTargetDateChange}
+            
+            {/* Modern Profile Card */}
+            <UserProfileCard
+              profile={userProfile}
+              metrics={calculatedMetrics}
+              onEditProfile={() => setIsProfileEditModalOpen(true)}
             />
-            <CalculationsDisplay metrics={calculatedMetrics} isProfileComplete={isProfileCompleteForFunctionality} showBmiCategoryMessage={false} />
 
+
+            {/* Advanced Settings for Profile */}
             <div className="mt-6">
               <CustomMacroTargets
                 currentTargets={userProfile.customMacroTargets || calculateDefaultMacroTargets(calculatedMetrics.targetCalories)}
                 onUpdateTargets={handleUpdateMacroTargets}
                 isPremiumUser={isPremiumUser}
+                isPremiumLoading={isPremiumLoading}
                 onUpgradeClick={() => setIsUpgradeModalOpen(true)}
                 targetCalories={calculatedMetrics.targetCalories}
                 isInitialSetup={isInitialSetup || hasJustCompletedOnboarding}
@@ -1027,179 +1038,96 @@ const App: React.FC = () => {
               />
             </div>
 
-            {/* Account Section - moved per user feedback */}
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                <i className="fas fa-user mr-2.5 text-blue-500 dark:text-blue-400"></i>Account
-              </h3>
-              {isAuthenticated && user ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <p className="text-text-default font-semibold">Signed in as {user.email}</p>
-                    <p className="text-sm text-text-alt">Your data is synced across devices</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to sign out?')) {
-                        logout();
-                      }
-                    }}
-                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
-                  >
-                    <i className="fas fa-sign-out-alt mr-2"></i>
-                    Sign Out
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-text-alt">Sign in to sync your data across devices and access premium features.</p>
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => {
-                        setAuthModalMode('login');
-                        setIsAuthModalOpen(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
-                    >
-                      <i className="fas fa-sign-in-alt mr-2"></i>
-                      Sign In
-                    </button>
-                    <button
-                      onClick={() => {
-                        setAuthModalMode('signup');
-                        setIsAuthModalOpen(true);
-                      }}
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all"
-                    >
-                      <i className="fas fa-user-plus mr-2"></i>
-                      Create Account
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Premium Subscription Section */}
-            <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
-              <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-                <i className="fas fa-crown mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Premium Subscription
-              </h3>
-              {isPremiumLoading ? (
-                <div className="text-center py-4">
-                  <i className="fas fa-spinner fa-spin text-2xl text-text-alt"></i>
-                </div>
-              ) : isPremiumUser ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-lg">
-                    <div>
-                      <p className="text-text-default font-semibold">Premium Active</p>
-                      <p className="text-sm text-text-alt">Enjoy unlimited access to all features</p>
-                    </div>
-                    <i className="fas fa-check-circle text-2xl text-green-500"></i>
-                  </div>
-                  <button
-                    onClick={openCustomerPortal}
-                    className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-600 dark:hover:bg-slate-500 dark:text-slate-200 font-semibold py-3 px-6 rounded-lg shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 transition-all"
-                  >
-                    <i className="fas fa-cog mr-2"></i>
-                    Manage Subscription
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                    <p className="text-text-default font-semibold mb-2">Upgrade to Premium</p>
-                    <ul className="space-y-2 text-sm text-text-alt">
-                      <li><i className="fas fa-check text-teal-500 mr-2"></i>Unlimited barcode scans</li>
-                      <li><i className="fas fa-check text-teal-500 mr-2"></i>Advanced analytics</li>
-                      <li><i className="fas fa-check text-teal-500 mr-2"></i>7-day meal planning</li>
-                      <li><i className="fas fa-check text-teal-500 mr-2"></i>Export to PDF</li>
-                    </ul>
-                  </div>
-                  <button
-                    onClick={() => setIsUpgradeModalOpen(true)}
-                    className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all"
-                  >
-                    <i className="fas fa-rocket mr-2"></i>
-                    Start 7-Day Free Trial
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {showAds && (
-              <GoogleAdSense
-                adClient={ADSENSE_CONFIG.CLIENT_ID}
-                adSlot={ADSENSE_CONFIG.AD_SLOTS.PROFILE_BANNER}
-                {...AD_PLACEMENTS.PROFILE}
-                testMode={ADSENSE_CONFIG.TEST_MODE}
-              />
+            {/* Fallback to detailed form for incomplete profiles */}
+            {isInitialSetup && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-text-default mb-4">
+                  Complete Your Profile Details
+                </h3>
+                <UserProfileForm profile={userProfile} onProfileChange={handleProfileChange} />
+              </div>
             )}
           </>
         );
+
       case Tab.Settings:
         return (
-          <>
-            <SettingsTab
-              theme={currentTheme}
-              handleThemeToggle={toggleTheme}
-              notificationsEnabled={reminderSettings.mealReminders.breakfast.enabled || reminderSettings.mealReminders.lunch.enabled || reminderSettings.mealReminders.dinner.enabled}
-              setNotificationsEnabled={(enabled) => {
-                const newMealReminders = {
-                  breakfast: { ...reminderSettings.mealReminders.breakfast, enabled },
-                  lunch: { ...reminderSettings.mealReminders.lunch, enabled },
-                  dinner: { ...reminderSettings.mealReminders.dinner, enabled }
-                };
-                handleUpdateReminderSettings({ mealReminders: newMealReminders });
-              }}
-              appVersion="1.0.0"
-              exportData={() => {
-                if (isPremiumUser) {
-                  // This will trigger PDF export
-                  const exportButton = document.querySelector('[data-pdf-export]') as HTMLButtonElement;
-                  if (exportButton) exportButton.click();
-                } else {
-                  setIsUpgradeModalOpen(true);
-                }
-              }}
-              isPremiumUser={isPremiumUser}
-              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-              pdfExportButton={
-                <PDFExportButton
-                  foodLog={filteredFoodLog}
-                  userProfile={userProfile}
-                  weightLog={filteredWeightLog}
-                  isPremiumUser={isPremiumUser}
-                  onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-                  premiumLimits={{
-                    canExportData: premiumLimits.limits.canExportData,
-                    onExport: premiumLimits.increment.exports
-                  }}
-                />
+          <SettingsTab
+            theme={currentTheme}
+            handleThemeToggle={toggleTheme}
+            notificationsEnabled={localStorage.getItem('notificationsEnabled') !== 'false' && Notification.permission === 'granted'}
+            setNotificationsEnabled={(enabled) => {
+              localStorage.setItem('notificationsEnabled', enabled.toString());
+              if (enabled && Notification.permission !== 'granted') {
+                requestNotificationPermission();
               }
-              isOnline={isOnline}
-              pendingItems={{
-                foodLog: offlineFoodQueue.length,
-                weight: 0, // TODO: Add weight queue if needed
-                goals: 0, // TODO: Add goals queue if needed
-                other: 0
-              }}
-              lastSyncTime={lastSyncTime}
-              onSync={syncOfflineFoodLog}
-              onRetryConnection={retryConnection}
-              isSyncing={isRetryingConnection}
-              syncProgress={0} // TODO: Add real sync progress tracking
-            />
-            {showAds && (
-              <GoogleAdSense
-                adClient={ADSENSE_CONFIG.CLIENT_ID}
-                adSlot={ADSENSE_CONFIG.AD_SLOTS.SETTINGS_BANNER}
-                {...AD_PLACEMENTS.SETTINGS}
-                testMode={ADSENSE_CONFIG.TEST_MODE}
+              // Force re-render to update toggle state
+              setGlobalSuccessMessage({ 
+                message: enabled ? 'Notifications enabled' : 'Notifications disabled' 
+              });
+            }}
+            appVersion="1.0.0"
+            exportData={() => {
+              // Export all data as CSV
+              const foodData = foodLog.map(item => ({
+                name: item.name,
+                calories: item.calories,
+                protein: item.protein || 0,
+                carbs: item.carbs || 0,
+                fat: item.fat || 0,
+                servingSize: item.servingSize,
+                timestamp: new Date(item.timestamp).toISOString(),
+                date: new Date(item.timestamp).toLocaleDateString()
+              }));
+              const weightData = actualWeightLog.map(entry => ({
+                date: entry.date,
+                weight: entry.weight
+              }));
+              exportDataToCsv(foodData, `dietwise-food-log-${new Date().toISOString().split('T')[0]}.csv`);
+              if (weightData.length > 0) {
+                exportDataToCsv(weightData, `dietwise-weight-log-${new Date().toISOString().split('T')[0]}.csv`);
+              }
+            }}
+            isPremiumUser={isPremiumUser}
+            onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            pdfExportButton={
+              <PDFExportButton
+                userProfile={userProfile}
+                foodLog={foodLog}
+                weightEntries={actualWeightLog}
+                calculatedMetrics={calculatedMetrics}
+                isPremiumUser={isPremiumUser}
+                onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+                appVersion="1.0.0"
               />
-            )}
-          </>
+            }
+            isOnline={isOnline}
+            pendingItems={{
+              foodLog: offlineFoodQueue.length,
+              weight: 0,
+              goals: 0,
+              other: 0
+            }}
+            lastSyncTime={lastSyncTime}
+            onSync={syncOfflineFoodLog}
+            onRetryConnection={retryConnection}
+            isSyncing={isRetryingConnection}
+            syncProgress={0}
+            isAuthenticated={isAuthenticated}
+            user={user}
+            onSignIn={() => {
+              setAuthModalMode('login');
+              setIsAuthModalOpen(true);
+            }}
+            onSignUp={() => {
+              setAuthModalMode('signup');
+              setIsAuthModalOpen(true);
+            }}
+            onSignOut={logout}
+            onManageSubscription={openCustomerPortal}
+          />
         );
+
       case Tab.Log:
         return (
           <>
@@ -1335,6 +1263,27 @@ const App: React.FC = () => {
             />
           </Suspense>
         );
+      case Tab.WeighIn:
+        return (
+          <Suspense fallback={<LoadingSpinner message="Loading Weight Tracker..." />}>
+            <WeighInTab
+              userProfile={userProfile}
+              weightLog={filteredWeightLog}
+              onWeightLog={(weight) => {
+                const entry = {
+                  date: new Date().toISOString().split('T')[0],
+                  weight: weight
+                };
+                handleAddWeightEntry(entry);
+              }}
+              onTargetWeightChange={handleTargetWeightChange}
+              onTargetDateChange={handleTargetDateChange}
+              targetCalories={calculatedMetrics.targetCalories}
+              isPremiumUser={isPremiumUser}
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            />
+          </Suspense>
+        );
       case Tab.Progress:
         return (
           <>
@@ -1411,6 +1360,7 @@ const App: React.FC = () => {
       case Tab.FoodLibrary: return "fas fa-book-bookmark";
       case Tab.Meals: return "fas fa-lightbulb";
       case Tab.Planner: return "fas fa-calendar-alt";
+      case Tab.WeighIn: return "fas fa-weight";
       case Tab.Progress: return "fas fa-chart-line";
       case Tab.Analytics: return "fas fa-chart-pie";
       default: return "";
@@ -1472,7 +1422,11 @@ const App: React.FC = () => {
           // Even with trial, guide through profile setup
           setShowProgressiveOnboarding(true);
           // Open upgrade modal after profile setup
-          setTimeout(() => setIsUpgradeModalOpen(true), 100);
+          setTimeout(() => {
+            if (!justCompletedSignup) {
+              setIsUpgradeModalOpen(true);
+            }
+          }, 100);
           trackEvent('onboarding_trial_started');
         }}
       />
@@ -1503,31 +1457,24 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className={`min-h-screen bg-bg-default text-text-default flex flex-col theme-${currentTheme}`}
+      className={`min-h-screen bg-gradient-to-br from-teal-50/70 via-cyan-50/70 to-blue-50/70 dark:from-teal-950/70 dark:via-cyan-950/70 dark:to-blue-950/70 text-text-default flex flex-col theme-${currentTheme}`}
       onTouchStart={mobile.swipeHandlers.onTouchStart}
       onTouchMove={mobile.swipeHandlers.onTouchMove}
       onTouchEnd={mobile.swipeHandlers.onTouchEnd}
     >
       <DemoBanner />
-      <header className="bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 dark:from-teal-700 dark:via-cyan-700 dark:to-sky-700 text-white shadow-lg sticky top-0 z-50">
+      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-lg sticky top-0 z-50">
         <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center">
-              <i className="fas fa-leaf mr-3 text-3xl opacity-90"></i>
+              <DietWiseLogo size="small" className="mr-3 flex-shrink-0" />
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">DietWise</h1>
-                <p className="text-xs sm:text-sm opacity-90 mt-0.5">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-800">DietWise</h1>
+                <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
                   {userProfile.name ? `Welcome back, ${getFirstName()}!` : 'Your Personal Nutrition Companion'}
                   {calculatedMetrics.targetCalories && ` • ${calculatedMetrics.targetCalories} cal/day`}
                 </p>
               </div>
-              <OfflineIndicator
-                isOnline={isOnline}
-                variant="badge"
-                size="sm"
-                pendingCount={offlineFoodQueue.length}
-                className="ml-3"
-              />
             </div>
           </div>
           {showDashboardToggle && (
@@ -1790,10 +1737,32 @@ const App: React.FC = () => {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={() => {
-          checkPremiumStatus(); // Refresh premium status after login
           trackEvent('auth_success', { mode: authModalMode });
+          
+          // Handle post-signup flow
+          if (authModalMode === 'signup') {
+            setJustCompletedSignup(true);
+            setActiveTab(Tab.Log);
+            // Clear the flag after a brief delay to prevent upgrade prompts
+            setTimeout(() => setJustCompletedSignup(false), 5000);
+          }
+          
+          // Refresh premium status after login (but not immediately for signup)
+          if (authModalMode === 'login') {
+            checkPremiumStatus();
+          } else {
+            // For signup, check premium status quietly without triggering popups
+            setTimeout(() => checkPremiumStatus(), 2000);
+          }
         }}
         initialMode={authModalMode}
+      />
+
+      <ProfileEditModal
+        isOpen={isProfileEditModalOpen}
+        onClose={() => setIsProfileEditModalOpen(false)}
+        profile={userProfile}
+        onSave={handleProfileChange}
       />
 
       <EmailCaptureModal

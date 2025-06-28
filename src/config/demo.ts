@@ -26,7 +26,7 @@ export const DEMO_CONFIG = {
       fiber: 3.1,
       sugar: 14.4,
       servingSize: '1 medium',
-      dateAdded: '2024-06-26T08:00:00.000Z',
+      timestamp: 1719388800000, // 2024-06-26 08:00:00 UTC
       mealType: 'breakfast' as const
     },
     {
@@ -39,7 +39,7 @@ export const DEMO_CONFIG = {
       fiber: 0,
       sugar: 0,
       servingSize: '100g',
-      dateAdded: '2024-06-26T12:30:00.000Z',
+      timestamp: 1719405000000, // 2024-06-26 12:30:00 UTC
       mealType: 'lunch' as const
     },
     {
@@ -52,16 +52,16 @@ export const DEMO_CONFIG = {
       fiber: 3.5,
       sugar: 0.7,
       servingSize: '1 cup cooked',
-      dateAdded: '2024-06-26T18:00:00.000Z',
+      timestamp: 1719424800000, // 2024-06-26 18:00:00 UTC
       mealType: 'dinner' as const
     }
   ],
   demoWeightLog: [
-    { id: '1', weight: 185, date: '2024-06-01T00:00:00.000Z', notes: 'Starting weight' },
-    { id: '2', weight: 183, date: '2024-06-08T00:00:00.000Z', notes: 'Week 1 progress' },
-    { id: '3', weight: 181, date: '2024-06-15T00:00:00.000Z', notes: 'Steady progress' },
-    { id: '4', weight: 180, date: '2024-06-22T00:00:00.000Z', notes: 'Current weight' },
-    { id: '5', weight: 179, date: '2024-06-26T00:00:00.000Z', notes: 'Recent weigh-in' }
+    { id: '1', weight: 185, date: '2024-06-01', notes: 'Starting weight' },
+    { id: '2', weight: 183, date: '2024-06-08', notes: 'Week 1 progress' },
+    { id: '3', weight: 181, date: '2024-06-15', notes: 'Steady progress' },
+    { id: '4', weight: 180, date: '2024-06-22', notes: 'Current weight' },
+    { id: '5', weight: 179, date: '2024-06-26', notes: 'Recent weigh-in' }
   ],
   notifications: {
     welcome: 'Welcome to DietWise Demo! This is a demonstration version with sample data.',

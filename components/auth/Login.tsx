@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { authApi } from '../../src/services/api/auth';
 import LoadingSpinner from '../common/LoadingSpinner';
 import Alert from '../common/Alert';
+import DietWiseLogo from '../../src/components/DietWiseLogo';
 
 interface LoginProps {
   onSuccess: () => void;
@@ -34,6 +35,7 @@ const Login: React.FC<LoginProps> = ({ onSuccess, onSignupClick, onForgotPasswor
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="text-center mb-8">
+        <DietWiseLogo size="medium" className="mx-auto mb-4" />
         <h2 className="text-3xl font-bold text-text-default mb-2">Welcome Back</h2>
         <p className="text-text-alt">Sign in to your DietWise account</p>
       </div>

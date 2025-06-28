@@ -434,7 +434,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
 
       {/* Smart Suggestions */}
       {smartSuggestions.length > 0 && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl border border-teal-200 dark:border-teal-700 animate-fade-in">
+        <div className="mb-6 p-4 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl border border-teal-200 dark:border-teal-700">
           <h3 className="text-sm font-semibold text-teal-700 dark:text-teal-300 mb-3 flex items-center">
             <i className="fas fa-lightbulb mr-2 animate-pulse"></i>
             Quick Add Suggestions

@@ -4,6 +4,7 @@ import { stripeApi } from '../src/services/api/stripe';
 import { trackEvent } from '@services/analyticsService';
 import LoadingSpinner from './common/LoadingSpinner';
 import Alert from './common/Alert';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface StripeCheckoutProps {
   onClose: () => void;
@@ -70,6 +71,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   return (
     <div className="max-w-md mx-auto">
       <div className="text-center mb-6">
+        <DietWiseLogo size="medium" className="mx-auto mb-4" />
         <h3 className="text-2xl font-bold text-text-default mb-2">Choose Your Plan</h3>
         <p className="text-text-alt">
           Start your 7-day free trial today. Cancel anytime.

@@ -102,37 +102,15 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
             transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
           }}
         >
-          {/* Logo Icon */}
+          {/* DietWise Logo */}
           <div className="bg-white rounded-full p-6 shadow-2xl mb-4">
-            <svg
+            <img
+              src="/logo.svg"
+              alt="DietWise Logo"
               width="80"
               height="80"
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-green-600"
-            >
-              {/* Apple/Health Icon */}
-              <path
-                d="M50 15C35 15 25 25 25 40C25 55 35 65 50 85C65 65 75 55 75 40C75 25 65 15 50 15Z"
-                fill="currentColor"
-                className="text-green-500"
-              />
-              <path
-                d="M45 10C40 10 35 15 35 20C35 25 40 30 45 30C50 30 55 25 55 20C55 15 50 10 45 10Z"
-                fill="currentColor"
-                className="text-green-400"
-              />
-              <circle cx="42" cy="35" r="3" fill="white" />
-              <circle cx="58" cy="35" r="3" fill="white" />
-              <path
-                d="M35 45 Q50 55 65 45"
-                stroke="white"
-                strokeWidth="3"
-                fill="none"
-                strokeLinecap="round"
-              />
-            </svg>
+              className="w-20 h-20"
+            />
           </div>
         </div>
 

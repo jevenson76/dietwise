@@ -16,6 +16,7 @@ interface CustomMacroTargetsProps {
   targetCalories: number | null;
   isInitialSetup?: boolean;
   profileCreationDate?: string;
+  isPremiumLoading?: boolean;
 }
 
 const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
@@ -25,7 +26,8 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
   onUpgradeClick,
   targetCalories,
   isInitialSetup = false,
-  profileCreationDate
+  profileCreationDate,
+  isPremiumLoading = false
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempTargets, setTempTargets] = useState<MacroTargets>(currentTargets);
@@ -153,17 +155,28 @@ const CustomMacroTargets: React.FC<CustomMacroTargetsProps> = ({
         )}
       </div>
 
-      {!isPremiumUser && !isEditing && !isInitialSetup && (() => {
-        // Check if profile was created recently (within last 30 minutes)
-        if (profileCreationDate) {
-          const createdAt = new Date(profileCreationDate).getTime();
-          const now = Date.now();
-          const thirtyMinutes = 30 * 60 * 1000;
-          if (now - createdAt < thirtyMinutes) {
-            return false; // Don't show lock if profile was just created
-          }
+      {!isPremiumUser && !isEditing && !isInitialSetup && !isPremiumLoading && (() => {
+        // If no profileCreationDate is set, treat as initial setup (don't show lock)
+        if (!profileCreationDate) {
+          return false;
         }
-        return true;
+        
+        // Check if premium status could be determined (backend available)
+        // If backend unavailable, don't show premium lock (graceful degradation)
+        const cachedPremiumStatus = localStorage.getItem('premiumStatus');
+        if (!cachedPremiumStatus) {
+          return false; // No backend connection and no cached status - allow access
+        }
+        
+        // Check if profile was created recently (within last 24 hours)
+        const createdAt = new Date(profileCreationDate).getTime();
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        if (now - createdAt < twentyFourHours) {
+          return false; // Don't show lock if profile was just created
+        }
+        
+        return true; // Show lock for profiles older than 24 hours
       })() && (
         <div className="absolute inset-0 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
           <div className="text-center p-4">

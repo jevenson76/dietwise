@@ -110,6 +110,18 @@ html {
 }
 
 /* Custom radio button styles */
+.custom-radio-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .custom-radio-input:checked + .custom-radio-label {
   border-color: #0d9488;
   background-color: #0d9488;
@@ -119,12 +131,18 @@ html {
 
 .custom-radio-label {
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
 .custom-radio-label:hover {
   border-color: #14b8a6;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+}
+
+.custom-radio-input:focus + .custom-radio-label {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
 }
 
 .dark .custom-radio-input:checked + .custom-radio-label {
