@@ -42,7 +42,7 @@ const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={null} size="md">
       <div className="text-center p-6">
         {/* Success Icon */}
         <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-6">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WeightEntry } from '../types';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -9,7 +9,8 @@ interface WeightLogFormProps {
 }
 
 const WeightLogForm: React.FC<WeightLogFormProps> = ({ onAddWeightEntry, latestWeight }) => {
-  const todayISO = format(new Date(), 'yyyy-MM-dd');
+  // Get today's date in the local timezone
+  const [todayISO] = useState(() => format(new Date(), 'yyyy-MM-dd'));
   const [date, setDate] = useState<string>(todayISO);
   const [weight, setWeight] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -45,12 +46,16 @@ const WeightLogForm: React.FC<WeightLogFormProps> = ({ onAddWeightEntry, latestW
   return (
     <div className="bg-bg-card p-6 rounded-xl shadow-xl">
       <h3 className="text-lg font-semibold text-text-default mb-4 pb-3 border-b border-border-default">
-        <i className="fas fa-weight-scale mr-2.5 text-teal-600 dark:text-teal-400"></i>Log Your Weight
+        <i className="fas fa-weight-scale mr-2.5 text-teal-600 dark:text-teal-400"></i>
+        Log Your Weight
+        <span className="text-sm font-normal text-text-alt ml-2">(Past dates allowed)</span>
       </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-            <label htmlFor="logWeightDate" className="block text-sm font-medium text-text-alt">Date</label>
+            <label htmlFor="logWeightDate" className="block text-sm font-medium text-text-alt mb-1">
+                Date <span className="text-xs text-text-alt font-normal">(select any past date)</span>
+            </label>
             <input
                 type="date"
                 id="logWeightDate"
@@ -60,6 +65,17 @@ const WeightLogForm: React.FC<WeightLogFormProps> = ({ onAddWeightEntry, latestW
                 max={todayISO} 
                 required
             />
+            {date !== todayISO && (
+                <div className="mt-1">
+                    <button
+                        type="button"
+                        onClick={() => setDate(todayISO)}
+                        className="text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 underline"
+                    >
+                        ← Back to today
+                    </button>
+                </div>
+            )}
             </div>
             <div>
             <label htmlFor="logWeightLbs" className="block text-sm font-medium text-text-alt">Weight (lbs)</label>

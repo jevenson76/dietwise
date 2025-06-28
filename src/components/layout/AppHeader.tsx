@@ -15,7 +15,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onToggleDashboard,
 }) => {
   return (
-    <header className="bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 dark:from-teal-700 dark:via-cyan-700 dark:to-sky-700 text-white shadow-lg sticky top-0 z-50">
+    <header className="bg-gradient-to-r from-teal-600 via-cyan-600 to-sky-600 dark:from-teal-700 dark:via-cyan-700 dark:to-sky-700 text-white shadow-lg">
       <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
         <div className="flex items-center">
           <DietWiseLogo size="small" className="mr-3 flex-shrink-0" />

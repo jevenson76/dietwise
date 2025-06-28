@@ -1463,7 +1463,7 @@ const App: React.FC = () => {
       onTouchEnd={mobile.swipeHandlers.onTouchEnd}
     >
       <DemoBanner />
-      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-lg sticky top-0 z-50">
+      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-lg">
         <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center">
@@ -1490,7 +1490,7 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <nav className="bg-bg-card shadow-md sticky top-[68px] sm:top-[76px] z-40 border-b border-border-default">
+      <nav className="bg-bg-card shadow-md border-b border-border-default">
         <div className="container mx-auto max-w-7xl px-2 sm:px-4 flex justify-center sm:justify-start space-x-0.5 sm:space-x-1 overflow-x-auto custom-scrollbar">
           {tabOrder.map((tab) => (
             <button
@@ -1718,7 +1718,7 @@ const App: React.FC = () => {
           setIsUpgradeModalOpen(false);
           trackEvent('upgrade_modal_closed');
         }} 
-        title=""
+        title={null}
         size="md"
       >
         <Suspense fallback={<LoadingSpinner message="Loading Checkout..." />}>

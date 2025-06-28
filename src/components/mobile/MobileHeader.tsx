@@ -21,7 +21,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   const [showOfflineTooltip, setShowOfflineTooltip] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 z-50 md:hidden">
+    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 md:hidden">
       <div className="flex items-center justify-between px-4 h-14">
         {/* Left side - Menu button */}
         <button

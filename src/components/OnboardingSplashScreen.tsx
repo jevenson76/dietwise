@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { trackEvent } from '@services/analyticsService';
+import DietWiseLogo from './DietWiseLogo';
 
 interface OnboardingSplashScreenProps {
   onComplete: () => void;
@@ -109,7 +110,7 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
           {/* Free Plan */}
           <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 border-2 border-gray-300 text-gray-800 shadow-lg">
             <div className="text-center mb-4">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Free Plan</h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">Free w/ Ads</h3>
               <p className="text-gray-600">Perfect for getting started</p>
               <div className="text-3xl font-bold text-gray-800 mt-3">$0</div>
               <p className="text-sm text-gray-500">Forever free</p>
@@ -130,6 +131,10 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
               <li className="flex items-center space-x-3">
                 <i className="fas fa-check text-green-600 text-lg"></i>
                 <span>30-day data history</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <i className="fas fa-info-circle text-gray-400 text-lg"></i>
+                <span className="text-gray-600">Includes ads</span>
               </li>
             </ul>
           </div>
@@ -164,6 +169,10 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
               <li className="flex items-center space-x-3">
                 <i className="fas fa-star text-yellow-600 text-lg"></i>
                 <span className="font-medium">PDF exports & full history</span>
+              </li>
+              <li className="flex items-center space-x-3">
+                <i className="fas fa-star text-yellow-600 text-lg"></i>
+                <span className="font-medium">No ads</span>
               </li>
             </ul>
           </div>
@@ -204,7 +213,7 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-6">
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 pt-16">
         {/* Skip Button */}
         <button
           onClick={handleSkip}
@@ -223,9 +232,15 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
 
         {/* Slide Content */}
         <div className="text-center text-white">
-          {/* Icon */}
-          <div className="mb-6">
-            <i className={`fas ${currentSlideData.icon} text-6xl`}></i>
+          {/* Logo on first slide, icon on others */}
+          <div className="mb-4">
+            {currentSlide === 0 ? (
+              <div className="bg-white rounded-full p-4 shadow-2xl inline-block">
+                <DietWiseLogo size="large" />
+              </div>
+            ) : (
+              <i className={`fas ${currentSlideData.icon} text-6xl`}></i>
+            )}
           </div>
 
           {/* Title */}
