@@ -93,7 +93,7 @@ export const getMealIdeas = async (calorieTarget: number, preferences?: string):
   log.info('Requesting meal ideas via backend API', 'gemini-service', { calorieTarget, hasPreferences: !!preferences });
   
   try {
-    const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
     
     const requestBody = {
       calorieTarget,
@@ -101,7 +101,7 @@ export const getMealIdeas = async (calorieTarget: number, preferences?: string):
       preferences: preferences ? [preferences] : []
     };
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/ai/meal-ideas`, {
+    const response = await fetch(`${API_BASE_URL}/ai/meal-ideas`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
