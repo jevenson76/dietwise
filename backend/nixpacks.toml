@@ -1,17 +1,5 @@
-# Railway uses Nixpacks for builds
-# This file configures the build process
-
-[phases.setup]
-nixPkgs = ["nodejs-18_x", "npm-9_x"]
-
-[phases.install]
-cmds = ["npm ci --production=false"]
-
-[phases.build]
-cmds = ["npm run build"]
+[build]
+cwd = "backend"
 
 [start]
 cmd = "npm start"
-
-[variables]
-NODE_ENV = "production"
