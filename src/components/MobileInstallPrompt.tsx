@@ -58,7 +58,7 @@ const MobileInstallPrompt: React.FC<MobileInstallPromptProps> = ({
           )}
           <button
             onClick={handleDismiss}
-            className="text-teal-200 hover:text-white p-1"
+            className="bg-white/20 hover:bg-red-500 text-teal-100 hover:text-white p-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-white/50 shadow-sm"
             aria-label="Dismiss install prompt"
           >
             <i className="fas fa-times"></i>

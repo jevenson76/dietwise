@@ -119,10 +119,10 @@ const MobileModal: React.FC<MobileModalProps> = ({
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 -mr-2"
+              className="bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 text-gray-600 dark:text-gray-300 hover:text-white p-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm"
               aria-label="Close modal"
             >
-              <i className="fas fa-times text-xl"></i>
+              <i className="fas fa-times text-lg"></i>
             </button>
           </div>
           
@@ -155,7 +155,7 @@ const MobileModal: React.FC<MobileModalProps> = ({
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 -mr-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 text-gray-600 dark:text-gray-300 hover:text-white p-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm"
             aria-label="Close modal"
           >
             <i className="fas fa-times"></i>

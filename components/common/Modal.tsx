@@ -99,7 +99,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
             </div>
             <button
               onClick={onClose}
-              className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 text-2xl p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
+              className="bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 text-gray-600 dark:text-gray-300 hover:text-white text-lg p-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm"
               aria-label="Close modal"
             >
               <i className="fas fa-times"></i>
@@ -110,7 +110,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
           {(!title || title.trim() === '') && (
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 text-2xl p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500 z-10"
+              className="absolute top-4 right-4 bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 text-gray-600 dark:text-gray-300 hover:text-white text-lg p-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm z-10"
               aria-label="Close modal"
             >
               <i className="fas fa-times"></i>

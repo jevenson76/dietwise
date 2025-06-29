@@ -68,7 +68,7 @@ const Alert: React.FC<AlertProps> = ({ message, type, onClose, className = '', s
       {onClose && (
         <button 
           onClick={onClose} 
-          className="ml-auto -mr-1 -mt-1 p-1.5 rounded-full text-current opacity-70 hover:opacity-100 hover:bg-current hover:bg-opacity-10 dark:hover:bg-opacity-20 transition-all" 
+          className="ml-auto -mr-1 -mt-1 p-2 rounded-full bg-white/50 dark:bg-gray-800/50 hover:bg-red-500 dark:hover:bg-red-600 text-gray-600 dark:text-gray-300 hover:text-white transition-all shadow-sm border border-gray-300 dark:border-gray-600" 
           aria-label="Close alert"
         >
           <i className="fas fa-times fa-fw"></i>

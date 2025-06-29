@@ -192,7 +192,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
             )}
             {!(isScanning || isLoadingApi || foodInfo || scannedUpc || currentError) && (
                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-4">
-                    <i className="fas fa-camera text-5xl mb-3 text-slate-400 dark:text-slate-500"></i>
+                    <i className="fas fa-barcode text-5xl mb-3 text-slate-400 dark:text-slate-500"></i>
                     <p className="text-center text-sm">{apiKeyMissing ? "Barcode scanning disabled (API Key missing)" : "Initializing camera..."}</p>
                     {!apiKeyMissing && <p className="text-center text-xs mt-1">Point at a barcode to scan.</p>}
                 </div>

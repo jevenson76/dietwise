@@ -38,7 +38,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
                 </h3>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+                  className="bg-gray-200 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 text-gray-600 dark:text-gray-300 hover:text-white p-2 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-400 shadow-sm"
                 >
                   <i className="fas fa-times"></i>
                 </button>
