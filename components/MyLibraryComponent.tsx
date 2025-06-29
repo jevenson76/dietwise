@@ -17,7 +17,7 @@ import HoverEffects from './common/HoverEffects';
 import StatusIndicator from './common/StatusIndicator';
 import SearchBar from './common/SearchBar';
 import FilterPanel, { FilterGroup, ActiveFilter } from './common/FilterPanel';
-import DietWiseLogo from '@components/DietWiseLogo';
+import DietWiseLogo from './DietWiseLogo';
 
 const MYFOOD_SCANNER_VIDEO_ID = "myfood-barcode-video";
 
