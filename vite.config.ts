@@ -47,13 +47,14 @@ export default defineConfig(({ mode, command }) => {
         }
       },
       server: {
-        proxy: {
-          '/api': {
-            target: 'http://localhost:3001',
-            changeOrigin: true,
-            secure: false
-          }
-        }
+        // Proxy disabled to use production backend
+        // proxy: {
+        //   '/api': {
+        //     target: 'http://localhost:3001',
+        //     changeOrigin: true,
+        //     secure: false
+        //   }
+        // }
       },
       build: {
         target: 'es2018', // Mobile browser compatibility
