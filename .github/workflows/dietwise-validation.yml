@@ -43,7 +43,7 @@ jobs:
         npm run test:unit
     
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         directory: ./validation/coverage/
         fail_ci_if_error: false
@@ -110,7 +110,7 @@ jobs:
         npm run test:e2e
     
     - name: Upload E2E test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: e2e-test-results
@@ -247,7 +247,7 @@ jobs:
         TEST_URL: http://localhost:4173
     
     - name: Upload performance reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-reports
         path: validation/performance-reports/
@@ -290,7 +290,7 @@ jobs:
         PWA_URL: http://localhost:4173
     
     - name: Upload Lighthouse reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lighthouse-reports
         path: validation/lighthouse-reports/
@@ -394,7 +394,7 @@ jobs:
         npm run test:a11y
     
     - name: Upload accessibility reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: accessibility-reports
@@ -458,7 +458,7 @@ jobs:
       uses: actions/checkout@v4
     
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
     
     - name: Generate validation report
       run: |
@@ -510,14 +510,14 @@ jobs:
         fi
     
     - name: Upload validation summary
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: validation-summary
         path: validation-summary.md
     
     - name: Comment PR with results
       if: github.event_name == 'pull_request'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const fs = require('fs');
@@ -558,7 +558,7 @@ jobs:
         curl -s "https://img.shields.io/badge/DietWise%20Validation-${SUCCESS_RATE}%25-${COLOR}" > validation-badge.svg
     
     - name: Upload validation badge
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: validation-badge
         path: validation-badge.svg

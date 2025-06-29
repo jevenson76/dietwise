@@ -39,7 +39,7 @@ jobs:
         
     - name: Deploy to GitHub Pages (if staging)
       if: github.event.inputs.deploy_target == 'staging' || github.event_name == 'workflow_dispatch'
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist
