@@ -11,6 +11,7 @@ interface EmptyStateProps {
   onSecondaryAction?: () => void;
   tips?: string[];
   className?: string;
+  logo?: React.ReactNode;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -24,9 +25,17 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   onSecondaryAction,
   tips,
   className = '',
+  logo,
 }) => {
   return (
     <div className={`text-center py-12 px-6 ${className}`}>
+      {/* Logo */}
+      {logo && (
+        <div className="mb-4">
+          {logo}
+        </div>
+      )}
+
       {/* Icon */}
       <div className="mb-4">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800">

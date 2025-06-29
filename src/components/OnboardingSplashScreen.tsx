@@ -222,13 +222,6 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
           Skip <i className="fas fa-arrow-right ml-1"></i>
         </button>
 
-        {/* Tap anywhere to continue hint - hidden on last slide */}
-        {currentSlide !== slides.length - 1 && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">
-            <i className="fas fa-hand-pointer mr-2"></i>
-            Tap anywhere to navigate
-          </div>
-        )}
 
         {/* Slide Content */}
         <div className="text-center text-white">

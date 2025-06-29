@@ -17,6 +17,7 @@ import HoverEffects from './common/HoverEffects';
 import StatusIndicator from './common/StatusIndicator';
 import SearchBar from './common/SearchBar';
 import FilterPanel, { FilterGroup, ActiveFilter } from './common/FilterPanel';
+import DietWiseLogo from '@components/DietWiseLogo';
 
 const MYFOOD_SCANNER_VIDEO_ID = "myfood-barcode-video";
 
@@ -512,6 +513,7 @@ const MyLibraryComponent: React.FC<MyLibraryComponentProps> = ({
               "Include serving sizes for accurate portions",
               "Add macros (protein, carbs, fat) for better insights"
             ]}
+            logo={<DietWiseLogo size="large" />}
           />
         ) : filteredFoods.length === 0 ? (
           <EmptyState

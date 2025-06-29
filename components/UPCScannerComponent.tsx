@@ -183,6 +183,12 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
         <div className="flex flex-col items-center">
           <div className="w-full max-w-md aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-4 shadow-inner relative">
             <video id={videoElementId} ref={videoRef} className={`w-full h-full object-cover ${(isScanning || isLoadingApi || foodInfo || scannedUpc) ? '' : 'hidden'}`} playsInline />
+            {/* DietWise Logo */}
+            {isScanning && (
+              <div className="absolute top-4 right-4 bg-white dark:bg-slate-800 rounded-lg p-2 shadow-lg">
+                <img src="/logo.svg" alt="DietWise" className="w-10 h-10" />
+              </div>
+            )}
             {!(isScanning || isLoadingApi || foodInfo || scannedUpc || currentError) && (
                  <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 p-4">
                     <i className="fas fa-camera text-5xl mb-3 text-slate-400 dark:text-slate-500"></i>

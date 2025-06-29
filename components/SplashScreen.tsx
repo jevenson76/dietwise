@@ -147,11 +147,6 @@ const DietWiseSplashScreen: React.FC<SplashScreenProps> = ({
         </div>
 
       </div>
-      
-      {/* Version - moved outside main content */}
-      <p className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white/70 text-sm">
-        v1.0.0
-      </p>
 
       {/* Mobile-specific elements - will be hidden on web */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2 hidden">

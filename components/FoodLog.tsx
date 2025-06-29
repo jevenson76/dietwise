@@ -12,6 +12,7 @@ import FeedbackAnimations from './common/FeedbackAnimations';
 import ProgressIndicator from './common/ProgressIndicator';
 import SearchBar from './common/SearchBar';
 import FilterPanel, { FilterGroup, ActiveFilter } from './common/FilterPanel';
+import DietWiseLogo from './DietWiseLogo';
 
 interface FoodLogProps {
   loggedItems: FoodItem[];
@@ -502,7 +503,7 @@ const FoodLog: React.FC<FoodLogProps> = ({
           {filteredLoggedItems.map((item) => renderFoodListItem(item, false))}
         </AnimatedList>
       )}
-       <Modal isOpen={isManualAddModalOpen} onClose={() => { resetManualForm(); setIsManualAddModalOpen(false); }} title="Add Food Manually">
+       <Modal isOpen={isManualAddModalOpen} onClose={() => { resetManualForm(); setIsManualAddModalOpen(false); }} title="Add Food Manually" logo={<DietWiseLogo size="small" />}>
         <div className="space-y-4">
             <div>
                 <label htmlFor="manualFoodName" className="block text-sm font-medium text-text-alt">Food Name <span className="text-red-500">*</span></label>

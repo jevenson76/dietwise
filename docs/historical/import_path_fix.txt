@@ -1,0 +1,44 @@
+--- a/App.tsx
++++ b/App.tsx
+@@
+-import { trackEvent } from './src/services/analyticsService';
++import { trackEvent } from './services/analyticsService';
+--- a/components/MealIdeaSuggestion.tsx
++++ b/components/MealIdeaSuggestion.tsx
+@@
+-import { trackEvent } from '../src/services/analyticsService';
++import { trackEvent } from '../services/analyticsService';
+--- a/components/UPCScannerComponent.tsx
++++ b/components/UPCScannerComponent.tsx
+@@
+-import { trackEvent } from '../src/services/analyticsService';
++import { trackEvent } from '../services/analyticsService';
+--- a/components/MealPlannerComponent.tsx
++++ b/components/MealPlannerComponent.tsx
+@@
+-import { trackEvent } from '../src/services/analyticsService';
++import { trackEvent } from '../services/analyticsService';
+--- a/components/ProgressTabComponent.tsx
++++ b/components/ProgressTabComponent.tsx
+@@
+-import { trackEvent } from '../src/services/analyticsService';
++import { trackEvent } from '../services/analyticsService';
+--- a/components/common/ShareButton.tsx
++++ b/components/common/ShareButton.tsx
+@@
+-import { trackEvent } from '../../src/services/analyticsService';
++import { trackEvent } from '../../services/analyticsService';
+--- a/src/aso/reviewManagement.ts
++++ b/src/aso/reviewManagement.ts
+@@
+-import { trackEvent } from "../services/analyticsService";
++import { trackEvent } from "../../services/analyticsService";
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@
+   "compilerOptions": {
++    "baseUrl": ".",
++    "paths": {
++      "@services/*": ["services/*"]
++    },
+     ...

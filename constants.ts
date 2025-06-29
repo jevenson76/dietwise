@@ -1,6 +1,6 @@
 import { ActivityLevel, UserProfile, ReminderSettings, Sex } from './types';
 
-export const GEMINI_MODEL_NAME = "gemini-2.5-flash-preview-04-17";
+export const GEMINI_MODEL_NAME = "gemini-1.5-flash";
 
 export const activityLevelMultipliers: Record<ActivityLevel, number> = {
   [ActivityLevel.SEDENTARY]: 1.2,

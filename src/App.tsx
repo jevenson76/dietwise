@@ -1671,6 +1671,7 @@ const App: React.FC = () => {
         onClose={() => setIsLogFromMyMealModalOpen(false)} 
         title="Log from My Meals"
         size="lg"
+        logo={<DietWiseLogo size="small" />}
       >
         {myMeals.length === 0 ? (
           <p className="text-text-alt text-center py-4">You haven't created any meals yet. Go to the 'Food Library' tab to add some!</p>

@@ -6,9 +6,10 @@ interface ModalProps {
   title?: string | null;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  logo?: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md' }) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'md', logo }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -86,10 +87,17 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
       >
         {title && title.trim() !== '' && (
           <div className="flex justify-between items-center p-5 sm:p-6 border-b border-border-default bg-bg-card rounded-t-xl">
-            <h2 id="modal-title" className="text-xl font-semibold text-text-default flex items-center">
-              <i className="fas fa-leaf mr-2.5 text-teal-600 dark:text-teal-500 text-xl opacity-90"></i>
-              {title}
-            </h2>
+            <div className="flex items-center">
+              {logo && (
+                <div className="mr-3">
+                  {logo}
+                </div>
+              )}
+              <h2 id="modal-title" className="text-xl font-semibold text-text-default flex items-center">
+                <i className="fas fa-leaf mr-2.5 text-teal-600 dark:text-teal-500 text-xl opacity-90"></i>
+                {title}
+              </h2>
+            </div>
             <button
               onClick={onClose}
               className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 text-2xl p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-500"
