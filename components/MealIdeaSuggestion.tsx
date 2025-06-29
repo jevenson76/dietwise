@@ -138,10 +138,10 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
   if (!isProfileComplete || !calorieTarget) {
      return (
         <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
-            <DietWiseLogo 
-              size="large" 
-              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" 
-            />
+            {/* DietWise Logo in upper right */}
+            <div className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
+                <DietWiseLogo size="small" />
+            </div>
             <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-4">
                 <i className="fas fa-lightbulb mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Meal Ideas
             </h2>
@@ -157,10 +157,10 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
 
   return (
     <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
-      <DietWiseLogo 
-        size="large" 
-        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" 
-      />
+      {/* DietWise Logo in upper right */}
+      <div className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
+        <DietWiseLogo size="small" />
+      </div>
       <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-2">
         <i className="fas fa-lightbulb mr-2.5 text-yellow-500 dark:text-yellow-400"></i>AI Meal Ideas
       </h2>
