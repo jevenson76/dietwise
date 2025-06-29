@@ -1,0 +1,5 @@
+[build]
+cwd = "backend"
+
+[start]
+cmd = "npm start"

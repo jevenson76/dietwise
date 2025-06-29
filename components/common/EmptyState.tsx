@@ -28,10 +28,10 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   logo,
 }) => {
   return (
-    <div className={`text-center py-12 px-6 ${className}`}>
-      {/* Logo */}
+    <div className={`text-center py-12 px-6 ${className} relative`}>
+      {/* Logo - positioned in upper right */}
       {logo && (
-        <div className="mb-4">
+        <div className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
           {logo}
         </div>
       )}
