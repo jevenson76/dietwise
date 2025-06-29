@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { WeightEntry } from '../types';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
+import Alert from './common/Alert';
 
 interface WeightLogFormProps {
   onAddWeightEntry: (entry: WeightEntry) => void;
@@ -93,7 +94,11 @@ const WeightLogForm: React.FC<WeightLogFormProps> = ({ onAddWeightEntry, latestW
             />
             </div>
         </div>
-        {error && <p className="text-red-600 dark:text-red-400 text-sm mt-1" role="alert">{error}</p>}
+        {error && (
+          <div className="mt-2">
+            <Alert type="error" message={error} />
+          </div>
+        )}
         <button 
             type="submit"
             className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all duration-150 disabled:opacity-70 disabled:cursor-not-allowed"

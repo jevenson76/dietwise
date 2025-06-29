@@ -62,7 +62,9 @@ export const useCameraBarcodeScanner = ({ onScanSuccess, onScanError, videoEleme
           }
           if (err && !(err instanceof NotFoundException)) {
             if (process.env.NODE_ENV !== 'production') {
+            if (process.env.NODE_ENV !== 'production') {
             console.error("Barcode scan error:", err);
+            }
             }
             setError(err.message);
             if (onScanError) onScanError(err);
@@ -72,7 +74,9 @@ export const useCameraBarcodeScanner = ({ onScanSuccess, onScanError, videoEleme
       );
     } catch (err: any) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error("Error starting scanner:", err);
+      }
       }
       let message = "Failed to start scanner.";
       if (err.name === 'NotAllowedError') {

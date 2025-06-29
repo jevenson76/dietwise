@@ -29,8 +29,6 @@ class NutritionAPIValidator {
   }
 
   async validateAllEndpoints(): Promise<ValidationResult[]> {
-    console.log('🥗 Starting DietWise Backend Validation...\n');
-
     await this.validateHealthCheck();
     await this.validateAuthentication();
     await this.validateUserManagement();
@@ -49,7 +47,7 @@ class NutritionAPIValidator {
   }
 
   private async validateHealthCheck(): Promise<void> {
-    console.log('📊 Testing Health Check Endpoints...');
+
     
     const tests = [
       {
@@ -72,8 +70,6 @@ class NutritionAPIValidator {
   }
 
   private async validateAuthentication(): Promise<void> {
-    console.log('🔐 Testing Authentication System...');
-
     // Test user registration
     const testUser = {
       email: `test-${Date.now()}@dietwise-test.com`,
@@ -118,8 +114,6 @@ class NutritionAPIValidator {
   }
 
   private async validateUserManagement(): Promise<void> {
-    console.log('👤 Testing User Management...');
-
     const authToken = await this.getAuthToken();
 
     await this.runEndpointTest('Get User Profile', {
@@ -155,8 +149,6 @@ class NutritionAPIValidator {
   }
 
   private async validateFoodDatabase(): Promise<void> {
-    console.log('🍎 Testing Food Database...');
-
     const authToken = await this.getAuthToken();
 
     await this.runEndpointTest('Search Foods', {
@@ -201,8 +193,6 @@ class NutritionAPIValidator {
   }
 
   private async validateNutritionCalculations(): Promise<void> {
-    console.log('🧮 Testing Nutrition Calculations...');
-
     const authToken = await this.getAuthToken();
 
     const userProfile = {
@@ -257,8 +247,6 @@ class NutritionAPIValidator {
   }
 
   private async validateMealPlanning(): Promise<void> {
-    console.log('🍽️ Testing Meal Planning...');
-
     const authToken = await this.getAuthToken();
 
     await this.runEndpointTest('Get Meal Plans', {
@@ -299,8 +287,6 @@ class NutritionAPIValidator {
   }
 
   private async validateProgressTracking(): Promise<void> {
-    console.log('📈 Testing Progress Tracking...');
-
     const authToken = await this.getAuthToken();
 
     await this.runEndpointTest('Log Food Entry', {
@@ -347,8 +333,6 @@ class NutritionAPIValidator {
   }
 
   private async validateAIIntegration(): Promise<void> {
-    console.log('🤖 Testing AI Integration...');
-
     const authToken = await this.getAuthToken();
 
     await this.runEndpointTest('AI Meal Suggestion', {
@@ -380,8 +364,6 @@ class NutritionAPIValidator {
   }
 
   private async validateFileUpload(): Promise<void> {
-    console.log('📁 Testing File Upload...');
-
     const authToken = await this.getAuthToken();
 
     // Mock image data
@@ -413,8 +395,6 @@ class NutritionAPIValidator {
   }
 
   private async validateSecurity(): Promise<void> {
-    console.log('🔒 Testing Security Measures...');
-
     // Test rate limiting
     await this.testRateLimit();
     
@@ -432,8 +412,6 @@ class NutritionAPIValidator {
   }
 
   private async validatePerformance(): Promise<void> {
-    console.log('⚡ Testing Performance...');
-
     const authToken = await this.getAuthToken();
 
     // Test concurrent requests
@@ -471,8 +449,6 @@ class NutritionAPIValidator {
   }
 
   private async validateDataIntegrity(): Promise<void> {
-    console.log('🛡️ Testing Data Integrity...');
-
     const authToken = await this.getAuthToken();
 
     // Test data validation
@@ -535,9 +511,6 @@ class NutritionAPIValidator {
           responseSize: JSON.stringify(response.data).length
         }
       });
-
-      console.log(this.results[this.results.length - 1].message);
-
     } catch (error) {
       const duration = Date.now() - startTime;
       
@@ -548,8 +521,6 @@ class NutritionAPIValidator {
         duration,
         details: { error: error.message }
       });
-
-      console.log(this.results[this.results.length - 1].message);
     }
   }
 
@@ -559,7 +530,7 @@ class NutritionAPIValidator {
   }
 
   private async testRateLimit(): Promise<void> {
-    console.log('Testing rate limiting...');
+
     
     const requests = Array(20).fill(null).map(() => 
       axios.get(`${this.baseURL}/health`, { timeout: 5000 })
@@ -653,27 +624,18 @@ class NutritionAPIValidator {
     const passedTests = this.results.filter(r => r.passed).length;
     const failedTests = totalTests - passedTests;
     
-    console.log('\n' + '='.repeat(50));
-    console.log('🥗 DIETWISE BACKEND VALIDATION SUMMARY');
-    console.log('='.repeat(50));
-    console.log(`Total Tests: ${totalTests}`);
-    console.log(`✅ Passed: ${passedTests}`);
-    console.log(`❌ Failed: ${failedTests}`);
-    console.log(`Success Rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
     
     if (failedTests > 0) {
-      console.log('\n❌ Failed Tests:');
+
       this.results
         .filter(r => !r.passed)
-        .forEach(r => console.log(`  - ${r.test}: ${r.message}`));
+
     }
     
     const avgResponseTime = this.results
       .filter(r => r.duration)
       .reduce((sum, r) => sum + r.duration!, 0) / this.results.length;
     
-    console.log(`\n⚡ Average Response Time: ${avgResponseTime.toFixed(0)}ms`);
-    console.log('='.repeat(50));
   }
 }
 
@@ -683,7 +645,9 @@ if (require.main === module) {
   validator.validateAllEndpoints()
     .then(() => process.exit(0))
     .catch(error => {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Validation failed:', error);
+      }
       process.exit(1);
     });
 }

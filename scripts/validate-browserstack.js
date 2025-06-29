@@ -87,41 +87,24 @@ function getBrowserStackDevices() {
 }
 
 async function validateBrowserStack() {
-  console.log('🧪 Validating BrowserStack Configuration...\n');
-  
-  console.log('📋 Configuration:');
-  console.log(`   Username: ${BROWSERSTACK_USERNAME}`);
-  console.log(`   Access Key: ${BROWSERSTACK_ACCESS_KEY.substring(0, 8)}...`);
-  console.log('');
 
+  
   try {
     // Test connection and get plan details
-    console.log('🔌 Testing BrowserStack connection...');
+
     const planData = await testBrowserStackConnection();
     
-    console.log('✅ Connection successful!');
-    console.log(`   Plan: ${planData.automate_plan || 'Free'}`);
-    console.log(`   Parallel Sessions: ${planData.parallel_sessions_running || 0}/${planData.parallel_sessions_max_allowed || 'N/A'}`);
-    console.log(`   Team ID: ${planData.team_id || 'Personal'}`);
-    console.log('');
-
     // Get available devices
-    console.log('📱 Fetching available devices...');
+
     const devices = await getBrowserStackDevices();
     
-    console.log('✅ Device list retrieved!');
-    console.log(`   Total devices available: ${devices.length}`);
     
     // Filter and show relevant devices for DietWise testing
     const mobileDevices = devices.filter(d => d.device && d.real_mobile);
     const desktopBrowsers = devices.filter(d => !d.device && d.browser);
     
-    console.log(`   Mobile devices: ${mobileDevices.length}`);
-    console.log(`   Desktop browsers: ${desktopBrowsers.length}`);
-    console.log('');
-
     // Show sample devices from our config
-    console.log('🎯 Devices configured in browserstack.config.ts:');
+
     const configuredDevices = [
       'iPhone 14 Pro',
       'Samsung Galaxy S23', 
@@ -135,30 +118,41 @@ async function validateBrowserStack() {
         d.device && d.device.toLowerCase().includes(deviceName.toLowerCase().split(' ')[0])
       );
       const status = found ? '✅' : '⚠️';
-      console.log(`   ${status} ${deviceName}`);
+
     });
     
-    console.log('');
-    console.log('🎉 BrowserStack validation complete!');
-    console.log('');
-    console.log('Next steps:');
-    console.log('1. Run: npx playwright test --config=browserstack.config.ts');
-    console.log('2. View results: https://app.browserstack.com/dashboard');
-    console.log('3. Monitor usage in BrowserStack dashboard');
     
   } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error('❌ BrowserStack validation failed:');
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error(`   Error: ${error.message}`);
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error('');
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error('Troubleshooting:');
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error('1. Verify your credentials are correct');
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error('2. Check your BrowserStack account status');
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error('3. Ensure you have available parallel sessions');
+    }
+    if (process.env.NODE_ENV !== 'production') {
     console.error('4. Visit: https://www.browserstack.com/accounts/subscriptions');
+    }
     
     process.exit(1);
   }
 }
 
 // Run validation
+if (process.env.NODE_ENV !== 'production') {
 validateBrowserStack().catch(console.error);
+}

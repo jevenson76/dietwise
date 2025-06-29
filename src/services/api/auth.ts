@@ -17,8 +17,9 @@ interface AuthResponse {
     email: string;
     name?: string;
   };
-  token: string;
-  expiresAt: string;
+  // Token is now stored in httpOnly cookie, not returned in response
+  success: boolean;
+  message?: string;
 }
 
 interface ResetPasswordParams {
@@ -36,16 +37,18 @@ export const authApi = {
     try {
       const response = await api.post<AuthResponse>('/auth/login', params);
 
-      // Store auth token
-      if (response.token) {
-        setAuthToken(response.token);
+      // With httpOnly cookies, the server automatically sets the auth cookie
+      // We only store non-sensitive user info in localStorage
+      if (response.user) {
         localStorage.setItem('authUser', JSON.stringify(response.user));
       }
 
       return response;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Login error:', error);
+      }
       }
       throw error;
     }
@@ -56,16 +59,18 @@ export const authApi = {
     try {
       const response = await api.post<AuthResponse>('/auth/signup', params);
 
-      // Store auth token
-      if (response.token) {
-        setAuthToken(response.token);
+      // With httpOnly cookies, the server automatically sets the auth cookie
+      // We only store non-sensitive user info in localStorage
+      if (response.user) {
         localStorage.setItem('authUser', JSON.stringify(response.user));
       }
 
       return response;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Signup error:', error);
+      }
       }
       throw error;
     }
@@ -77,15 +82,17 @@ export const authApi = {
       await api.post('/auth/logout');
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Logout error:', error);
+      }
       }
     } finally {
       // Clear local storage
       localStorage.removeItem('authUser');
       localStorage.removeItem('premiumStatus');
 
-      // Clear API token
-      setAuthToken(null);
+      // With httpOnly cookies, the server clears the auth cookie
+      // No client-side token management needed
     }
   },
 
@@ -96,7 +103,9 @@ export const authApi = {
       return response.user;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Get current user error:', error);
+      }
       }
       return null;
     }
@@ -109,7 +118,9 @@ export const authApi = {
       return response;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Password reset request error:', error);
+      }
       }
       throw error;
     }
@@ -122,16 +133,29 @@ export const authApi = {
       return response;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Update password error:', error);
+      }
       }
       throw error;
     }
   },
 
   // Check if user is authenticated
-  isAuthenticated(): boolean {
-    const token = localStorage.getItem('authToken');
-    return !!token;
+  // With httpOnly cookies, we check by trying to get current user
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      const user = await this.getCurrentUser();
+      return !!user;
+    } catch {
+      return false;
+    }
+  },
+
+  // Synchronous check based on stored user (less reliable but faster)
+  hasStoredUser(): boolean {
+    const userStr = localStorage.getItem('authUser');
+    return !!userStr;
   },
 
   // Get stored user
@@ -146,11 +170,10 @@ export const authApi = {
     }
   },
 
-  // Initialize auth from storage
+  // Initialize auth state
+  // With httpOnly cookies, no initialization needed as cookies are automatic
   initializeAuth(): void {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setAuthToken(token);
-    }
+    // No action needed - httpOnly cookies are automatically sent
+    // The server will validate the cookie on each request
   },
 };

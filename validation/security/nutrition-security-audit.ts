@@ -19,8 +19,6 @@ class NutritionSecurityAuditor {
   }
 
   async runCompleteSecurityAudit(): Promise<SecurityTest[]> {
-    console.log('🔒 Starting DietWise Security Audit...\n');
-
     await this.testAuthentication();
     await this.testAuthorization();
     await this.testInputValidation();
@@ -33,8 +31,6 @@ class NutritionSecurityAuditor {
   }
 
   private async testAuthentication(): Promise<void> {
-    console.log('🔐 Testing Authentication Security...');
-
     // Test password requirements
     await this.testPasswordPolicy();
     
@@ -215,8 +211,6 @@ class NutritionSecurityAuditor {
   }
 
   private async testAuthorization(): Promise<void> {
-    console.log('🛡️ Testing Authorization Controls...');
-
     await this.testVerticalPrivilegeEscalation();
     await this.testHorizontalPrivilegeEscalation();
     await this.testResourceAccess();
@@ -311,8 +305,6 @@ class NutritionSecurityAuditor {
   }
 
   private async testInputValidation(): Promise<void> {
-    console.log('🔍 Testing Input Validation...');
-
     await this.testSQLInjection();
     await this.testXSSPrevention();
     await this.testCommandInjection();
@@ -513,8 +505,6 @@ class NutritionSecurityAuditor {
   }
 
   private async testDataProtection(): Promise<void> {
-    console.log('🔐 Testing Data Protection...');
-
     await this.testDataEncryption();
     await this.testSensitiveDataExposure();
     await this.testDataLeakage();
@@ -609,8 +599,6 @@ class NutritionSecurityAuditor {
   }
 
   private async testInfrastructure(): Promise<void> {
-    console.log('🏗️ Testing Infrastructure Security...');
-
     await this.testHTTPSEnforcement();
     await this.testCORSConfiguration();
     await this.testSecurityHeaders();
@@ -751,8 +739,6 @@ class NutritionSecurityAuditor {
   }
 
   private async testSpecificNutritionVulnerabilities(): Promise<void> {
-    console.log('🥗 Testing Nutrition-Specific Security Issues...');
-
     await this.testFoodDataManipulation();
     await this.testCalorieCalculationTampering();
     await this.testMacroNutrientValidation();
@@ -892,7 +878,7 @@ class NutritionSecurityAuditor {
     
     const emoji = result.passed ? '✅' : '❌';
     const severity = result.severity.padEnd(8);
-    console.log(`${emoji} [${severity}] ${result.name}`);
+
   }
 
   private getRecommendation(result: Omit<SecurityTest, 'recommendation'>): string {
@@ -939,41 +925,21 @@ class NutritionSecurityAuditor {
     const mediumIssues = this.results.filter(r => !r.passed && r.severity === 'Medium').length;
     const lowIssues = this.results.filter(r => !r.passed && r.severity === 'Low').length;
     const totalPassed = this.results.filter(r => r.passed).length;
-
-    console.log('\n' + '='.repeat(60));
-    console.log('🔒 DIETWISE SECURITY AUDIT REPORT');
-    console.log('='.repeat(60));
-    console.log(`Total Tests: ${this.results.length}`);
-    console.log(`✅ Passed: ${totalPassed}`);
-    console.log(`🔴 Critical Issues: ${criticalIssues}`);
-    console.log(`🟠 High Issues: ${highIssues}`);
-    console.log(`🟡 Medium Issues: ${mediumIssues}`);
-    console.log(`🔵 Low Issues: ${lowIssues}`);
-
     const securityScore = (totalPassed / this.results.length) * 100;
-    console.log(`\n🛡️ Security Score: ${securityScore.toFixed(1)}%`);
-
     if (criticalIssues > 0) {
-      console.log('\n🚨 CRITICAL SECURITY ISSUES FOUND:');
+
       this.results
         .filter(r => !r.passed && r.severity === 'Critical')
         .forEach(r => {
-          console.log(`  ❌ ${r.name}`);
-          console.log(`     ${r.details}`);
-          console.log(`     💡 ${r.recommendation}\n`);
         });
     }
 
     if (securityScore < 80) {
-      console.log('⚠️ SECURITY SCORE BELOW ACCEPTABLE THRESHOLD');
-      console.log('🔧 Immediate action required before production deployment');
     } else if (securityScore < 95) {
-      console.log('⚠️ Some security improvements recommended');
-    } else {
-      console.log('✅ Excellent security posture');
-    }
 
-    console.log('='.repeat(60));
+    } else {
+
+    }
   }
 }
 
@@ -983,7 +949,9 @@ if (require.main === module) {
   auditor.runCompleteSecurityAudit()
     .then(() => process.exit(0))
     .catch(error => {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Security audit failed:', error);
+      }
       process.exit(1);
     });
 }

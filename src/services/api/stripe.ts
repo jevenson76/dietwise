@@ -33,7 +33,9 @@ export const stripeApi = {
       return response;
     } catch (error: any) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Create checkout session error:', error);
+      }
       }
       
       // Provide user-friendly error messages
@@ -60,7 +62,9 @@ export const stripeApi = {
       return response;
     } catch (error: any) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Create portal session error:', error);
+      }
       }
       
       // Provide user-friendly error messages
@@ -85,7 +89,9 @@ export const stripeApi = {
       return response;
     } catch (error: any) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Get subscription status error:', error);
+      }
       }
       
       // For subscription status, we might want to fail gracefully
@@ -113,7 +119,9 @@ export const stripeApi = {
       return subscription.active;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Check subscription error:', error);
+      }
       }
       return false;
     }

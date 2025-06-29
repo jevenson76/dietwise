@@ -103,12 +103,12 @@ class LoggingService {
           break;
         case LogLevel.WARN:
           if (process.env.NODE_ENV !== 'production') {
-          console.warn(`${entry.timestamp} WARN ${contextStr} ${entry.message}`, dataStr);
+            console.warn(`${entry.timestamp} WARN ${contextStr} ${entry.message}`, dataStr);
           }
           break;
         case LogLevel.ERROR:
           if (process.env.NODE_ENV !== 'production') {
-          console.error(`${entry.timestamp} ERROR ${contextStr} ${entry.message}`, dataStr);
+            console.error(`${entry.timestamp} ERROR ${contextStr} ${entry.message}`, dataStr);
           }
           break;
       }

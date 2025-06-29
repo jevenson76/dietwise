@@ -5,7 +5,7 @@ const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 if (!STRIPE_PUBLISHABLE_KEY) {
   if (process.env.NODE_ENV !== 'production') {
-  console.error('Missing VITE_STRIPE_PUBLISHABLE_KEY environment variable');
+    console.error('Missing VITE_STRIPE_PUBLISHABLE_KEY environment variable');
   }
 }
 
@@ -21,7 +21,7 @@ export const STRIPE_PRICES = {
 
 if (!STRIPE_PRICES.monthly || !STRIPE_PRICES.yearly) {
   if (process.env.NODE_ENV !== 'production') {
-  console.error('Missing Stripe price IDs in environment variables');
+    console.error('Missing Stripe price IDs in environment variables');
   }
 }
 

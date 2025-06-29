@@ -213,20 +213,21 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 pt-16">
-        {/* Skip Button */}
-        <button
-          onClick={handleSkip}
-          className="absolute top-8 right-8 text-white/70 hover:text-white transition-colors"
-        >
-          Skip <i className="fas fa-arrow-right ml-1"></i>
-        </button>
+      <div className="relative z-10 w-full max-w-2xl mx-auto px-6 min-h-screen flex flex-col">
+        {/* Skip Button - Fixed position */}
+        <div className="absolute top-8 right-8">
+          <button
+            onClick={handleSkip}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            Skip <i className="fas fa-arrow-right ml-1"></i>
+          </button>
+        </div>
 
-
-        {/* Slide Content */}
-        <div className="text-center text-white">
-          {/* Logo on first slide, icon on others */}
-          <div className="mb-4">
+        {/* Slide Content Container - Flex grow to fill space */}
+        <div className="flex-1 flex flex-col justify-center text-center text-white py-16">
+          {/* Icon Container - Fixed height */}
+          <div className="h-24 flex items-center justify-center mb-6">
             {currentSlide === 0 ? (
               <div className="bg-white rounded-full p-4 shadow-2xl inline-block">
                 <DietWiseLogo size="large" />
@@ -236,23 +237,29 @@ const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({
             )}
           </div>
 
-          {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">
-            {currentSlideData.title}
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-white/90 mb-8">
-            {currentSlideData.subtitle}
-          </p>
-
-          {/* Content */}
-          <div className="mb-12 max-h-[400px] overflow-y-auto custom-scrollbar px-2">
-            {currentSlideData.content}
+          {/* Title Container - Fixed min-height */}
+          <div className="min-h-[80px] flex items-center justify-center mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold">
+              {currentSlideData.title}
+            </h1>
           </div>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between">
+          {/* Subtitle Container - Fixed min-height */}
+          <div className="min-h-[40px] flex items-center justify-center mb-8">
+            <p className="text-xl md:text-2xl text-white/90">
+              {currentSlideData.subtitle}
+            </p>
+          </div>
+
+          {/* Content Container - Fixed height with scroll */}
+          <div className="h-[400px] flex items-start justify-center overflow-y-auto custom-scrollbar px-2 mb-8">
+            <div className="w-full">
+              {currentSlideData.content}
+            </div>
+          </div>
+
+          {/* Navigation Container - Fixed height and position */}
+          <div className="h-20 flex items-center justify-between">
             {/* Progress Dots */}
             <div className="flex space-x-2">
               {slides.map((_, index) => (

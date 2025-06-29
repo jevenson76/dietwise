@@ -20,7 +20,9 @@ export class BiometricService {
       return result.isAvailable;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error checking biometric availability:', error);
+        }
       }
       return false;
     }
@@ -54,7 +56,9 @@ export class BiometricService {
       const errorMessage = (error as any).message || 'Authentication failed';
       
       if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Biometric authentication error:', error);
+        }
       }
       
       return { 

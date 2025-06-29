@@ -275,9 +275,9 @@ const ProgressiveOnboarding: React.FC<ProgressiveOnboardingProps> = ({ onComplet
         <div className="absolute bottom-20 right-20 w-40 h-40 bg-white rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-md mx-auto px-6">
-        {/* Progress bar */}
-        <div className="mb-8">
+      <div className="relative z-10 w-full max-w-md mx-auto px-6 min-h-screen flex flex-col py-8">
+        {/* Progress bar - Fixed height */}
+        <div className="h-16 flex flex-col justify-center mb-4">
           <div className="h-2 bg-white/20 rounded-full overflow-hidden">
             <div 
               className="h-full bg-white transition-all duration-500 ease-out"
@@ -289,21 +289,29 @@ const ProgressiveOnboarding: React.FC<ProgressiveOnboardingProps> = ({ onComplet
           </p>
         </div>
 
-        {/* Content */}
-        <div className="text-white">
-          <h2 className="text-3xl font-bold text-center mb-2">
-            {currentStepData.title}
-          </h2>
-          <p className="text-lg text-white/90 text-center mb-8">
-            {currentStepData.subtitle}
-          </p>
+        {/* Content Container - Flex grow */}
+        <div className="flex-1 flex flex-col justify-center text-white">
+          {/* Title Container - Fixed min-height */}
+          <div className="min-h-[60px] flex items-center justify-center mb-2">
+            <h2 className="text-3xl font-bold text-center">
+              {currentStepData.title}
+            </h2>
+          </div>
+          
+          {/* Subtitle Container - Fixed min-height */}
+          <div className="min-h-[40px] flex items-center justify-center mb-8">
+            <p className="text-lg text-white/90 text-center">
+              {currentStepData.subtitle}
+            </p>
+          </div>
 
-          <div className="mb-8">
+          {/* Component Container - Fixed height with scroll */}
+          <div className="h-[350px] overflow-y-auto custom-scrollbar px-2 mb-8">
             {currentStepData.component}
           </div>
 
-          {/* Navigation */}
-          <div className="flex justify-between items-center">
+          {/* Navigation Container - Fixed height */}
+          <div className="h-16 flex justify-between items-center">
             <button
               onClick={currentStep === 0 ? handleSkip : handleBack}
               className="px-6 py-3 text-white/70 hover:text-white transition-colors"

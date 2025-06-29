@@ -30,7 +30,9 @@ const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({
       onClose();
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Email submission failed:', error);
+      }
       }
     } finally {
       setIsSubmitting(false);

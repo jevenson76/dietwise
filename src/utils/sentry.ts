@@ -55,7 +55,9 @@ export const captureException = (error: Error, context?: Record<string, any>) =>
   } else {
     // In development, just log to console
     if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production') {
     console.error('Error captured:', error, context);
+    }
     }
   }
 };

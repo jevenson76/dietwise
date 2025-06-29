@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useResponsive } from '../../hooks/useResponsive';
+import EmptyState from './EmptyState';
 
 interface TrendDataPoint {
   date: string;
@@ -115,10 +116,11 @@ const TrendChart: React.FC<TrendChartProps> = ({
   if (chartData.points.length === 0) {
     return (
       <div className={`bg-bg-card rounded-xl p-6 shadow-lg border border-border-default ${className}`}>
-        <div className="text-center text-text-alt">
-          <i className="fas fa-chart-line text-2xl mb-2"></i>
-          <p>No data available</p>
-        </div>
+        <EmptyState
+          icon="fas fa-chart-line"
+          title="No Data Available"
+          description="Start tracking to see your trends here."
+        />
       </div>
     );
   }

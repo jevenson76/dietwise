@@ -44,7 +44,9 @@ export class NotificationService {
       this.isInitialized = true;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error initializing notifications:', error);
+        }
       }
     }
   }
@@ -70,13 +72,15 @@ export class NotificationService {
     await PushNotifications.addListener('registration', (token: Token) => {
       this.pushToken = token.value;
       if (process.env.NODE_ENV !== 'production') {
-        console.log('Push registration success, token: ' + token.value);
+
       }
     });
 
     await PushNotifications.addListener('registrationError', (error: any) => {
       if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error on registration: ' + JSON.stringify(error));
+        }
       }
     });
 
@@ -84,7 +88,7 @@ export class NotificationService {
       'pushNotificationReceived',
       (notification: PushNotificationSchema) => {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('Push received: ' + JSON.stringify(notification));
+
         }
       }
     );
@@ -93,7 +97,7 @@ export class NotificationService {
       'pushNotificationActionPerformed',
       (notification: ActionPerformed) => {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('Push action performed: ' + JSON.stringify(notification));
+
         }
       }
     );
@@ -117,7 +121,7 @@ export class NotificationService {
       'localNotificationActionPerformed',
       (notification) => {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('Local notification action performed', notification);
+
         }
       }
     );

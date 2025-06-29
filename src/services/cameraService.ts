@@ -16,7 +16,9 @@ export class CameraService {
       // Check if running on native platform
       if (!Capacitor.isNativePlatform()) {
         if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production') {
           console.warn('Camera is only available on native platforms');
+          }
         }
         return null;
       }
@@ -43,7 +45,9 @@ export class CameraService {
       };
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error taking photo:', error);
+        }
       }
       throw error;
     }
@@ -77,7 +81,9 @@ export class CameraService {
       };
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error picking photo:', error);
+        }
       }
       throw error;
     }

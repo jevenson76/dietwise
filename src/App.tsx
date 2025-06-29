@@ -17,6 +17,9 @@ import UPCScannerComponent from '@components/UPCScannerComponent';
 import FoodLog from '@components/FoodLog';
 import Alert from '@components/common/Alert';
 import Modal from '@components/common/Modal';
+import LoadingSpinner from '@components/common/LoadingSpinner';
+import SkeletonLoader, { FoodLogItemSkeleton, WeightEntrySkeleton, ProfileSkeleton } from '@components/common/SkeletonLoader';
+import EmptyState from '@components/common/EmptyState';
 // Lazy load heavy components with preload capability
 import { lazyWithPreload, preloadComponents } from '@utils/lazyWithPreload';
 const MealPlannerComponent = lazyWithPreload(() => import('@components/MealPlannerComponent'));
@@ -57,6 +60,9 @@ import OfflineBanner from '@components/common/OfflineBanner';
 import OfflineStatus from '@components/common/OfflineStatus';
 import DemoBanner from './components/DemoBanner';
 import { isDemoMode, getDemoData } from './config/demo';
+import { AppHeader } from './components/layout/AppHeader';
+import { AppFooter } from './components/layout/AppFooter';
+import MobileBottomNav from './components/mobile/MobileBottomNav';
 
 import Chart from 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
@@ -65,14 +71,13 @@ Chart.defaults.locale = 'en-US';
 
 const generateUUID = () => crypto.randomUUID();
 
-// Simple loading component for Suspense fallbacks
-const LoadingSpinner: React.FC<{ message?: string }> = ({ message = "Loading..." }) => (
+// Wrapper for LoadingSpinner to match existing usage
+const LoadingWithMessage: React.FC<{ message?: string }> = ({ message = "Loading..." }) => (
   <div className="flex flex-col items-center justify-center py-8 px-4">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mb-3"></div>
-    <p className="text-text-alt text-sm">{message}</p>
+    <LoadingSpinner size="md" />
+    <p className="text-text-alt text-sm mt-3">{message}</p>
   </div>
 );
-
 enum Tab {
   Log = 'Log Food', 
   FoodLibrary = 'Food Library', // Renamed from My Library
@@ -481,7 +486,9 @@ const App: React.FC = () => {
       trackEvent('offline_sync_success', { syncedCount: successCount });
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error("Error syncing offline food log:", error);
+      }
       }
       setOfflineFoodQueue(prevQueue => [...itemsToSync.slice(successCount), ...prevQueue]); 
       displayGlobalSuccessMessage({message: `Error syncing offline items. ${itemsToSync.length - successCount} items remain queued.`});
@@ -750,6 +757,26 @@ const App: React.FC = () => {
     }
   }, [reminderSettings, actualWeightLog, userProfile, showNotification, format, startOfDay, parseISO, differenceInCalendarDays]);
 
+  // Check if we should show review prompt
+  useEffect(() => {
+    if (isInitialSetup || isReviewPromptModalOpen || reminderSettings.hasGivenFeedback) return;
+
+    const reviewMetrics: ReviewPromptMetrics = {
+        completedFirstWeek: milestones.some(m => m.type === MilestoneType.FIRST_WEEK_COMPLETED),
+        achievedWeightMilestone: milestones.some(m => m.type === MilestoneType.WEIGHT_LOSS_X_LBS || m.type === MilestoneType.REACHED_TARGET_WEIGHT),
+        logged30Meals: milestones.some(m => m.type === MilestoneType.LOGGED_X_MEALS && (m.value as number) >= 30),
+        foodLogStreak7Days: milestones.some(m => m.type === MilestoneType.LOGGED_FOOD_X_DAYS_STREAK && (m.value as number) >= 7),
+    };
+
+    reviewManagerRef.current.shouldRequestReview(userProfile.email || 'anonymous', reviewMetrics, reminderSettings.lastReviewPromptDate, reminderSettings.hasGivenFeedback)
+      .then(shouldPrompt => {
+        if (shouldPrompt) {
+          setIsReviewPromptModalOpen(true);
+          handleUpdateReminderSettings({ lastReviewPromptDate: new Date().toISOString() });
+        }
+      });
+  }, [milestones, isInitialSetup, isReviewPromptModalOpen, reminderSettings.lastReviewPromptDate, reminderSettings.hasGivenFeedback, userProfile.email, handleUpdateReminderSettings]);
+
   const handleAddMyFood = (food: MyFoodItem) => setMyFoods(prev => [...prev, {...food, id: generateUUID()}]);
   const handleUpdateMyFood = (updatedFood: MyFoodItem) => setMyFoods(prev => prev.map(f => f.id === updatedFood.id ? updatedFood : f));
   const handleDeleteMyFood = (foodId: string) => setMyFoods(prev => prev.filter(f => f.id !== foodId));
@@ -831,26 +858,6 @@ const App: React.FC = () => {
       trackEvent('initial_setup_complete_message_shown', { userName: userProfile.name });
     }
   }, [isProfileCompleteForFunctionality, hasShownSetupCompleteMessage, activeTab, userProfile.name, displayGlobalSuccessMessage]);
-
-  useEffect(() => {
-    if (isInitialSetup || isReviewPromptModalOpen || reminderSettings.hasGivenFeedback) return;
-
-    const reviewMetrics: ReviewPromptMetrics = {
-        completedFirstWeek: milestones.some(m => m.type === MilestoneType.FIRST_WEEK_COMPLETED),
-        achievedWeightMilestone: milestones.some(m => m.type === MilestoneType.WEIGHT_LOSS_X_LBS || m.type === MilestoneType.REACHED_TARGET_WEIGHT),
-        logged30Meals: milestones.some(m => m.type === MilestoneType.LOGGED_X_MEALS && (m.value as number) >= 30),
-        foodLogStreak7Days: milestones.some(m => m.type === MilestoneType.LOGGED_FOOD_X_DAYS_STREAK && (m.value as number) >= 7),
-    };
-
-    reviewManagerRef.current.shouldRequestReview(userProfile.email || 'anonymous', reviewMetrics, reminderSettings.lastReviewPromptDate, reminderSettings.hasGivenFeedback)
-      .then(shouldPrompt => {
-        if (shouldPrompt) {
-          setIsReviewPromptModalOpen(true);
-          handleUpdateReminderSettings({ lastReviewPromptDate: new Date().toISOString() });
-        }
-      });
-  }, [milestones, isInitialSetup, isReviewPromptModalOpen, reminderSettings.lastReviewPromptDate, reminderSettings.hasGivenFeedback, userProfile.email, handleUpdateReminderSettings]);
-
   // Email capture after first week completion
   useEffect(() => {
     const hasCompletedFirstWeek = milestones.some(m => m.type === MilestoneType.FIRST_WEEK_COMPLETED);
@@ -896,7 +903,9 @@ const App: React.FC = () => {
         }
       } catch (err) {
           if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production') {
           console.error("Error requesting notification permission:", err);
+          }
           }
           displayGlobalSuccessMessage({message: "Could not request notification permission."});
       }
@@ -949,7 +958,9 @@ const App: React.FC = () => {
         }
     } catch (e) {
         if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error("Error exporting data to CSV:", e);
+        }
         }
         displayGlobalSuccessMessage({message: "Data export failed."});
         trackEvent('data_export_failed', { filename, error: (e as Error).message});
@@ -965,7 +976,9 @@ const App: React.FC = () => {
       trackEvent('email_captured', { source: 'first_week_modal' });
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Email submission failed:', error);
+      }
       }
       throw error;
     }
@@ -983,7 +996,9 @@ const App: React.FC = () => {
       trackEvent('pull_to_refresh_used');
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Refresh failed:', error);
+      }
       }
     }
   };
@@ -992,7 +1007,6 @@ const App: React.FC = () => {
   const getFirstName = () => userProfile.name ? userProfile.name.split(' ')[0] : '';
 
   const renderTabContent = () => {
-    // DEBUG: Log what tab is being rendered
     const firstName = getFirstName();
     
     switch (activeTab) {
@@ -1022,8 +1036,6 @@ const App: React.FC = () => {
               metrics={calculatedMetrics}
               onEditProfile={() => setIsProfileEditModalOpen(true)}
             />
-
-
             {/* Advanced Settings for Profile */}
             <div className="mt-6">
               <CustomMacroTargets
@@ -1173,7 +1185,12 @@ const App: React.FC = () => {
                 />
               </div>
             )}
-            <Suspense fallback={<LoadingSpinner message="Loading Food Library..." />}>
+            <Suspense fallback={
+              <div className="space-y-4">
+                <SkeletonLoader type="title" />
+                <SkeletonLoader type="list" lines={3} />
+              </div>
+            }>
               <MyLibraryComponent
                 myFoods={myFoods}
                 myMeals={myMeals}
@@ -1247,7 +1264,7 @@ const App: React.FC = () => {
           );
         }
         return (
-          <Suspense fallback={<LoadingSpinner message="Loading 7-Day Planner..." />}>
+          <Suspense fallback={<LoadingWithMessage message="Loading 7-Day Planner..." />}>
             <MealPlannerComponent 
               calorieTarget={calculatedMetrics.targetCalories} 
               isProfileComplete={isProfileCompleteForFunctionality} 
@@ -1265,7 +1282,7 @@ const App: React.FC = () => {
         );
       case Tab.WeighIn:
         return (
-          <Suspense fallback={<LoadingSpinner message="Loading Weight Tracker..." />}>
+          <Suspense fallback={<LoadingWithMessage message="Loading Weight Tracker..." />}>
             <WeighInTab
               userProfile={userProfile}
               weightLog={filteredWeightLog}
@@ -1298,7 +1315,15 @@ const App: React.FC = () => {
                 />
               </div>
             )}
-            <Suspense fallback={<LoadingSpinner message="Loading Progress..." />}>
+            <Suspense fallback={
+              <div className="space-y-4">
+                <SkeletonLoader type="title" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <SkeletonLoader type="chart" />
+                  <SkeletonLoader type="card" />
+                </div>
+              </div>
+            }>
               {(() => {
                 try {
                   return (
@@ -1314,7 +1339,9 @@ const App: React.FC = () => {
                   );
                 } catch (error) {
                   if (process.env.NODE_ENV !== 'production') {
+                  if (process.env.NODE_ENV !== 'production') {
                   console.error('Progress tab error:', error);
+                  }
                   }
                   return (
                     <div className="p-4 text-center">
@@ -1330,7 +1357,16 @@ const App: React.FC = () => {
       case Tab.Analytics:
         return (
           <>
-            <Suspense fallback={<LoadingSpinner message="Loading Analytics..." />}>
+            <Suspense fallback={
+              <div className="space-y-4">
+                <SkeletonLoader type="title" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <SkeletonLoader type="chart" />
+                  <SkeletonLoader type="chart" />
+                </div>
+                <SkeletonLoader type="card" />
+              </div>
+            }>
               <AdvancedAnalytics
                 foodLog={filteredFoodLog}
                 isPremiumUser={isPremiumUser}
@@ -1463,38 +1499,17 @@ const App: React.FC = () => {
       onTouchEnd={mobile.swipeHandlers.onTouchEnd}
     >
       <DemoBanner />
-      <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 shadow-lg">
-        <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-800">DietWise</h1>
-                <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
-                  {userProfile.name ? `Welcome back, ${getFirstName()}!` : 'Your Personal Nutrition Companion'}
-                  {calculatedMetrics.targetCalories && ` • ${calculatedMetrics.targetCalories} cal/day`}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {showDashboardToggle && (
-              <button
-                onClick={toggleDashboardVisibility}
-                className="p-1.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 transition-colors"
-                aria-label={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
-                title={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
-              >
-                <i className={`fas ${isDashboardVisible ? 'fa-eye-slash' : 'fa-eye'} text-lg sm:text-xl fa-fw`}></i>
-              </button>
-            )}
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-lg border border-gray-200">
-              <DietWiseLogo size="small" />
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        userName={userProfile.name}
+        targetCalories={calculatedMetrics.targetCalories}
+        isOnline={isOnline}
+        showDashboardToggle={showDashboardToggle}
+        isDashboardVisible={isDashboardVisible}
+        onToggleDashboard={toggleDashboardVisibility}
+      />
 
-      <nav className="bg-bg-card shadow-md border-b border-border-default">
+      {/* Desktop Navigation */}
+      <nav className="hidden md:block bg-bg-card shadow-md border-b border-border-default">
         <div className="container mx-auto max-w-7xl px-2 sm:px-4 flex justify-center sm:justify-start space-x-0.5 sm:space-x-1 overflow-x-auto custom-scrollbar">
           {tabOrder.map((tab) => (
             <button
@@ -1514,6 +1529,13 @@ const App: React.FC = () => {
         </div>
       </nav>
 
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        isPremium={isPremiumUser}
+      />
+
       {/* Enhanced Offline Banner */}
       {showOfflineBanner && (
         <OfflineBanner
@@ -1530,7 +1552,7 @@ const App: React.FC = () => {
         />
       )}
 
-      <main className="container mx-auto max-w-5xl p-4 md:p-6 flex-grow w-full">
+      <main className="container mx-auto max-w-5xl p-4 md:p-6 flex-grow w-full pb-20 md:pb-4">
         {mobile?.isMobile ? (
           <PullToRefresh onRefresh={handleRefresh}>
             {/* Strategic upgrade prompt - show after user has logged 10+ items and is not premium */}
@@ -1559,7 +1581,13 @@ const App: React.FC = () => {
             }
 
             {showDashboardToggle && isDashboardVisible && (
-              <Suspense fallback={<LoadingSpinner message="Loading Dashboard..." />}>
+              <Suspense fallback={
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <SkeletonLoader type="card" />
+                  <SkeletonLoader type="card" />
+                  <SkeletonLoader type="card" />
+                </div>
+              }>
                 <UserStatusDashboard 
                   userProfile={userProfile}
                   actualWeightLog={actualWeightLog}
@@ -1678,7 +1706,17 @@ const App: React.FC = () => {
         logo={<DietWiseLogo size="small" />}
       >
         {myMeals.length === 0 ? (
-          <p className="text-text-alt text-center py-4">You haven't created any meals yet. Go to the 'Food Library' tab to add some!</p>
+          <EmptyState
+            icon="fas fa-utensils"
+            iconColor="text-teal-500"
+            title="No Meals Created Yet"
+            description="You haven't created any meals yet. Head over to the Food Library to create your first custom meal!"
+            actionLabel="Go to Food Library"
+            onAction={() => {
+              setIsLogFromMyMealModalOpen(false);
+              handleTabChange(Tab.FoodLibrary);
+            }}
+          />
         ) : (
           <ul className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
             {myMeals.map(meal => (
@@ -1699,8 +1737,7 @@ const App: React.FC = () => {
         )}
       </Modal>
 
-{/* Temporarily commented out to fix React hooks error */}
-      {/*<Suspense fallback={<LoadingSpinner message="Loading Review Modal..." />}>
+      <Suspense fallback={<LoadingWithMessage message="Loading Review Modal..." />}>
         <ReviewPromptModal
           isOpen={isReviewPromptModalOpen}
           onClose={() => setIsReviewPromptModalOpen(false)}
@@ -1715,7 +1752,7 @@ const App: React.FC = () => {
             setIsReviewPromptModalOpen(false);
           }}
         />
-      </Suspense>*/}
+      </Suspense>
 
       <Modal 
         isOpen={isUpgradeModalOpen && !isPremiumUser} 
@@ -1726,7 +1763,7 @@ const App: React.FC = () => {
         title={null}
         size="md"
       >
-        <Suspense fallback={<LoadingSpinner message="Loading Checkout..." />}>
+        <Suspense fallback={<LoadingWithMessage message="Loading Checkout..." />}>
           <StripeCheckout
             onClose={() => {
               setIsUpgradeModalOpen(false);
@@ -1788,12 +1825,7 @@ const App: React.FC = () => {
         }}
         onInstall={mobile.showInstallPrompt}
       />
-      <footer className="bg-slate-800 dark:bg-slate-900 text-slate-300 dark:text-slate-400 text-center p-8 mt-16 border-t border-slate-700 dark:border-slate-600">
-        <p className="text-sm">&copy; {new Date().getFullYear()} Wizard Tech, LLC.</p>
-        <p className="text-xs mt-2 opacity-80">
-          This tool is for informational purposes only. Always consult with a healthcare professional before making significant changes to your diet or exercise routine.
-        </p>
-      </footer>
+      <AppFooter />
     </div>
   );
 };

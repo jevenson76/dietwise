@@ -53,7 +53,9 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({
           await onRefresh();
         } catch (error) {
           if (process.env.NODE_ENV !== 'production') {
+          if (process.env.NODE_ENV !== 'production') {
           console.error('Refresh failed:', error);
+          }
           }
         } finally {
           setIsRefreshing(false);

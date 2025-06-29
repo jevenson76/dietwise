@@ -3,6 +3,7 @@ import { UserProfile } from '../types';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { validateUserProfile } from '../utils/validation';
+import Alert from './common/Alert';
 
 interface WeightGoalSetterProps {
   profile: UserProfile;
@@ -72,10 +73,9 @@ const WeightGoalSetter: React.FC<WeightGoalSetterProps> = ({ profile, onTargetWe
             aria-label="Target weight input"
           />
           {error && (
-            <p className="mt-1 text-sm text-red-500" role="alert">
-              <i className="fas fa-exclamation-circle mr-1"></i>
-              {error}
-            </p>
+            <div className="mt-2">
+              <Alert type="error" message={error} />
+            </div>
           )}
           <div className="mt-4">
             <label htmlFor="targetWeight" className="block text-xs font-medium text-text-alt mb-2">

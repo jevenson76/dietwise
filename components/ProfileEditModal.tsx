@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserProfile, Sex, ActivityLevel } from '../types';
 import { validateUserProfile } from '../utils/validation';
 import Modal from './common/Modal';
+import DietWiseLogo from './DietWiseLogo';
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -115,7 +116,7 @@ const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
     }`;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile" size="lg" logo={<DietWiseLogo size="small" />}>
       <div className="p-6 space-y-6">
         {/* Basic Information */}
         <div className="space-y-4">

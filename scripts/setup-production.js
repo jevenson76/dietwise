@@ -15,29 +15,25 @@ const rl = readline.createInterface({
 });
 
 const question = (query) => new Promise((resolve) => rl.question(query, resolve));
-
-console.log('🚀 DietWise Production Setup CLI\n');
-console.log('Please enter your credentials from the Excel file:\n');
-
 async function setupProduction() {
   try {
     // Collect credentials
-    console.log('📌 STRIPE CREDENTIALS:');
+
     const stripeSecretKey = await question('Stripe Secret Key (sk_live_...): ');
     const stripePublishableKey = await question('Stripe Publishable Key (pk_live_...): ');
     const stripeMonthlyPriceId = await question('Stripe Monthly Price ID: ');
     const stripeYearlyPriceId = await question('Stripe Yearly Price ID: ');
     
-    console.log('\n📌 SUPABASE CREDENTIALS:');
+
     const supabaseUrl = await question('Supabase URL (https://xxx.supabase.co): ');
     const supabaseAnonKey = await question('Supabase Anon Key: ');
     const supabaseServiceKey = await question('Supabase Service Role Key: ');
     const databaseUrl = await question('Database URL (postgresql://...): ');
     
-    console.log('\n📌 AI CREDENTIALS:');
+
     const geminiApiKey = await question('Gemini API Key: ');
     
-    console.log('\n📌 DEPLOYMENT SETTINGS:');
+
     const frontendUrl = await question('Frontend URL (default: https://dietwise.netlify.app): ') || 'https://dietwise.netlify.app';
     
     // JWT Secret (already generated)
@@ -87,42 +83,30 @@ VITE_APP_ENV=production
     fs.writeFileSync(path.join(__dirname, '../backend/.env.production'), backendEnv);
     fs.writeFileSync(path.join(__dirname, '../.env.production'), frontendEnv);
     
-    console.log('\n✅ Environment files created!');
+
     
     // Ask if user wants to deploy now
     const deployNow = await question('\nDo you want to deploy to Railway now? (y/n): ');
     
     if (deployNow.toLowerCase() === 'y') {
-      console.log('\n🚀 Starting Railway deployment...\n');
+
       
       // Check if Railway CLI is installed
       try {
         execSync('railway --version', { stdio: 'ignore' });
       } catch {
-        console.log('Installing Railway CLI...');
+
         execSync('npm install -g @railway/cli', { stdio: 'inherit' });
       }
       
-      console.log('\n📋 Next steps:');
-      console.log('1. Run: cd backend && railway login');
-      console.log('2. Run: railway init (create new project)');
-      console.log('3. Run: railway up (deploy)');
-      console.log('4. Copy the deployment URL');
-      console.log('5. Update frontend .env.production with the backend URL');
-      console.log('6. Build frontend: npm run build:production');
-      console.log('7. Deploy frontend to Netlify');
       
-      console.log('\n🔧 After deployment, configure Stripe webhook:');
-      console.log('- URL: [YOUR_BACKEND_URL]/api/v1/stripe/webhook');
-      console.log('- Events: subscription.*, invoice.payment_*, checkout.session.completed');
     }
     
-    console.log('\n✅ Setup complete! Your credentials are saved in:');
-    console.log('- backend/.env.production');
-    console.log('- .env.production');
     
   } catch (error) {
+    if (process.env.NODE_ENV !== 'production') {
     console.error('Error:', error.message);
+    }
   } finally {
     rl.close();
   }

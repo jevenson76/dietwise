@@ -106,7 +106,7 @@ export const useFoodLog = ({ onFoodAdded, onFoodRemoved }: UseFoodLogProps = {})
       });
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-      console.error('Failed to sync offline food log:', error);
+        console.error('Failed to sync offline food log:', error);
       }
       trackEvent('offline_queue_sync_failed', {
         itemCount: offlineFoodQueue.length,

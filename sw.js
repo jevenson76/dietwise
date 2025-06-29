@@ -23,9 +23,7 @@ self.addEventListener('install', (event) => {
 
         const cachePromises = APP_SHELL_FILES.map(fileUrl => {
           return cache.add(fileUrl).catch(error => {
-            if (process.env.NODE_ENV !== 'production') {
             console.error(`[Service Worker] Failed to cache during install: ${fileUrl}`, error);
-            }
           });
         });
         return Promise.all(cachePromises);
@@ -35,9 +33,7 @@ self.addEventListener('install', (event) => {
         return self.skipWaiting(); 
       })
       .catch(error => {
-        if (process.env.NODE_ENV !== 'production') {
         console.error('[Service Worker] Installation phase failed:', error);
-        }
       })
   );
 });
@@ -58,9 +54,7 @@ self.addEventListener('activate', (event) => {
 
       return self.clients.claim(); 
     }).catch(error => {
-      if (process.env.NODE_ENV !== 'production') {
       console.error('[Service Worker] Activation phase failed:', error);
-      }
     })
   );
 });
@@ -102,9 +96,7 @@ self.addEventListener('fetch', (event) => {
           return fetch(event.request).then((networkResponse) => {
             return networkResponse;
           }).catch(error => {
-            if (process.env.NODE_ENV !== 'production') {
             console.error('[Service Worker] Fetch failed for app shell resource (cache-first):', event.request.url, error);
-            }
             return new Response("Network error. Resource not available.", { status: 503, statusText: "Service Unavailable", headers: { 'Content-Type': 'text/plain' } });
           });
         })
@@ -142,9 +134,7 @@ self.addEventListener('fetch', (event) => {
         }
       }).catch(error => {
         // Fail gracefully if ads can't load
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('[Service Worker] Ad request failed:', event.request.url, error.message);
-        }
+        console.warn('[Service Worker] Ad request failed:', event.request.url, error.message);
         // Return empty response to prevent breaking the page
         return new Response('', { 
           status: 204, 
@@ -155,9 +145,7 @@ self.addEventListener('fetch', (event) => {
   }
   else {
     event.respondWith(fetch(event.request).catch(error => {
-        if (process.env.NODE_ENV !== 'production') {
         console.warn('[Service Worker] Network request failed (cross-origin or API):', event.request.url, error.message);
-        }
         return new Response(JSON.stringify({ error: "Network error: Could not fetch resource." }), { 
             status: 503, 
             statusText: "Service Unavailable", 

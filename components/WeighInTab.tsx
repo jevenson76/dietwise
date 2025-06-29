@@ -5,6 +5,7 @@ import WeightLogFormComponent from './WeightLogFormComponent';
 import WeightChartComponent from './WeightChartComponent';
 import WeightGoalSetter from './WeightGoalSetter';
 import DietWiseLogo from '../src/components/DietWiseLogo';
+import EmptyState from './common/EmptyState';
 
 interface WeighInTabProps {
   userProfile: UserProfile;
@@ -207,11 +208,13 @@ const WeighInTab: React.FC<WeighInTabProps> = ({
             showAdvanced={isPremiumUser}
           />
         ) : (
-          <div className="text-center py-12">
-            <i className="fas fa-chart-line text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
-            <h4 className="text-lg font-semibold text-text-default mb-2">Start Tracking Your Weight</h4>
-            <p className="text-text-alt">Log your first weight entry to see your progress chart here.</p>
-          </div>
+          <EmptyState
+            icon="fas fa-chart-line"
+            title="Start Tracking Your Weight"
+            description="Log your first weight entry to see your progress chart here."
+            actionLabel="Log Weight"
+            onAction={() => document.getElementById('weight-input')?.focus()}
+          />
         )}
       </div>
 
@@ -269,10 +272,13 @@ const WeighInTab: React.FC<WeighInTabProps> = ({
             )}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <i className="fas fa-scale-unbalanced text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
-            <p className="text-text-alt">No weigh-ins recorded yet. Start by logging your current weight above!</p>
-          </div>
+          <EmptyState
+            icon="fas fa-scale-unbalanced"
+            title="No Weigh-ins Yet"
+            description="No weigh-ins recorded yet. Start by logging your current weight above!"
+            actionLabel="Log Your First Weight"
+            onAction={() => document.getElementById('weight-input')?.focus()}
+          />
         )}
       </div>
     </div>

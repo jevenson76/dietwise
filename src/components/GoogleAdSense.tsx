@@ -40,7 +40,9 @@ const GoogleAdSense: React.FC<GoogleAdSenseProps> = ({
         window.adsbygoogle.push({});
         isAdLoaded.current = true;
       } catch (error) {
-        console.error('AdSense error:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('AdSense error:', error);
+        }
       }
     }
   }, [testMode]);

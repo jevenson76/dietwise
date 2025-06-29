@@ -20,11 +20,6 @@ const colors = {
 };
 
 const log = {
-  success: (msg) => console.log(`${colors.green}✓${colors.reset} ${msg}`),
-  error: (msg) => console.log(`${colors.red}✗${colors.reset} ${msg}`),
-  warning: (msg) => console.log(`${colors.yellow}⚠${colors.reset} ${msg}`),
-  info: (msg) => console.log(`${colors.cyan}ℹ${colors.reset} ${msg}`),
-  header: (msg) => console.log(`\n${colors.blue}${msg}${colors.reset}\n${'='.repeat(msg.length)}`)
 };
 
 class CredentialValidator {
@@ -334,14 +329,14 @@ class CredentialValidator {
     const frontendTotal = this.results.frontend.valid + this.results.frontend.invalid;
     const backendTotal = this.results.backend.valid + this.results.backend.invalid;
     
-    console.log(`Frontend: ${this.results.frontend.valid}/${frontendTotal} required credentials valid`);
+
     if (this.results.frontend.warnings > 0) {
-      console.log(`          ${this.results.frontend.warnings} optional credentials missing`);
+
     }
     
-    console.log(`Backend:  ${this.results.backend.valid}/${backendTotal} required credentials valid`);
+
     if (this.results.backend.warnings > 0) {
-      console.log(`          ${this.results.backend.warnings} optional credentials missing`);
+
     }
     
     const totalInvalid = this.results.frontend.invalid + this.results.backend.invalid;
@@ -357,18 +352,13 @@ class CredentialValidator {
     // Show next steps
     log.header('Next Steps');
     if (totalInvalid > 0) {
-      console.log('1. Add missing credentials to the .env files');
-      console.log('2. Run this script again to verify: npm run validate:credentials');
-      console.log('3. Test locally: npm run dev (frontend) & cd backend && npm run dev');
     } else {
-      console.log('1. Test all features locally');
-      console.log('2. Deploy backend to Railway/Heroku with these environment variables');
-      console.log('3. Deploy frontend to Vercel/Netlify with frontend variables');
-      console.log('4. Update VITE_API_URL to point to production backend');
     }
   }
 }
 
 // Run validation
 const validator = new CredentialValidator();
+if (process.env.NODE_ENV !== 'production') {
 validator.validate().catch(console.error);
+}

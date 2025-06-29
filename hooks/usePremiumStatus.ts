@@ -43,7 +43,9 @@ export const usePremiumStatus = () => {
       }));
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Error checking premium status:', error);
+      }
       }
 
       // Fall back to localStorage if API fails
@@ -71,7 +73,9 @@ export const usePremiumStatus = () => {
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error('Error opening customer portal:', error);
+      }
       }
     }
   };

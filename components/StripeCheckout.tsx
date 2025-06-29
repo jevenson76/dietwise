@@ -53,7 +53,7 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
 
     } catch (err: any) {
       if (process.env.NODE_ENV !== 'production') {
-      console.error('Checkout error:', err);
+        console.error('Checkout error:', err);
       }
       setError(err.message || 'Failed to start checkout process');
       trackEvent('checkout_error', { 

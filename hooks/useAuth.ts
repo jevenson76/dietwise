@@ -27,32 +27,18 @@ export const useAuth = () => {
 
   const initializeAuth = async () => {
     try {
-      // Check if user is stored locally
-      const storedUser = authApi.getStoredUser();
+      // With httpOnly cookies, we check authentication by trying to get current user
+      // The cookie will be automatically sent with the request
+      const currentUser = await authApi.getCurrentUser();
 
-      if (storedUser && authApi.isAuthenticated()) {
-        // Initialize API with stored token
-        authApi.initializeAuth();
-
-        // Verify token is still valid by fetching current user
-        const currentUser = await authApi.getCurrentUser();
-
-        if (currentUser) {
-          setAuthState({
-            user: currentUser,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } else {
-          // Token is invalid, clear auth
-          await authApi.logout();
-          setAuthState({
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-          });
-        }
+      if (currentUser) {
+        setAuthState({
+          user: currentUser,
+          isAuthenticated: true,
+          isLoading: false,
+        });
       } else {
+        // No valid authentication cookie, user is not logged in
         setAuthState({
           user: null,
           isAuthenticated: false,
@@ -61,7 +47,7 @@ export const useAuth = () => {
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-      console.error('Failed to initialize auth:', error);
+        console.error('Failed to initialize auth:', error);
       }
       setAuthState({
         user: null,

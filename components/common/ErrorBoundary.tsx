@@ -25,7 +25,9 @@ class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV !== 'production') {
       console.error("Uncaught error:", error, errorInfo);
+      }
     }
     this.setState({ error, errorInfo });
     // Log the error to analytics

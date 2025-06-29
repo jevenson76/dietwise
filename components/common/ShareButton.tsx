@@ -25,7 +25,9 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       } catch (error) {
         trackEvent('share_failed_native', { error: (error as Error).message });
         if (process.env.NODE_ENV !== 'production') {
+        if (process.env.NODE_ENV !== 'production') {
         console.error('Error sharing content:', error);
+        }
         }
         // Fallback or specific error handling can be added here
         alert("Sharing failed. You can manually copy this: " + shareData.text + (shareData.url ? ` URL: ${shareData.url}` : ''));
