@@ -9,6 +9,7 @@ import LoadingState from '@components/common/LoadingState';
 import ErrorMessage, { ErrorTemplates } from '@components/common/ErrorMessage';
 import { createContextualError } from '../utils/errorMessages';
 import type { GroundingChunk } from '@google/genai';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface MealPlannerComponentProps {
   calorieTarget: number | null;
@@ -150,7 +151,12 @@ const MealPlannerComponent: React.FC<MealPlannerComponentProps> = ({ calorieTarg
   }
 
   return (
-    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
+      {/* DietWise Logo in upper right */}
+      <div className="absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700">
+        <DietWiseLogo size="small" />
+      </div>
+      
       <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-2">
         <i className="fas fa-calendar-alt mr-2.5 text-sky-500 dark:text-sky-400"></i>AI 7-Day Meal Plan & Shopping List
       </h2>

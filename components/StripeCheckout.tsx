@@ -69,7 +69,12 @@ const StripeCheckout: React.FC<StripeCheckoutProps> = ({
   const yearlyPlan = SUBSCRIPTION_PLANS.find(p => p.id === 'yearly')!;
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-md mx-auto relative">
+      {/* DietWise Logo in upper right */}
+      <div className="absolute -top-2 -right-2 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+        <DietWiseLogo size="small" />
+      </div>
+      
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-text-default mb-2">Choose Your Plan</h3>
         <p className="text-text-alt">

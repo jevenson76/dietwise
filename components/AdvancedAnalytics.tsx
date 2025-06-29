@@ -8,6 +8,7 @@ import TrendChart from './common/TrendChart';
 import MetricsCard from './common/MetricsCard';
 import NutritionBreakdown from './common/NutritionBreakdown';
 import AnimatedCard from './common/AnimatedCard';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 Chart.register(...registerables);
 
@@ -460,7 +461,12 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* DietWise Logo in upper right */}
+      <div className="absolute top-0 right-0 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+        <DietWiseLogo size="small" />
+      </div>
+      
       {/* Header */}
       <AnimatedCard 
         title="Advanced Analytics"

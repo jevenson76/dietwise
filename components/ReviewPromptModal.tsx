@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './common/Modal';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface ReviewPromptModalProps {
   isOpen: boolean;
@@ -125,7 +126,7 @@ const ReviewPromptModal: React.FC<ReviewPromptModalProps> = ({ isOpen, onClose, 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleCloseAndReset} title="Rate Your Experience">
+    <Modal isOpen={isOpen} onClose={handleCloseAndReset} title="Rate Your Experience" logo={<DietWiseLogo size="small" />}>
       {renderContent()}
     </Modal>
   );

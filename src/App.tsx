@@ -1467,7 +1467,6 @@ const App: React.FC = () => {
         <div className="container mx-auto max-w-7xl px-4 py-5 flex items-center justify-between">
           <div className="flex-1">
             <div className="flex items-center">
-              <DietWiseLogo size="small" className="mr-3 flex-shrink-0" />
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-800">DietWise</h1>
                 <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
@@ -1477,16 +1476,21 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-          {showDashboardToggle && (
-            <button
-              onClick={toggleDashboardVisibility}
-              className="p-1.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 transition-colors ml-4"
-              aria-label={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
-              title={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
-            >
-              <i className={`fas ${isDashboardVisible ? 'fa-eye-slash' : 'fa-eye'} text-lg sm:text-xl fa-fw`}></i>
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {showDashboardToggle && (
+              <button
+                onClick={toggleDashboardVisibility}
+                className="p-1.5 rounded-full hover:bg-white/20 focus:outline-none focus:ring-1 focus:ring-white/50 transition-colors"
+                aria-label={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
+                title={isDashboardVisible ? "Hide status dashboard" : "Show status dashboard"}
+              >
+                <i className={`fas ${isDashboardVisible ? 'fa-eye-slash' : 'fa-eye'} text-lg sm:text-xl fa-fw`}></i>
+              </button>
+            )}
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-lg border border-gray-200">
+              <DietWiseLogo size="small" />
+            </div>
+          </div>
         </div>
       </header>
 

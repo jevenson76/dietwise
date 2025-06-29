@@ -11,6 +11,7 @@ import { getFoodInfoFromUPC, API_KEY_ERROR_MESSAGE } from '@services/geminiServi
 import { trackEvent } from '@services/analyticsService';
 import { ScannedFoodInfo, FoodItem, GroundingSource } from '@appTypes';
 import type { GroundingChunk } from '@google/genai';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface UPCScannerComponentProps {
   onFoodScanned: (foodItem: FoodItem, source: 'scan' | 'manual') => void;
@@ -179,7 +180,7 @@ const UPCScannerComponent: React.FC<UPCScannerComponentProps> = ({
   const currentError = apiError || scannerError;
 
   return (
-      <Modal isOpen={isOpen} onClose={handleCloseScanner} title={scannedUpc && !foodInfo && !isLoadingApi ? `UPC: ${scannedUpc}`: (foodInfo?.name || "Scan Barcode")} size="xl">
+      <Modal isOpen={isOpen} onClose={handleCloseScanner} title={scannedUpc && !foodInfo && !isLoadingApi ? `UPC: ${scannedUpc}`: (foodInfo?.name || "Scan Barcode")} size="xl" logo={<DietWiseLogo size="small" />}>
         <div className="flex flex-col items-center">
           <div className="w-full max-w-md aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-lg overflow-hidden mb-4 shadow-inner relative">
             <video id={videoElementId} ref={videoRef} className={`w-full h-full object-cover ${(isScanning || isLoadingApi || foodInfo || scannedUpc) ? '' : 'hidden'}`} playsInline />

@@ -3,6 +3,7 @@ import Modal from '../common/Modal';
 import Login from './Login';
 import Signup from './Signup';
 import ForgotPassword from './ForgotPassword';
+import DietWiseLogo from '../../src/components/DietWiseLogo';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -60,7 +61,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Account" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Account" size="lg" logo={<DietWiseLogo size="small" />}>
       <div className="p-6">
         {renderContent()}
       </div>

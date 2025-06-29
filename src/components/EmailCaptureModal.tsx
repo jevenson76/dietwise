@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from '@components/common/Modal';
 import { trackEvent } from '@services/analyticsService';
+import DietWiseLogo from './DietWiseLogo';
 
 interface EmailCaptureModalProps {
   isOpen: boolean;
@@ -42,7 +43,13 @@ const EmailCaptureModal: React.FC<EmailCaptureModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={null} size="md">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={null} 
+      size="md"
+      logo={<DietWiseLogo size="large" className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" />}
+    >
       <div className="text-center p-6">
         {/* Success Icon */}
         <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-6">

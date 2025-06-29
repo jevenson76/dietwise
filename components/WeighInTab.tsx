@@ -4,6 +4,7 @@ import { useResponsive } from '../hooks/useResponsive';
 import WeightLogFormComponent from './WeightLogFormComponent';
 import WeightChartComponent from './WeightChartComponent';
 import WeightGoalSetter from './WeightGoalSetter';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface WeighInTabProps {
   userProfile: UserProfile;
@@ -85,7 +86,12 @@ const WeighInTab: React.FC<WeighInTabProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 relative">
+      {/* DietWise Logo in upper right */}
+      <div className="absolute top-0 right-0 w-12 h-12 rounded-full flex items-center justify-center bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+        <DietWiseLogo size="small" />
+      </div>
+      
       {/* Current Weight & Stats Overview */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-700 p-6 sm:p-8 rounded-2xl shadow-xl border border-blue-100 dark:border-slate-600">
         <div className="flex items-center justify-between mb-6">

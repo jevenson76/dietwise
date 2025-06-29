@@ -8,6 +8,7 @@ import { differenceInDays, format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { startOfDay } from 'date-fns/startOfDay';
 import EmptyState from '@components/common/EmptyState';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface ProgressTabComponentProps {
   userProfile: UserProfile;
@@ -107,7 +108,11 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
 
   if (!isProfileComplete) {
      return (
-        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
+            <DietWiseLogo 
+              size="large" 
+              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" 
+            />
             <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-4">
                 <i className="fas fa-chart-line mr-2.5 text-sky-500 dark:text-sky-400"></i>Progress Tracking
             </h2>
@@ -130,7 +135,11 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
 
   if (userProfile.targetWeight === null) {
      return (
-        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
+            <DietWiseLogo 
+              size="large" 
+              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" 
+            />
             <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-4">
                 <i className="fas fa-chart-line mr-2.5 text-sky-500 dark:text-sky-400"></i>Progress Tracking
             </h2>
@@ -152,7 +161,11 @@ export const ProgressTabComponent: React.FC<ProgressTabComponentProps> = ({
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 relative">
+      <DietWiseLogo 
+        size="large" 
+        className="absolute top-0 right-0 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border z-10" 
+      />
       {showWeighInReminder && (
         <Alert
           type="info"

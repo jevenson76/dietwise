@@ -4,6 +4,7 @@ import { trackEvent } from '@services/analyticsService';
 import LoadingSpinner from '@components/common/LoadingSpinner';
 import Alert from '@components/common/Alert';
 import LoadingState from '@components/common/LoadingState';
+import DietWiseLogo from '../src/components/DietWiseLogo';
 
 interface MealIdeaSuggestionProps {
   calorieTarget: number | null;
@@ -136,7 +137,11 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
 
   if (!isProfileComplete || !calorieTarget) {
      return (
-        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+        <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
+            <DietWiseLogo 
+              size="large" 
+              className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" 
+            />
             <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-4">
                 <i className="fas fa-lightbulb mr-2.5 text-yellow-500 dark:text-yellow-400"></i>Meal Ideas
             </h2>
@@ -151,7 +156,11 @@ const MealIdeaSuggestion: React.FC<MealIdeaSuggestionProps> = ({
   }
 
   return (
-    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8">
+    <div className="bg-bg-card p-6 sm:p-8 rounded-xl shadow-xl mt-6 sm:mt-8 relative">
+      <DietWiseLogo 
+        size="large" 
+        className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-lg border" 
+      />
       <h2 className="text-xl sm:text-2xl font-semibold text-text-default mb-2">
         <i className="fas fa-lightbulb mr-2.5 text-yellow-500 dark:text-yellow-400"></i>AI Meal Ideas
       </h2>
